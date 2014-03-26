@@ -7,6 +7,7 @@
  */
 #endregion
 
+#region Using Statements
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -20,11 +21,54 @@ using System.Diagnostics;
 
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
+#endregion
 
 namespace Microsoft.Xna.Framework.Content
 {
 	public partial class ContentManager : IDisposable
 	{
+		#region Public ServiceProvider Property
+
+		public IServiceProvider ServiceProvider
+		{
+			get
+			{
+				return this.serviceProvider;
+			}
+		}
+
+		#endregion
+
+		#region Public RootDirectory Property
+
+		public string RootDirectory
+		{
+			get
+			{
+				return _rootDirectory;
+			}
+			set
+			{
+				_rootDirectory = value;
+			}
+		}
+
+		#endregion
+
+		#region Internal Root Directory Path Property
+
+		internal string RootDirectoryFullPath
+		{
+			get
+			{
+				return Path.Combine(TitleContainer.Location, RootDirectory);
+			}
+		}
+
+		#endregion
+
+		#region Private Variables
+
 		private string _rootDirectory = string.Empty;
 		private IServiceProvider serviceProvider;
 		private IGraphicsDeviceService graphicsDeviceService;
@@ -35,7 +79,7 @@ namespace Microsoft.Xna.Framework.Content
 		private static object ContentManagerLock = new object();
 		private static List<WeakReference> ContentManagers = new List<WeakReference>();
 
-		static List<char> targetPlatformIdentifiers = new List<char>()
+		private static List<char> targetPlatformIdentifiers = new List<char>()
 		{
 			'w', // Windows
 			'x', // Xbox360
@@ -51,6 +95,10 @@ namespace Microsoft.Xna.Framework.Content
 			'M', // WindowsPhone8
 			'r', // RaspberryPi
 		};
+
+		#endregion
+
+		#region Private Static Methods
 
 		private static void AddContentManager(ContentManager contentManager)
 		{
@@ -97,6 +145,10 @@ namespace Microsoft.Xna.Framework.Content
 			}
 		}
 
+		#endregion
+
+		#region Internal Static Methods
+
 		internal static void ReloadGraphicsContent()
 		{
 			lock (ContentManagerLock)
@@ -123,6 +175,10 @@ namespace Microsoft.Xna.Framework.Content
 			}
 		}
 
+		#endregion
+
+		#region Destructor
+
 		/* Use C# destructor syntax for finalization code.
 		 * This destructor will run only if the Dispose method
 		 * does not get called.
@@ -137,6 +193,10 @@ namespace Microsoft.Xna.Framework.Content
 			 */
 			Dispose(false);
 		}
+
+		#endregion
+
+		#region Public Constructors
 
 		public ContentManager(IServiceProvider serviceProvider)
 		{
@@ -163,31 +223,9 @@ namespace Microsoft.Xna.Framework.Content
 			AddContentManager(this);
 		}
 
-		public void Dispose()
-		{
-			Dispose(true);
-			/* Tell the garbage collector not to call the finalizer
-			 * since all the cleanup will already be done.
-			 */
-			GC.SuppressFinalize(this);
-			// Once disposed, content manager wont be used again
-			RemoveContentManager(this);
-		}
+		#endregion
 
-		/* If disposing is true, it was called explicitly and we should dispose managed objects.
-		 * If disposing is false, it was called by the finalizer and managed objects should not be disposed.
-		 */
-		protected virtual void Dispose(bool disposing)
-		{
-			if (!disposed)
-			{
-				if (disposing)
-				{
-					Unload();
-				}
-				disposed = true;
-			}
-		}
+		#region Public Load Method
 
 		public virtual T Load<T>(string assetName)
 		{
@@ -215,6 +253,79 @@ namespace Microsoft.Xna.Framework.Content
 			return result;
 		}
 
+		#endregion
+
+		#region Public Dispose Method
+
+		public void Dispose()
+		{
+			Dispose(true);
+			/* Tell the garbage collector not to call the finalizer
+			 * since all the cleanup will already be done.
+			 */
+			GC.SuppressFinalize(this);
+			// Once disposed, content manager wont be used again
+			RemoveContentManager(this);
+		}
+
+		#endregion
+
+		#region Public Unload Method
+
+		public virtual void Unload()
+		{
+			// Look for disposable assets.
+			foreach (IDisposable disposable in disposableAssets)
+			{
+				if (disposable != null)
+				{
+					disposable.Dispose();
+				}
+			}
+			disposableAssets.Clear();
+			loadedAssets.Clear();
+		}
+
+		#endregion
+
+		#region Internal RecordDisposable Method
+
+		internal void RecordDisposable(IDisposable disposable)
+		{
+			Debug.Assert(disposable != null, "The disposable is null!");
+
+			/* Avoid recording disposable objects twice. ReloadAsset will try to record the disposables again.
+			 * We don't know which asset recorded which disposable so just guard against storing multiple of the same instance.
+			 */
+			if (!disposableAssets.Contains(disposable))
+			{
+				disposableAssets.Add(disposable);
+			}
+		}
+
+		#endregion
+
+		#region Protected Dispose Method
+
+		/* If disposing is true, it was called explicitly and we should dispose managed objects.
+		 * If disposing is false, it was called by the finalizer and managed objects should not be disposed.
+		 */
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposed)
+			{
+				if (disposing)
+				{
+					Unload();
+				}
+				disposed = true;
+			}
+		}
+
+		#endregion
+
+		#region Protected OpenStream Method
+
 		protected virtual Stream OpenStream(string assetName)
 		{
 			Stream stream;
@@ -238,6 +349,10 @@ namespace Microsoft.Xna.Framework.Content
 			}
 			return stream;
 		}
+
+		#endregion
+
+		#region Protected ReadAsset Method
 
 		protected T ReadAsset<T>(string assetName, Action<IDisposable> recordDisposableObject)
 		{
@@ -322,6 +437,10 @@ namespace Microsoft.Xna.Framework.Content
 			return (T) result;
 		}
 
+		#endregion
+
+		#region Protected Filename Normalizer Method
+
 		protected virtual string Normalize<T>(string assetName)
 		{
 			if (typeof(T) == typeof(Texture2D) || typeof(T) == typeof(Texture))
@@ -350,6 +469,10 @@ namespace Microsoft.Xna.Framework.Content
 			}
 			return null;
 		}
+
+		#endregion
+
+		#region Protected ReadRawAsset Method
 
 		protected virtual object ReadRawAsset<T>(string assetName, string originalAssetName)
 		{
@@ -395,6 +518,100 @@ namespace Microsoft.Xna.Framework.Content
 			}
 			return null;
 		}
+
+		#endregion
+
+		#region Protected LoadedAssets Property
+
+		/// <summary>
+		/// Virtual property to allow a derived ContentManager to have it's assets reloaded
+		/// </summary>
+		protected virtual Dictionary<string, object> LoadedAssets
+		{
+			get
+			{
+				return loadedAssets;
+			}
+		}
+
+		#endregion
+
+		#region Protected Asset Reloading Methods
+
+		protected virtual void ReloadGraphicsAssets()
+		{
+			foreach (KeyValuePair<string, object> asset in LoadedAssets)
+			{
+				MethodInfo methodInfo = typeof(ContentManager).GetMethod("ReloadAsset", BindingFlags.NonPublic | BindingFlags.Instance);
+				MethodInfo genericMethod = methodInfo.MakeGenericMethod(asset.Value.GetType());
+				genericMethod.Invoke(this, new object[] { asset.Key, Convert.ChangeType(asset.Value, asset.Value.GetType()) });
+			}
+		}
+
+		protected virtual void ReloadAsset<T>(string originalAssetName, T currentAsset)
+		{
+			string assetName = originalAssetName;
+			if (string.IsNullOrEmpty(assetName))
+			{
+				throw new ArgumentNullException("assetName");
+			}
+			if (disposed)
+			{
+				throw new ObjectDisposedException("ContentManager");
+			}
+
+			if (this.graphicsDeviceService == null)
+			{
+				this.graphicsDeviceService = serviceProvider.GetService(typeof(IGraphicsDeviceService)) as IGraphicsDeviceService;
+				if (this.graphicsDeviceService == null)
+				{
+					throw new InvalidOperationException("No Graphics Device Service");
+				}
+			}
+
+			Stream stream = null;
+			try
+			{
+				// Try to load it traditionally
+				stream = OpenStream(assetName);
+				// Try to load as XNB file
+				try
+				{
+					using (BinaryReader xnbReader = new BinaryReader(stream))
+					{
+						using (ContentReader reader = GetContentReaderFromXnb(assetName, ref stream, xnbReader, null))
+						{
+							reader.InitializeTypeReaders();
+							reader.ReadObject<T>(currentAsset);
+							reader.ReadSharedResources();
+						}
+					}
+				}
+				finally
+				{
+					if (stream != null)
+					{
+						stream.Dispose();
+					}
+				}
+			}
+			catch (ContentLoadException)
+			{
+				// Try to reload as a non-xnb file.
+				assetName = TitleContainer.GetFilename(Path.Combine(RootDirectory, assetName));
+				assetName = Normalize<T>(assetName);
+				ReloadRawAsset(currentAsset, assetName, originalAssetName);
+			}
+		}
+
+		protected virtual void ReloadRawAsset<T>(T asset, string assetName, string originalAssetName)
+		{
+			// FIXME: Is this needed? -flibit
+		}
+
+		#endregion
+
+		#region Private GetContentReaderFromXnb Method
 
 		private ContentReader GetContentReaderFromXnb(string originalAssetName, ref Stream stream, BinaryReader xnbReader, Action<IDisposable> recordDisposableObject)
 		{
@@ -503,141 +720,6 @@ namespace Microsoft.Xna.Framework.Content
 			return reader;
 		}
 
-		internal void RecordDisposable(IDisposable disposable)
-		{
-			Debug.Assert(disposable != null, "The disposable is null!");
-
-			/* Avoid recording disposable objects twice. ReloadAsset will try to record the disposables again.
-			 * We don't know which asset recorded which disposable so just guard against storing multiple of the same instance.
-			 */
-			if (!disposableAssets.Contains(disposable))
-			{
-				disposableAssets.Add(disposable);
-			}
-		}
-
-		/// <summary>
-		/// Virtual property to allow a derived ContentManager to have it's assets reloaded
-		/// </summary>
-		protected virtual Dictionary<string, object> LoadedAssets
-		{
-			get
-			{
-				return loadedAssets;
-			}
-		}
-
-		protected virtual void ReloadGraphicsAssets()
-		{
-			foreach (KeyValuePair<string, object> asset in LoadedAssets)
-			{
-				MethodInfo methodInfo = typeof(ContentManager).GetMethod("ReloadAsset", BindingFlags.NonPublic | BindingFlags.Instance);
-				MethodInfo genericMethod = methodInfo.MakeGenericMethod(asset.Value.GetType());
-				genericMethod.Invoke(this, new object[] { asset.Key, Convert.ChangeType(asset.Value, asset.Value.GetType()) });
-			}
-		}
-
-		protected virtual void ReloadAsset<T>(string originalAssetName, T currentAsset)
-		{
-			string assetName = originalAssetName;
-			if (string.IsNullOrEmpty(assetName))
-			{
-				throw new ArgumentNullException("assetName");
-			}
-			if (disposed)
-			{
-				throw new ObjectDisposedException("ContentManager");
-			}
-
-			if (this.graphicsDeviceService == null)
-			{
-				this.graphicsDeviceService = serviceProvider.GetService(typeof(IGraphicsDeviceService)) as IGraphicsDeviceService;
-				if (this.graphicsDeviceService == null)
-				{
-					throw new InvalidOperationException("No Graphics Device Service");
-				}
-			}
-
-			Stream stream = null;
-			try
-			{
-				// Try to load it traditionally
-				stream = OpenStream(assetName);
-				// Try to load as XNB file
-				try
-				{
-					using (BinaryReader xnbReader = new BinaryReader(stream))
-					{
-						using (ContentReader reader = GetContentReaderFromXnb(assetName, ref stream, xnbReader, null))
-						{
-							reader.InitializeTypeReaders();
-							reader.ReadObject<T>(currentAsset);
-							reader.ReadSharedResources();
-						}
-					}
-				}
-				finally
-				{
-					if (stream != null)
-					{
-						stream.Dispose();
-					}
-				}
-			}
-			catch (ContentLoadException)
-			{
-				// Try to reload as a non-xnb file.
-				assetName = TitleContainer.GetFilename(Path.Combine(RootDirectory, assetName));
-				assetName = Normalize<T>(assetName);
-				ReloadRawAsset(currentAsset, assetName, originalAssetName);
-			}
-		}
-
-		protected virtual void ReloadRawAsset<T>(T asset, string assetName, string originalAssetName)
-		{
-			// FIXME: Is this needed? -flibit
-		}
-
-		public virtual void Unload()
-		{
-			// Look for disposable assets.
-			foreach (IDisposable disposable in disposableAssets)
-			{
-				if (disposable != null)
-				{
-					disposable.Dispose();
-				}
-			}
-			disposableAssets.Clear();
-			loadedAssets.Clear();
-		}
-
-		public string RootDirectory
-		{
-			get
-			{
-				return _rootDirectory;
-			}
-			set
-			{
-				_rootDirectory = value;
-			}
-		}
-
-		internal string RootDirectoryFullPath
-		{
-			get
-			{
-				return Path.Combine(TitleContainer.Location, RootDirectory);
-			}
-		}
-
-		public IServiceProvider ServiceProvider
-		{
-			get
-			{
-				return this.serviceProvider;
-			}
-		}
+		#endregion
 	}
 }

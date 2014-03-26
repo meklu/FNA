@@ -32,27 +32,52 @@ SOFTWARE.
 */
 #endregion
 
+#region Using Statements
 using System;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+#endregion
 
 namespace Microsoft.Xna.Framework.Content
 {
 	public sealed class ContentTypeReaderManager
 	{
-		ContentReader _reader;
-		ContentTypeReader[] contentReaders;
-		static string assemblyName;
+		#region Private Variables
+
+		private ContentReader _reader;
+		private ContentTypeReader[] contentReaders;
+		private static string assemblyName;
+
+		// Trick to prevent the linker removing the code, but not actually execute the code
+		private static bool falseflag = false;
+		/* Static map of type names to creation functions. Required as iOS requires all
+		 * types at compile time
+		 */
+		private static Dictionary<string, Func<ContentTypeReader>> typeCreators =
+			new Dictionary<string, Func<ContentTypeReader>>();
+
+		#endregion
+
+		#region Private Static Constructor
+
 		static ContentTypeReaderManager()
 		{
 			assemblyName = Assembly.GetExecutingAssembly().FullName;
 		}
 
+		#endregion
+
+		#region Public Constructors
+
 		public ContentTypeReaderManager(ContentReader reader)
 		{
 			_reader = reader;
 		}
+
+		#endregion
+
+		#region Public Methods
 
 		public ContentTypeReader GetTypeReader(Type targetType)
 		{
@@ -66,8 +91,9 @@ namespace Microsoft.Xna.Framework.Content
 			return null;
 		}
 
-		// Trick to prevent the linker removing the code, but not actually execute the code
-		static bool falseflag = false;
+		#endregion
+
+		#region Internal Death Defying Method
 
 		internal ContentTypeReader[] LoadAssetReaders()
 		{
@@ -184,6 +210,34 @@ namespace Microsoft.Xna.Framework.Content
 			return contentReaders;
 		}
 
+		#endregion
+
+		#region Public Static Methods
+
+		/// <summary>
+		/// Adds the type creator.
+		/// </summary>
+		/// <param name='typeString'>
+		/// Type string.
+		/// </param>
+		/// <param name='createFunction'>
+		/// Create function.
+		/// </param>
+		public static void AddTypeCreator(
+			string typeString,
+			Func<ContentTypeReader> createFunction
+		) {
+			if (!typeCreators.ContainsKey(typeString))
+			{
+				typeCreators.Add(typeString, createFunction);
+			}
+		}
+
+		public static void ClearTypeCreators()
+		{
+			typeCreators.Clear();
+		}
+
 		/// <summary>
 		/// Removes Version, Culture and PublicKeyToken from a type string.
 		/// </summary>
@@ -239,34 +293,7 @@ namespace Microsoft.Xna.Framework.Content
 			);
 			return preparedType;
 		}
-		/* Static map of type names to creation functions. Required as iOS requires all
-		 * types at compile time
-		 */
-		private static Dictionary<string, Func<ContentTypeReader>> typeCreators =
-			new Dictionary<string, Func<ContentTypeReader>>();
-		/// <summary>
-		/// Adds the type creator.
-		/// </summary>
-		/// <param name='typeString'>
-		/// Type string.
-		/// </param>
-		/// <param name='createFunction'>
-		/// Create function.
-		/// </param>
-		public static void AddTypeCreator(
-			string typeString,
-			Func<ContentTypeReader> createFunction
-		) {
-			if (!typeCreators.ContainsKey(typeString))
-			{
-				typeCreators.Add(typeString, createFunction);
-			}
-		}
 
-		public static void ClearTypeCreators()
-		{
-			typeCreators.Clear();
-		}
-
+		#endregion
 	}
 }

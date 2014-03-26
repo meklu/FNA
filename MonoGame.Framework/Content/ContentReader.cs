@@ -32,6 +32,7 @@ SOFTWARE.
 */
 #endregion
 
+#region Using Statements
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,51 +40,13 @@ using System.Text;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+#endregion
 
 namespace Microsoft.Xna.Framework.Content
 {
 	public sealed class ContentReader : BinaryReader
 	{
-		private ContentManager contentManager;
-		private Action<IDisposable> recordDisposableObject;
-		private ContentTypeReaderManager typeReaderManager;
-		private GraphicsDevice graphicsDevice;
-		private string assetName;
-		private List<KeyValuePair<int, Action<object>>> sharedResourceFixups;
-		private ContentTypeReader[] typeReaders;
-		internal int version;
-		internal int sharedResourceCount;
-
-		internal ContentTypeReader[] TypeReaders
-		{
-			get
-			{
-				return typeReaders;
-			}
-		}
-
-		internal GraphicsDevice GraphicsDevice
-		{
-			get
-			{
-				return this.graphicsDevice;
-			}
-		}
-
-		internal ContentReader(
-			ContentManager manager,
-			Stream stream,
-			GraphicsDevice graphicsDevice,
-			string assetName,
-			int version,
-			Action<IDisposable> recordDisposableObject
-		) : base(stream) {
-			this.graphicsDevice = graphicsDevice;
-			this.recordDisposableObject = recordDisposableObject;
-			this.contentManager = manager;
-			this.assetName = assetName;
-			this.version = version;
-		}
+		#region Public Properties
 
 		public ContentManager ContentManager
 		{
@@ -101,56 +64,67 @@ namespace Microsoft.Xna.Framework.Content
 			}
 		}
 
-		internal object ReadAsset<T>()
+		#endregion
+
+		#region Internal Properties
+
+		internal ContentTypeReader[] TypeReaders
 		{
-			InitializeTypeReaders();
-			// Read primary object
-			object result = ReadObject<T>();
-			// Read shared resources
-			ReadSharedResources();
-			return result;
+			get
+			{
+				return typeReaders;
+			}
 		}
 
-		internal void InitializeTypeReaders()
+		internal GraphicsDevice GraphicsDevice
 		{
-			typeReaderManager = new ContentTypeReaderManager(this);
-			typeReaders = typeReaderManager.LoadAssetReaders();
-			foreach (ContentTypeReader r in typeReaders)
+			get
 			{
-				r.Initialize(typeReaderManager);
+				return this.graphicsDevice;
 			}
-
-			sharedResourceCount = Read7BitEncodedInt();
-			sharedResourceFixups = new List<KeyValuePair<int, Action<object>>>();
 		}
 
-		internal void ReadSharedResources()
-		{
-			if (sharedResourceCount <= 0)
-			{
-				return;
-			}
+		#endregion
 
-			object[] sharedResources = new object[sharedResourceCount];
-			for (int i = 0; i < sharedResourceCount; i += 1)
-			{
-				int index = Read7BitEncodedInt();
-				if (index > 0)
-				{
-					ContentTypeReader contentReader = typeReaders[index - 1];
-					sharedResources[i] = ReadObject<object>(contentReader);
-				}
-				else
-				{
-					sharedResources[i] = null;
-				}
-			}
-			// Fixup shared resources by calling each registered action
-			foreach (KeyValuePair<int, Action<object>> fixup in sharedResourceFixups)
-			{
-				fixup.Value(sharedResources[fixup.Key]);
-			}
+		#region Internal Variables
+
+		internal int version;
+		internal int sharedResourceCount;
+
+		#endregion
+
+		#region Private Variables
+
+		private ContentManager contentManager;
+		private Action<IDisposable> recordDisposableObject;
+		private ContentTypeReaderManager typeReaderManager;
+		private GraphicsDevice graphicsDevice;
+		private string assetName;
+		private List<KeyValuePair<int, Action<object>>> sharedResourceFixups;
+		private ContentTypeReader[] typeReaders;
+
+		#endregion
+
+		#region Internal Constructor
+
+		internal ContentReader(
+			ContentManager manager,
+			Stream stream,
+			GraphicsDevice graphicsDevice,
+			string assetName,
+			int version,
+			Action<IDisposable> recordDisposableObject
+		) : base(stream) {
+			this.graphicsDevice = graphicsDevice;
+			this.recordDisposableObject = recordDisposableObject;
+			this.contentManager = manager;
+			this.assetName = assetName;
+			this.version = version;
 		}
+
+		#endregion
+
+		#region Public Read Methods
 
 		public T ReadExternalReference<T>()
 		{
@@ -192,23 +166,6 @@ namespace Microsoft.Xna.Framework.Content
 			result.M43 = ReadSingle();
 			result.M44 = ReadSingle();
 			return result;
-		}
-
-		private void RecordDisposable<T>(T result)
-		{
-			IDisposable disposable = result as IDisposable;
-			if (disposable == null)
-			{
-				return;
-			}
-			if (recordDisposableObject != null)
-			{
-				recordDisposableObject(disposable);
-			}
-			else
-			{
-				contentManager.RecordDisposable(disposable);
-			}
 		}
 
 		public T ReadObject<T>()
@@ -354,6 +311,61 @@ namespace Microsoft.Xna.Framework.Content
 			return result;
 		}
 
+		#endregion
+
+		#region Internal Methods
+
+		internal object ReadAsset<T>()
+		{
+			InitializeTypeReaders();
+			// Read primary object
+			object result = ReadObject<T>();
+			// Read shared resources
+			ReadSharedResources();
+			return result;
+		}
+
+		internal void InitializeTypeReaders()
+		{
+			typeReaderManager = new ContentTypeReaderManager(this);
+			typeReaders = typeReaderManager.LoadAssetReaders();
+			foreach (ContentTypeReader r in typeReaders)
+			{
+				r.Initialize(typeReaderManager);
+			}
+
+			sharedResourceCount = Read7BitEncodedInt();
+			sharedResourceFixups = new List<KeyValuePair<int, Action<object>>>();
+		}
+
+		internal void ReadSharedResources()
+		{
+			if (sharedResourceCount <= 0)
+			{
+				return;
+			}
+
+			object[] sharedResources = new object[sharedResourceCount];
+			for (int i = 0; i < sharedResourceCount; i += 1)
+			{
+				int index = Read7BitEncodedInt();
+				if (index > 0)
+				{
+					ContentTypeReader contentReader = typeReaders[index - 1];
+					sharedResources[i] = ReadObject<object>(contentReader);
+				}
+				else
+				{
+					sharedResources[i] = null;
+				}
+			}
+			// Fixup shared resources by calling each registered action
+			foreach (KeyValuePair<int, Action<object>> fixup in sharedResourceFixups)
+			{
+				fixup.Value(sharedResources[fixup.Key]);
+			}
+		}
+
 		internal new int Read7BitEncodedInt()
 		{
 			return base.Read7BitEncodedInt();
@@ -365,5 +377,28 @@ namespace Microsoft.Xna.Framework.Content
 			float radius = ReadSingle();
 			return new BoundingSphere(position, radius);
 		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void RecordDisposable<T>(T result)
+		{
+			IDisposable disposable = result as IDisposable;
+			if (disposable == null)
+			{
+				return;
+			}
+			if (recordDisposableObject != null)
+			{
+				recordDisposableObject(disposable);
+			}
+			else
+			{
+				contentManager.RecordDisposable(disposable);
+			}
+		}
+
+		#endregion
 	}
 }

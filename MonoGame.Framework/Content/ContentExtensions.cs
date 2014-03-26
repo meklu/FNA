@@ -7,20 +7,28 @@
  */
 #endregion
 
+#region Using Statements
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+#endregion
 
 namespace Microsoft.Xna.Framework.Content
 {
 	public static class ContentExtensions
 	{
+		#region Public Static Constructor Extractor Method
+
 		public static ConstructorInfo GetDefaultConstructor(this Type type)
 		{
 			BindingFlags attrs = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
 			return type.GetConstructor(attrs, null, new Type[0], null);
 		}
+
+		#endregion
+
+		#region Public Static Property Extractor Method
 
 		public static PropertyInfo[] GetAllProperties(this Type type)
 		{
@@ -44,6 +52,10 @@ namespace Microsoft.Xna.Framework.Content
 			return props;
 		}
 
+		#endregion
+
+		#region Public Static Field Extractor Method
+
 		public static FieldInfo[] GetAllFields(this Type type)
 		{
 			BindingFlags attrs = (
@@ -54,5 +66,7 @@ namespace Microsoft.Xna.Framework.Content
 			);
 			return type.GetFields(attrs);
 		}
+
+		#endregion
 	}
 }

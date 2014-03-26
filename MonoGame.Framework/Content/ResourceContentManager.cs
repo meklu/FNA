@@ -7,16 +7,24 @@
  */
 #endregion
 
+#region Using Statements
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Resources;
+#endregion
 
 namespace Microsoft.Xna.Framework.Content
 {
 	public class ResourceContentManager : ContentManager
 	{
+		#region Private ResourceManager Instance
+
 		private ResourceManager resource;
+
+		#endregion
+
+		#region Public Constructor
 
 		public ResourceContentManager(
 			IServiceProvider servicesProvider,
@@ -28,6 +36,10 @@ namespace Microsoft.Xna.Framework.Content
 			}
 			this.resource = resource;
 		}
+
+		#endregion
+
+		#region Protected OpenStream Method
 
 		protected override System.IO.Stream OpenStream(string assetName)
 		{
@@ -42,5 +54,7 @@ namespace Microsoft.Xna.Framework.Content
 			}
 			return new MemoryStream(obj as byte[]);
 		}
+
+		#endregion
 	}
 }

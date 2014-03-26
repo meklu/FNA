@@ -7,7 +7,9 @@
  */
 #endregion
 
+#region Using Statements
 using System;
+#endregion
 
 namespace Microsoft.Xna.Framework.Content
 {
@@ -19,18 +21,7 @@ namespace Microsoft.Xna.Framework.Content
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
 	public sealed class ContentSerializerAttribute : Attribute
 	{
-
-		private bool allowNull;
-		private string collectionItemName;
-		private string elementName;
-		private bool flattenContent;
-		private bool hasCollectionItemName;
-		private bool optional;
-		private bool sharedResource;
-
-		public ContentSerializerAttribute()
-		{
-		}
+		#region Public Properties
 
 		public bool AllowNull
 		{
@@ -110,6 +101,30 @@ namespace Microsoft.Xna.Framework.Content
 			}
 		}
 
+		#endregion
+
+		#region Private Variables
+
+		private bool allowNull;
+		private string collectionItemName;
+		private string elementName;
+		private bool flattenContent;
+		private bool hasCollectionItemName;
+		private bool optional;
+		private bool sharedResource;
+
+		#endregion
+
+		#region Public Constructor
+
+		public ContentSerializerAttribute()
+		{
+		}
+
+		#endregion
+
+		#region Public Methods
+
 		public ContentSerializerAttribute Clone()
 		{
 			ContentSerializerAttribute clone = new ContentSerializerAttribute();
@@ -123,5 +138,6 @@ namespace Microsoft.Xna.Framework.Content
 			return clone;
 		}
 
+		#endregion
 	}
 }

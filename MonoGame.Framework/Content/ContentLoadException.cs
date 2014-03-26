@@ -7,12 +7,16 @@
  */
 #endregion
 
+#region Using Statements
 using System;
+#endregion
 
 namespace Microsoft.Xna.Framework.Content
 {
 	public class ContentLoadException : Exception
 	{
+		#region Public Constructors
+
 		public ContentLoadException() : base()
 		{
 		}
@@ -24,6 +28,8 @@ namespace Microsoft.Xna.Framework.Content
 		public ContentLoadException(string message, Exception innerException) : base(message,innerException)
 		{
 		}
+
+		#endregion
 	}
 }
 

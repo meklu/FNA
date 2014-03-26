@@ -32,22 +32,16 @@ SOFTWARE.
 */
 #endregion
 
+#region Using Statements
 using System;
 using System.IO;
-
+#endregion
 
 namespace Microsoft.Xna.Framework.Content
 {
 	public abstract class ContentTypeReader
 	{
-#region Private Member Variables
-
-		private Type targetType;
-
-#endregion Private Member Variables
-
-
-#region Public Properties
+		#region Public Properties
 
 		public Type TargetType
 		{
@@ -66,31 +60,25 @@ namespace Microsoft.Xna.Framework.Content
 			}
 		}
 
-#endregion Public Properties
+		#endregion
 
+		#region Private Member Variables
 
-#region Protected Constructors
+		private Type targetType;
+
+		#endregion
+
+		#region Protected Constructors
 
 		protected ContentTypeReader(Type targetType)
 		{
 			this.targetType = targetType;
 		}
 
-#endregion Protected Constructors
+		#endregion
 
+		#region Public Filename Normalizer Method
 
-#region Protected Methods
-
-		protected internal virtual void Initialize(ContentTypeReaderManager manager)
-		{
-			// Do nothing. Are we supposed to add ourselves to the manager?
-		}
-
-		protected internal abstract object Read(ContentReader input, object existingInstance);
-
-#endregion Protected Methods
-
-#region Internal Static Helper Methods
 		public static string Normalize(string fileName, string[] extensions)
 		{
 			if (File.Exists(fileName))
@@ -109,21 +97,37 @@ namespace Microsoft.Xna.Framework.Content
 			}
 			return null;
 		}
-#endregion
+
+		#endregion
+
+		#region Protected Initialization Method
+
+		protected internal virtual void Initialize(ContentTypeReaderManager manager)
+		{
+			// Do nothing. Are we supposed to add ourselves to the manager?
+		}
+
+		#endregion
+
+		#region Protected Read Method
+
+		protected internal abstract object Read(ContentReader input, object existingInstance);
+
+		#endregion
 	}
 
 	public abstract class ContentTypeReader<T> : ContentTypeReader
 	{
-#region Protected Constructors
+		#region Protected Constructor
 
 		protected ContentTypeReader() : base(typeof(T))
 		{
 			// Nothing
 		}
 
-#endregion Protected Constructors
+		#endregion
 
-#region Protected Methods
+		#region Protected Read Methods
 
 		protected internal override object Read(ContentReader input, object existingInstance)
 		{
@@ -143,6 +147,6 @@ namespace Microsoft.Xna.Framework.Content
 
 		protected internal abstract T Read(ContentReader input, T existingInstance);
 
-#endregion Protected Methods
+		#endregion
 	}
 }
