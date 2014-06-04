@@ -315,7 +315,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			);
 		}
 
-		public virtual void GetData<T>(
+		public void GetData<T>(
 			int level,
 			Rectangle? rect,
 			T[] data,
@@ -326,6 +326,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				throw new ArgumentException("data cannot be null");
 			}
+
 			if (data.Length < startIndex + elementCount)
 			{
 				throw new ArgumentException(
@@ -334,27 +335,23 @@ namespace Microsoft.Xna.Framework.Graphics
 				);
 			}
 
-			OpenGLDevice.Instance.BindTexture(texture);
-
 			if (glFormat == (PixelFormat) All.CompressedTextureFormats)
 			{
 				throw new NotImplementedException("GetData, CompressedTexture");
 			}
-			else if (rect == null)
+
+			if (!OpenGLDevice.Instance.ReadTargetIfApplicable(texture, level, data, rect))
 			{
-				// Just throw the whole texture into the user array.
-				GL.GetTexImage(
-					TextureTarget.Texture2D,
-					0,
-					glFormat,
-					glType,
-					data
-				);
-			}
-			else
-			{
+				OpenGLDevice.Instance.BindTexture(texture);
+
+				// Make sure our read buffer is the size of the texture
+				T[] texData = data;
+				if (rect != null)
+				{
+					texData = new T[Width * Height];
+				}
+
 				// Get the whole texture...
-				T[] texData = new T[Width * Height];
 				GL.GetTexImage(
 					TextureTarget.Texture2D,
 					0,
@@ -363,25 +360,28 @@ namespace Microsoft.Xna.Framework.Graphics
 					texData
 				);
 
-				// Now, blit the rect region into the user array.
-				Rectangle region = rect.Value;
-				int curPixel = -1;
-				for (int row = region.Y; row < region.Y + region.Height; row += 1)
+				if (rect != null)
 				{
-					for (int col = region.X; col < region.X + region.Width; col += 1)
+					// Now, blit the rect region into the user array.
+					Rectangle region = rect.Value;
+					int curPixel = -1;
+					for (int row = region.Y; row < region.Y + region.Height; row += 1)
 					{
-						curPixel += 1;
-						if (curPixel < startIndex)
+						for (int col = region.X; col < region.X + region.Width; col += 1)
 						{
-							// If we're not at the start yet, just keep going...
-							continue;
+							curPixel += 1;
+							if (curPixel < startIndex)
+							{
+								// If we're not at the start yet, just keep going...
+								continue;
+							}
+							if (curPixel > elementCount)
+							{
+								// If we're past the end, we're done!
+								return;
+							}
+							data[curPixel - startIndex] = texData[(row * Width) + col];
 						}
-						if (curPixel > elementCount)
-						{
-							// If we're past the end, we're done!
-							return;
-						}
-						data[curPixel - startIndex] = texData[(row * Width) + col];
 					}
 				}
 			}
