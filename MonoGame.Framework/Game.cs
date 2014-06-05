@@ -467,25 +467,6 @@ namespace Microsoft.Xna.Framework
 			}
 		}
 
-		private void ShowRuntimeError(String Title, String Message)
-		{
-			SDL2.SDL.SDL_MessageBoxData mbdata;
-			mbdata.flags = SDL2.SDL.SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR;
-			mbdata.message = Message;
-			mbdata.title = Title;
-			mbdata.colorScheme = null;
-			mbdata.window = IntPtr.Zero;
-			mbdata.numbuttons = 1;
-
-			SDL2.SDL.SDL_MessageBoxButtonData[] butarray = new SDL2.SDL.SDL_MessageBoxButtonData[1];
-			butarray[0].flags = SDL2.SDL.SDL_MessageBoxButtonFlags.SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
-			butarray[0].text = "OK";
-			mbdata.buttons = butarray;
-
-			int resultButton;
-			int retval = SDL2.SDL.SDL_ShowMessageBox(ref mbdata, out resultButton);
-		}
-
 		public void Run(GameRunBehavior runBehavior)
 		{
 			AssertNotDisposed();
@@ -834,6 +815,25 @@ namespace Microsoft.Xna.Framework
 		#endregion
 
 		#region Private Methods
+
+		private void ShowRuntimeError(String Title, String Message)
+		{
+			SDL2.SDL.SDL_MessageBoxData mbdata;
+			mbdata.flags = SDL2.SDL.SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR;
+			mbdata.message = Message;
+			mbdata.title = Title;
+			mbdata.colorScheme = null;
+			mbdata.window = IntPtr.Zero;
+			mbdata.numbuttons = 1;
+
+			SDL2.SDL.SDL_MessageBoxButtonData[] butarray = new SDL2.SDL.SDL_MessageBoxButtonData[1];
+			butarray[0].flags = SDL2.SDL.SDL_MessageBoxButtonFlags.SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+			butarray[0].text = "OK";
+			mbdata.buttons = butarray;
+
+			int resultButton;
+			int retval = SDL2.SDL.SDL_ShowMessageBox(ref mbdata, out resultButton);
+		}
 
 		/* NOTE: InitializeExistingComponents really should only be called once.
 		 * Game.Initialize is the only method in a position to guarantee
