@@ -7,6 +7,16 @@
  */
 #endregion
 
+#region RESIZABLE_WINDOW Option
+// #define RESIZABLE_WINDOW
+/* So we've got this silly issue in SDL2's video API at the moment. We can't
+ * add/remove the resizable property to the SDL_Window*!
+ *
+ * So, if you want to have your GameWindow be resizable, uncomment this define.
+ * -flibit
+ */
+#endregion
+
 #region Using Statements
 using System;
 using System.Collections.Generic;
@@ -19,80 +29,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Microsoft.Xna.Framework
 {
-    #region MonoGameConfig
-    [Serializable]
-    [System.Xml.Serialization.XmlType("Version")]
-    public class VersionXml
-    {
-        public VersionXml()
-        {
-            this.Version = null;
-        }
-
-        public VersionXml(Version Version)
-        {
-            this.Version = Version;
-        }
-
-        [System.Xml.Serialization.XmlIgnore]
-        public Version Version { get; set; }
-
-        [System.Xml.Serialization.XmlText]
-        [EditorBrowsable(EditorBrowsableState.Never), Browsable(false)]
-        public string Value
-        {
-            get { return this.Version == null ? string.Empty : this.Version.ToString(); }
-            set
-            {
-                Version temp;
-                Version.TryParse(value, out temp);
-                this.Version = temp;
-            }
-        }
-
-        public static implicit operator Version(VersionXml VersionXml)
-        {
-            return VersionXml.Version;
-        }
-
-        public static implicit operator VersionXml(Version Version)
-        {
-            return new VersionXml(Version);
-        }
-
-        public override string ToString()
-        {
-            return this.Value;
-        }
-    }
-
-    [Serializable]
-    public struct MonoGameConfig
-    {
-        public VersionXml OpenGLMinVersion;
-
-        [System.Xml.Serialization.XmlArray("OpenGLRequiredExtensions")]
-        [System.Xml.Serialization.XmlArrayItem("Extension")]
-        public List<String> OpenGLRequiredExtensions;
-
-        /* So we've got this silly issue in SDL2's video API at the moment. We can't
-         * add/remove the resizable property to the SDL_Window*!
-         *
-         * So, if you want to have your GameWindow be resizable, you must set it in the config
-         * -darthdurden
-         */
-        public bool AllowResize;
-
-        public MonoGameConfig(bool AllowResize, Version OpenGLMinVersion, IEnumerable<String> OpenGLRequiredExtensions)
-        {
-            this.AllowResize = AllowResize;
-            this.OpenGLMinVersion = new VersionXml(OpenGLMinVersion);
-            this.OpenGLRequiredExtensions = new List<string>(OpenGLRequiredExtensions);
-        }
-    }
-    #endregion
-
-    class SDL2_GameWindow : GameWindow
+	class SDL2_GameWindow : GameWindow
 	{
 		#region Public GameWindow Properties
 
@@ -194,34 +131,13 @@ namespace Microsoft.Xna.Framework
 
 		private string INTERNAL_deviceName;
 
-        private MonoGameConfig INTERNAL_config;
-
 		#endregion
 
 		#region Internal Constructor
 
 		internal SDL2_GameWindow(Game game)
-        {
-            #region MonoGame Config
-            if (System.IO.File.Exists("MonoGame.cfg"))
-            {
-                // Load the file.
-                System.IO.FileStream fileIn = System.IO.File.OpenRead("MonoGame.cfg");
-
-                // Load the data into our config struct.
-                System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(MonoGameConfig));
-                INTERNAL_config = (MonoGameConfig)serializer.Deserialize(fileIn);
-
-                // We out.
-                fileIn.Close();
-            }
-            else
-            {
-                INTERNAL_config = new MonoGameConfig(false, new Version(3, 0), new[] { "GL_ARB_framebuffer_object" });
-            }
-            #endregion
-
-            Game = game;
+		{
+			Game = game;
 
 			INTERNAL_sdlWindowFlags_Next = (
 				SDL.SDL_WindowFlags.SDL_WINDOW_OPENGL |
@@ -229,8 +145,11 @@ namespace Microsoft.Xna.Framework
 				SDL.SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS |
 				SDL.SDL_WindowFlags.SDL_WINDOW_MOUSE_FOCUS
 			);
-
-            AllowUserResizing = INTERNAL_config.AllowResize;
+#if RESIZABLE_WINDOW
+			AllowUserResizing = true;
+#else
+			AllowUserResizing = false;
+#endif
 
 			SDL.SDL_GL_SetAttribute(SDL.SDL_GLattr.SDL_GL_RED_SIZE, 8);
 			SDL.SDL_GL_SetAttribute(SDL.SDL_GLattr.SDL_GL_GREEN_SIZE, 8);
@@ -246,8 +165,7 @@ namespace Microsoft.Xna.Framework
 			);
 #endif
 
-            string title = MonoGame.Utilities.AssemblyHelper.GetDefaultWindowTitle();
-
+			string title = MonoGame.Utilities.AssemblyHelper.GetDefaultWindowTitle();
 			INTERNAL_sdlWindow = SDL.SDL_CreateWindow(
 				title,
 				SDL.SDL_WINDOWPOS_CENTERED,
@@ -256,7 +174,7 @@ namespace Microsoft.Xna.Framework
 				GraphicsDeviceManager.DefaultBackBufferHeight,
 				INTERNAL_sdlWindowFlags_Next
 			);
-			INTERNAL_SetIcon(INTERNAL_sdlWindow, title);
+			INTERNAL_SetIcon(title);
 
 			INTERNAL_sdlWindowFlags_Current = INTERNAL_sdlWindowFlags_Next;
 		}
@@ -384,7 +302,7 @@ namespace Microsoft.Xna.Framework
 
 		#region Private Window Icon Method
 
-		private void INTERNAL_SetIcon(IntPtr Window, string title)
+		private void INTERNAL_SetIcon(string title)
 		{
 			string fileIn = String.Empty;
 
@@ -398,7 +316,7 @@ namespace Microsoft.Xna.Framework
 				if (!String.IsNullOrEmpty(fileIn))
 				{
 					IntPtr icon = SDL_image.IMG_Load(fileIn);
-                    SDL.SDL_SetWindowIcon(Window, icon);
+					SDL.SDL_SetWindowIcon(INTERNAL_sdlWindow, icon);
 					SDL.SDL_FreeSurface(icon);
 					return;
 				}
@@ -412,7 +330,7 @@ namespace Microsoft.Xna.Framework
 			if (!String.IsNullOrEmpty(fileIn))
 			{
 				IntPtr icon = SDL.SDL_LoadBMP(fileIn);
-                SDL.SDL_SetWindowIcon(Window, icon);
+				SDL.SDL_SetWindowIcon(INTERNAL_sdlWindow, icon);
 				SDL.SDL_FreeSurface(icon);
 			}
 		}
