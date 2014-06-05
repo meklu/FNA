@@ -14,23 +14,8 @@ using System.Text;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
-    public interface ISpriteBatch
-    {
-        void Draw(Texture2D texture,
-            Vector4 destinationRectangle,
-            Rectangle? sourceRectangle,
-            Color color,
-            float rotation,
-            Vector2 origin,
-            SpriteEffects effect,
-            float depth,
-            bool autoFlush);
-
-        void FlushIfNeeded();
-    }
-
 	// TODO: Rewrite from scratch using DynamicVertexBuffer/DynamicIndexBuffer. -flibit
-    public class SpriteBatch : GraphicsResource, ISpriteBatch
+	public class SpriteBatch : GraphicsResource
 	{
 		#region Private Variables
 
@@ -696,7 +681,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		}
 
 		// Mark the end of a draw operation for Immediate SpriteSortMode.
-		public void FlushIfNeeded()
+		internal void FlushIfNeeded()
 		{
 			if (_sortMode == SpriteSortMode.Immediate)
 			{
@@ -726,24 +711,9 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-        #region ISpriteBatch
-        void ISpriteBatch.Draw(Texture2D texture,
-            Vector4 destinationRectangle,
-            Rectangle? sourceRectangle,
-            Color color,
-            float rotation,
-            Vector2 origin,
-            SpriteEffects effect,
-            float depth,
-            bool autoFlush)
-        {
-            this.DrawInternal(texture, destinationRectangle, sourceRectangle, color, rotation, origin, effect, depth, autoFlush);
-        }
-        #endregion
+		#region Private Methods
 
-        #region Private Methods
-
-        void Setup()
+		void Setup()
 		{
 			GraphicsDevice gd = GraphicsDevice;
 			gd.BlendState = _blendState;
