@@ -504,6 +504,14 @@ namespace Microsoft.Xna.Framework.Audio
 				{
 					rpcVolume *= XACTCalculator.CalculateAmplitudeRatio(result / 100.0);
 				}
+				else if (curRPC.Parameter == RPCParameter.Pitch)
+				{
+					// TODO: Pitch
+				}
+				else if (curRPC.Parameter == RPCParameter.FilterFrequency)
+				{
+					// TODO: Filters?
+				}
 				else
 				{
 					throw new Exception("RPC Parameter Type: " + curRPC.Parameter.ToString());

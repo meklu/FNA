@@ -492,6 +492,14 @@ namespace Microsoft.Xna.Framework.Audio
 					{
 						// TODO: Global volume?
 					}
+					else if (curRPC.Value.Parameter == RPCParameter.Pitch)
+					{
+						// TODO: Global pitch?
+					}
+					else if (curRPC.Value.Parameter == RPCParameter.FilterFrequency)
+					{
+						// TODO: Global filter?
+					}
 					else if (curRPC.Value.Parameter >= RPCParameter.NUM_PARAMETERS)
 					{
 						// FIXME: ASSUMPTION MANIA UP IN THIS BIZNAZZ
