@@ -14,9 +14,9 @@ using System;
 namespace Microsoft.Xna.Framework
 {
 	/// <summary>
-	/// This class is used for the game window's TextInput event as EventArgs.
+	/// This class is used for the game's TextInput event as EventArgs.
 	/// </summary>
-	public class TextInputEventArgs : EventArgs
+	public class TextInputEventArgsEXT : EventArgs
 	{
 		#region Public Properties
 
@@ -30,7 +30,7 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Constructors
 
-		public TextInputEventArgs(char character)
+		public TextInputEventArgsEXT(char character)
 		{
 			Character = character;
 		}
