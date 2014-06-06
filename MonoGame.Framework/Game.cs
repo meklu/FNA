@@ -405,7 +405,7 @@ namespace Microsoft.Xna.Framework
 		/// For more information this event is based off:
 		/// http://msdn.microsoft.com/en-AU/library/system.windows.forms.control.keypress.aspx
 		/// </summary>
-		public event EventHandler<TextInputEventArgs> TextInput;
+		public event EventHandler<TextInputEventArgsEXT> TextInputEXT;
 
 		#endregion
 
@@ -796,11 +796,11 @@ namespace Microsoft.Xna.Framework
 			UnloadContent();
 		}
 
-		internal void OnTextInput(object sender, TextInputEventArgs e)
+		internal void OnTextInput(object sender, TextInputEventArgsEXT e)
 		{
-			if (TextInput != null)
+			if (TextInputEXT != null)
 			{
-				TextInput(sender, e);
+				TextInputEXT(sender, e);
 			}
 		}
 
