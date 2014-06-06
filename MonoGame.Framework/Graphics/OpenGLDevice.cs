@@ -1444,36 +1444,24 @@ namespace Microsoft.Xna.Framework.Graphics
 			 */
 			if (renderbuffer != currentRenderbuffer)
 			{
-				if (	depthFormat != currentDepthStencilFormat &&
-					currentDepthStencilFormat != DepthFormat.None	)
+				if (currentDepthStencilFormat == DepthFormat.Depth24Stencil8)
 				{
-					// Changing formats, unbind the current renderbuffer first.
 					Framebuffer.AttachDepthRenderbuffer(
 						0,
-						FramebufferAttachment.DepthAttachment
+						FramebufferAttachment.StencilAttachment
 					);
-					if (currentDepthStencilFormat == DepthFormat.Depth24Stencil8)
-					{
-						Framebuffer.AttachDepthRenderbuffer(
-							0,
-							FramebufferAttachment.StencilAttachment
-						);
-					}
 				}
 				currentDepthStencilFormat = depthFormat;
-				if (currentDepthStencilFormat != DepthFormat.None)
+				Framebuffer.AttachDepthRenderbuffer(
+					renderbuffer,
+					FramebufferAttachment.DepthAttachment
+				);
+				if (currentDepthStencilFormat == DepthFormat.Depth24Stencil8)
 				{
 					Framebuffer.AttachDepthRenderbuffer(
 						renderbuffer,
-						FramebufferAttachment.DepthAttachment
+						FramebufferAttachment.StencilAttachment
 					);
-					if (currentDepthStencilFormat == DepthFormat.Depth24Stencil8)
-					{
-						Framebuffer.AttachDepthRenderbuffer(
-							renderbuffer,
-							FramebufferAttachment.StencilAttachment
-						);
-					}
 				}
 				currentRenderbuffer = renderbuffer;
 			}
