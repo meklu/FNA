@@ -380,8 +380,13 @@ namespace Microsoft.Xna.Framework.Audio
 					// Number of WaveBank tracks
 					ushort numTracks = reader.ReadUInt16();
 
-					// Variation Playlist Type
-					ushort variationType = reader.ReadUInt16();
+					/* Variation Playlist Type.
+					 * First 4 bytes indicates Variation Type.
+					 * Next 4 bytes appear to indicate New Variation On Loop.
+					 * The rest is currently unknown.
+					 * -flibit
+					 */
+					ushort variationType = (ushort) (reader.ReadUInt16() & 0x000F);
 
 					// Unknown values
 					reader.ReadBytes(4);
@@ -526,8 +531,13 @@ namespace Microsoft.Xna.Framework.Audio
 					// Number of WaveBank tracks
 					ushort numTracks = reader.ReadUInt16();
 
-					// Variation Playlist Type
-					ushort variationType = reader.ReadUInt16();
+					/* Variation Playlist Type.
+					 * First 4 bytes indicates Variation Type.
+					 * Next 4 bytes appear to indicate New Variation On Loop.
+					 * The rest is currently unknown.
+					 * -flibit
+					 */
+					ushort variationType = (ushort) (reader.ReadUInt16() & 0x000F);
 
 					// Unknown values
 					reader.ReadBytes(4);
