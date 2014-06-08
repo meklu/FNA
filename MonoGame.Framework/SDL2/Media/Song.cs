@@ -60,6 +60,42 @@ namespace Microsoft.Xna.Framework.Media
 
 		#region Public Properties
 
+		/// <summary>
+		/// Gets the Album on which the Song appears.
+		/// </summary>
+		// TODO: A real Vorbis stream would have this info.
+		public Album Album
+		{
+			get
+			{
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the Artist of the Song.
+		/// </summary>
+		// TODO: A real Vorbis stream would have this info.
+		public Artist Artist
+		{
+			get
+			{
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the Genre of the Song.
+		/// </summary>
+		// TODO: A real Vorbis stream would have this info.
+		public Genre Genre
+		{
+			get
+			{
+				return null;
+			}
+		}
+
 		// TODO: A real Vorbis stream would have this info.
 		public TimeSpan Duration
 		{

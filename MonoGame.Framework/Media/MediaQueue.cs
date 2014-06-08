@@ -37,17 +37,25 @@ namespace Microsoft.Xna.Framework.Media
 			set;
 		}
 
-		#endregion
-
-		#region Internal Properties
-
-		internal int Count
+		public int Count
 		{
 			get
 			{
 				return songs.Count;
 			}
 		}
+
+		public Song this[int index]
+		{
+			get
+			{
+				return songs[index];
+			}
+		}
+
+		#endregion
+
+		#region Internal Properties
 
 		internal IEnumerable<Song> Songs
 		{

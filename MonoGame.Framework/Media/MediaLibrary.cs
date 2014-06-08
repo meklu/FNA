@@ -18,26 +18,42 @@ namespace Microsoft.Xna.Framework.Media
 	{
 		#region Public Properties
 
+		public AlbumCollection Albums
+		{
+			get
+			{
+				throw new NotImplementedException();
+			}
+		}
+
+		public bool IsDisposed
+		{
+			get;
+			private set;
+		}
+
+		public MediaSource MediaSource
+		{
+			get
+			{
+				throw new NotImplementedException();
+			}
+		}
+
+		public PlaylistCollection Playlists
+		{
+			get
+			{
+				throw new NotImplementedException();
+			}
+		}
+
 		public SongCollection Songs
 		{
 			get
 			{
-				/* This is meant to return a pre-made collection, based on the
-				 * WMP library.
-				 * -flibit
-				 */
-				return new SongCollection();
+				throw new NotImplementedException();
 			}
-		}
-
-		#endregion
-
-		#region Private Properties
-
-		private PlaylistCollection PlayLists
-		{
-			get;
-			set;
 		}
 
 		#endregion
@@ -46,10 +62,12 @@ namespace Microsoft.Xna.Framework.Media
 
 		public MediaLibrary()
 		{
+			IsDisposed = false;
 		}
 
 		public MediaLibrary(MediaSource mediaSource)
 		{
+			IsDisposed = false;
 		}
 
 		#endregion
@@ -58,6 +76,7 @@ namespace Microsoft.Xna.Framework.Media
 
 		public void Dispose()
 		{
+			IsDisposed = true;
 		}
 
 		#endregion

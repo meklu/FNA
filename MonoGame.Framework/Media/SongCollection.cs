@@ -51,10 +51,10 @@ namespace Microsoft.Xna.Framework.Media
 
 		#region Internal Constructor
 
-		internal SongCollection()
+		internal SongCollection(List<Song> songs)
 		{
 			IsReadOnly = false;
-			innerlist = new List<Song>();
+			innerlist = songs;
 		}
 
 		#endregion
@@ -102,13 +102,7 @@ namespace Microsoft.Xna.Framework.Media
 
 		public SongCollection Clone()
 		{
-			SongCollection sc = new SongCollection();
-			foreach (Song song in innerlist)
-			{
-				sc.Add(song);
-			}
-
-			return sc;
+			return new SongCollection(new List<Song>(innerlist));
 		}
 
 		public bool Contains(Song item)
