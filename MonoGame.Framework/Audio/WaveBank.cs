@@ -311,7 +311,7 @@ namespace Microsoft.Xna.Framework.Audio
 			// Seek to the first offset, obtain WaveBank info
 			reader.BaseStream.Seek(offsets[0], SeekOrigin.Begin);
 
-			// Unknown value
+			// Unknown value, IsStreaming bool?
 			reader.ReadUInt16();
 
 			// WaveBank Flags
