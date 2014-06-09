@@ -1306,18 +1306,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			where T : struct
 		{
 			bool readPixels = false;
-			if (currentAttachments != null)
-			{
-				for (int i = 0; i < currentAttachments.Length && !readPixels; i++)
-				{
-					if (currentAttachments[i] == texture.Handle)
-					{
-						readPixels = true;
-					}
-				}
-			}
 
-			if (readPixels)
+			if (currentAttachments != null &&
+				currentAttachments.Length == 1 &&
+				currentAttachments[0] == texture.Handle)
 			{
 				// GL.ReadPixels should be faster than reading back from the render target if we are already bound
 				if (rect.HasValue)
@@ -1333,6 +1325,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
 					GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, data);
 				}
+
+				readPixels = true;
 			}
 
 			return readPixels;

@@ -67,13 +67,16 @@ namespace Microsoft.Xna.Framework.Audio
 				throw new Exception("OpenALDevice already created!");
 			}
 
-			Instance = new OpenALDevice();
+			try
+			{
+				Instance = new OpenALDevice();
+			}
+			catch (Exception)
+			{
+				// We ignore and device creation exceptions, as they are handled down the line with Instance != null
+			}
 		}
 
-		#endregion
-
-		#region Public Properties
-		public bool IsAvailable { get; private set; }
 		#endregion
 
 		#region Private Constructor
@@ -81,50 +84,42 @@ namespace Microsoft.Xna.Framework.Audio
 		private OpenALDevice()
 		{
 			alDevice = Alc.OpenDevice(string.Empty);
-			if (!CheckALCError("Could not open AL device") && alDevice != IntPtr.Zero)
+			if (CheckALCError("Could not open AL device") || alDevice == IntPtr.Zero)
 			{
-				int[] attribute = new int[0];
-				alContext = Alc.CreateContext(alDevice, attribute);
-				if (!CheckALCError("Could not create OpenAL context") && alContext != ContextHandle.Zero)
-				{
-					Alc.MakeContextCurrent(alContext);
-					if (!CheckALCError("Could not make OpenAL context current"))
-					{
-						EFX = new EffectsExtension();
-
-						float[] ori = new float[]
-						{
-							0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f
-						};
-						AL.Listener(ALListenerfv.Orientation, ref ori);
-						AL.Listener(ALListener3f.Position, 0.0f, 0.0f, 0.0f);
-						AL.Listener(ALListener3f.Velocity, 0.0f, 0.0f, 0.0f);
-						AL.Listener(ALListenerf.Gain, 1.0f);
-
-						// We do NOT use automatic attenuation! XNA does not do this!
-						AL.DistanceModel(ALDistanceModel.None);
-
-						instancePool = new List<SoundEffectInstance>();
-						dynamicInstancePool = new List<DynamicSoundEffectInstance>();
-
-						IsAvailable = true;
-					}
-					else
-					{
-						Dispose();
-						IsAvailable = false;
-					}
-				}
-				else
-				{
-					Dispose();
-					IsAvailable = false;
-				}
+				throw new Exception("Could not open AL device!");
 			}
-			else
+
+			int[] attribute = new int[0];
+			alContext = Alc.CreateContext(alDevice, attribute);
+			if (CheckALCError("Could not create OpenAL context") || alContext == ContextHandle.Zero)
 			{
-				IsAvailable = false;
+				Dispose();
+				throw new Exception("Could not create OpenAL context");
 			}
+
+			Alc.MakeContextCurrent(alContext);
+			if (CheckALCError("Could not make OpenAL context current"))
+			{
+				Dispose();
+				throw new Exception("Could not make OpenAL context current");
+			}
+
+			EFX = new EffectsExtension();
+
+			float[] ori = new float[]
+			{
+				0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f
+			};
+			AL.Listener(ALListenerfv.Orientation, ref ori);
+			AL.Listener(ALListener3f.Position, 0.0f, 0.0f, 0.0f);
+			AL.Listener(ALListener3f.Velocity, 0.0f, 0.0f, 0.0f);
+			AL.Listener(ALListenerf.Gain, 1.0f);
+
+			// We do NOT use automatic attenuation! XNA does not do this!
+			AL.DistanceModel(ALDistanceModel.None);
+
+			instancePool = new List<SoundEffectInstance>();
+			dynamicInstancePool = new List<DynamicSoundEffectInstance>();
 		}
 
 		#endregion
