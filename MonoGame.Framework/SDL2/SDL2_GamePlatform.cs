@@ -538,9 +538,14 @@ namespace Microsoft.Xna.Framework
 			}
 		}
 
-		public override void ShowRuntimeError(string Title, string Message)
+		public override void ShowRuntimeError(string title, string message)
 		{
-			SDL2.SDL.SDL_ShowSimpleMessageBox(SDL.SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR, Title, Message, Window.Handle);
+			SDL.SDL_ShowSimpleMessageBox(
+				SDL.SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR,
+				title,
+				message,
+				Window.Handle
+			);
 		}
 
 		#endregion

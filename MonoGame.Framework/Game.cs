@@ -460,10 +460,14 @@ namespace Microsoft.Xna.Framework
 			{
 				Run(Platform.DefaultRunBehavior);
 			}
-			catch (Audio.NoAudioHardwareException e)
+			catch (Audio.NoAudioHardwareException)
 			{
-				String error = "Could not find a suitable audio device. Verify that a sound card is\ninstalled, and check the driver properties to make sure it is not disabled.";
-				Platform.ShowRuntimeError(this.Window.Title, error);
+				// FIXME: Should we be catching this here? -flibit
+				Platform.ShowRuntimeError(
+					this.Window.Title,
+					"Could not find a suitable audio device. Verify that a sound card is\n" +
+					"installed, and check the driver properties to make sure it is not disabled."
+				);
 			}
 		}
 

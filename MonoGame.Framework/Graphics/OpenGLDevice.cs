@@ -1292,7 +1292,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region glReadPixels
+		#region glReadPixels Method
+
 		/// <summary>
 		/// Attempts to read the texture data directly from the FBO using GL.ReadPixels
 		/// </summary>
@@ -1302,35 +1303,64 @@ namespace Microsoft.Xna.Framework.Graphics
 		/// <param name="data">The texture data array</param>
 		/// <param name="rect">The portion of the image to read from</param>
 		/// <returns>True if we successfully read the texture data</returns>
-		public bool ReadTargetIfApplicable<T>(OpenGLTexture texture, int level, T[] data, Rectangle? rect)
-			where T : struct
-		{
-			bool readPixels = false;
-
-			if (currentDrawBuffers == 1 &&
+		public bool ReadTargetIfApplicable<T>(
+			OpenGLTexture texture,
+			int level,
+			T[] data,
+			Rectangle? rect
+		) where T : struct {
+			if (	currentDrawBuffers == 1 &&
 				currentAttachments != null &&				
-				currentAttachments[0] == texture.Handle)
+				currentAttachments[0] == texture.Handle	)
 			{
-				// GL.ReadPixels should be faster than reading back from the render target if we are already bound
+				/* glReadPixels should be faster than reading
+				 * back from the render target if we are already bound.
+				 */
 				if (rect.HasValue)
 				{
-					GL.ReadPixels(rect.Value.Left, rect.Value.Top, rect.Value.Width, rect.Value.Height, PixelFormat.Rgba, PixelType.UnsignedByte, data);
+					GL.ReadPixels(
+						rect.Value.Left,
+						rect.Value.Top,
+						rect.Value.Width,
+						rect.Value.Height,
+						PixelFormat.Rgba,
+						PixelType.UnsignedByte,
+						data
+					);
 				}
 				else
 				{
+					// FIXME: Using two glGet calls here! D:
 					int width = 0;
 					int height = 0;
-					GL.GetTexLevelParameter(texture.Target, level, GetTextureParameter.TextureWidth, out width);
-					GL.GetTexLevelParameter(texture.Target, level, GetTextureParameter.TextureHeight, out height);
+					GL.GetTexLevelParameter(
+						texture.Target,
+						level,
+						GetTextureParameter.TextureWidth,
+						out width
+					);
+					GL.GetTexLevelParameter(
+						texture.Target,
+						level,
+						GetTextureParameter.TextureHeight,
+						out height
+					);
 
-					GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, data);
+					GL.ReadPixels(
+						0,
+						0,
+						width,
+						height,
+						PixelFormat.Rgba,
+						PixelType.UnsignedByte,
+						data
+					);
 				}
-
-				readPixels = true;
+				return true;
 			}
-
-			return readPixels;
+			return false;
 		}
+
 		#endregion
 
 		#region glDeleteRenderbuffer Method
