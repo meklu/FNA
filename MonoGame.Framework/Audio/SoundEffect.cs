@@ -220,6 +220,15 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#endregion
 
+		#region Destructor
+
+		~SoundEffect()
+		{
+			Dispose();
+		}
+
+		#endregion
+
 		#region Public Dispose Method
 
 		public void Dispose()
