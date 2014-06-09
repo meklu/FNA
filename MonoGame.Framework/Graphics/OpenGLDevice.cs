@@ -1801,15 +1801,17 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			public static void Initialize()
 			{
-				hasARB = OpenGLDevice.Instance.Extensions.Contains("ARB_framebuffer_object");
+				hasARB = (	SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffers") != IntPtr.Zero &&
+						SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebuffer") != IntPtr.Zero	);
 
-				// If we don't have ARB framebuffers
-				if (SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffers") == IntPtr.Zero || SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebuffer") == IntPtr.Zero)
+				// If we don't have ARB_framebuffer_object, check for EXT as a fallback.
+				if (!hasARB)
 				{
-					// If we don't have EXT framebuffers
-					if (SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffersEXT") == IntPtr.Zero || SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebufferEXT") == IntPtr.Zero)
+					System.Console.WriteLine("ARB_framebuffer_object not found, falling back to EXT.");
+					if (	SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffersEXT") == IntPtr.Zero ||
+						SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebufferEXT") == IntPtr.Zero	)
 					{
-						throw new NoSuitableGraphicsDeviceException("The graphics device does not support framebuffer objects.");
+						throw new NoSuitableGraphicsDeviceException("The graphics card does not support framebuffer objects.");
 					}
 				}
 			}
