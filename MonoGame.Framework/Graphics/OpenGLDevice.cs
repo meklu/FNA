@@ -530,12 +530,6 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region OpenGL Extensions List, Device Capabilities Variables
 
-		public Version Version
-		{
-			get;
-			private set;
-		}
-
 		public string Extensions
 		{
 			get;
@@ -608,11 +602,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Initialize XNA->GL conversion Dictionaries
 			XNAToGL.Initialize();
 
-			// Load the OpenGL version
-			String versionString = GL.GetString(StringName.Version);
-			// If the version string contains additional text after the actual number, remove it here.
-			versionString = versionString.Substring(0, versionString.IndexOf(' '));
-			Version = new Version(versionString);
+			// Print GL information
+			System.Console.WriteLine("OpenGL Device: " + GL.GetString(StringName.Renderer));
+			System.Console.WriteLine("OpenGL Driver: " + GL.GetString(StringName.Version));
+			System.Console.WriteLine("OpenGL Vendor: " + GL.GetString(StringName.Vendor));
 			
 			// Load the extension list, initialize extension-dependent components
 			Extensions = GL.GetString(StringName.Extensions);
