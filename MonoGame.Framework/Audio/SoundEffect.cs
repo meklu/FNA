@@ -375,58 +375,56 @@ namespace Microsoft.Xna.Framework.Audio
 			bool isADPCM,
 			uint formatParameter
 		) {
+			if (Audio.OpenALDevice.Instance == null || !Audio.OpenALDevice.Instance.IsAvailable)
+			{
+				throw new NoAudioHardwareException();
+			}
+
 			// FIXME: MSADPCM Duration
 			Duration = TimeSpan.FromSeconds(data.Length / 2 / channels / ((double) sampleRate));
 
 			// Generate the buffer now, in case we need to perform alBuffer ops.
 			INTERNAL_buffer = AL.GenBuffer();
 
-			if (INTERNAL_buffer != 0)
+			ALFormat format;
+			if (isADPCM)
 			{
-				ALFormat format;
-				if (isADPCM)
-				{
-					format = (channels == 2) ? ALFormat.StereoMsadpcmSoft : ALFormat.MonoMsadpcmSoft;
-					AL.Buffer(INTERNAL_buffer, ALBufferi.UnpackBlockAlignmentSoft, formatParameter);
-				}
-				else
-				{
-					if (formatParameter == 1)
-					{
-						format = (channels == 2) ? ALFormat.Stereo16 : ALFormat.Mono16;
-					}
-					else
-					{
-						format = (channels == 2) ? ALFormat.Stereo8 : ALFormat.Mono8;
-					}
-				}
-
-				// Load it!
-				AL.BufferData(
-					INTERNAL_buffer,
-					format,
-					data,
-					data.Length,
-					(int)sampleRate
-				);
-
-				// Set the loop points, if applicable
-				if (loopStart > 0 || loopEnd > 0)
-				{
-					AL.Buffer(
-						INTERNAL_buffer,
-						ALBufferiv.LoopPointsSoft,
-						new uint[]
-					{
-						loopStart,
-						loopEnd
-					}
-					);
-				}
+				format = (channels == 2) ? ALFormat.StereoMsadpcmSoft : ALFormat.MonoMsadpcmSoft;
+				AL.Buffer(INTERNAL_buffer, ALBufferi.UnpackBlockAlignmentSoft, formatParameter);
 			}
 			else
 			{
-				throw new NoAudioHardwareException();
+				if (formatParameter == 1)
+				{
+					format = (channels == 2) ? ALFormat.Stereo16 : ALFormat.Mono16;
+				}
+				else
+				{
+					format = (channels == 2) ? ALFormat.Stereo8 : ALFormat.Mono8;
+				}
+			}
+
+			// Load it!
+			AL.BufferData(
+				INTERNAL_buffer,
+				format,
+				data,
+				data.Length,
+				(int)sampleRate
+			);
+
+			// Set the loop points, if applicable
+			if (loopStart > 0 || loopEnd > 0)
+			{
+				AL.Buffer(
+					INTERNAL_buffer,
+					ALBufferiv.LoopPointsSoft,
+					new uint[]
+				{
+					loopStart,
+					loopEnd
+				}
+				);
 			}
 		}
 

@@ -72,6 +72,10 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#endregion
 
+		#region Public Properties
+		public bool IsAvailable { get; private set; }
+		#endregion
+
 		#region Private Constructor
 
 		private OpenALDevice()
@@ -102,16 +106,24 @@ namespace Microsoft.Xna.Framework.Audio
 
 						instancePool = new List<SoundEffectInstance>();
 						dynamicInstancePool = new List<DynamicSoundEffectInstance>();
+
+						IsAvailable = true;
 					}
 					else
 					{
 						Dispose();
+						IsAvailable = false;
 					}
 				}
 				else
 				{
 					Dispose();
+					IsAvailable = false;
 				}
+			}
+			else
+			{
+				IsAvailable = false;
 			}
 		}
 
@@ -145,25 +157,22 @@ namespace Microsoft.Xna.Framework.Audio
 			CheckALError();
 #endif
 
-			if (instancePool != null && dynamicInstancePool != null)
+			for (int i = 0; i < instancePool.Count; i += 1)
 			{
-				for (int i = 0; i < instancePool.Count; i += 1)
+				if (instancePool[i].State == SoundState.Stopped)
 				{
-					if (instancePool[i].State == SoundState.Stopped)
-					{
-						instancePool[i].Dispose();
-						instancePool.RemoveAt(i);
-						i -= 1;
-					}
+					instancePool[i].Dispose();
+					instancePool.RemoveAt(i);
+					i -= 1;
 				}
+			}
 
-				for (int i = 0; i < dynamicInstancePool.Count; i += 1)
+			for (int i = 0; i < dynamicInstancePool.Count; i += 1)
+			{
+				if (!dynamicInstancePool[i].Update())
 				{
-					if (!dynamicInstancePool[i].Update())
-					{
-						dynamicInstancePool.Remove(dynamicInstancePool[i]);
-						i -= 1;
-					}
+					dynamicInstancePool.Remove(dynamicInstancePool[i]);
+					i -= 1;
 				}
 			}
 		}
@@ -186,9 +195,16 @@ namespace Microsoft.Xna.Framework.Audio
 
 		private bool CheckALCError(string message)
 		{
+			bool retVal = false;
 			AlcError err = Alc.GetError(alDevice);
 
-			return err != AlcError.NoError;
+			if (err != AlcError.NoError)
+			{
+				System.Console.WriteLine("OpenAL Error: " + err.ToString());
+				retVal = true;
+			}
+
+			return retVal;
 		}
 
 		#endregion

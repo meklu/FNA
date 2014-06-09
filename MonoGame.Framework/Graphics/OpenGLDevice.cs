@@ -1326,12 +1326,12 @@ namespace Microsoft.Xna.Framework.Graphics
 				}
 				else
 				{
-					float width = 0;
-					float height = 0;
+					int width = 0;
+					int height = 0;
 					GL.GetTexLevelParameter(texture.Target, level, GetTextureParameter.TextureWidth, out width);
 					GL.GetTexLevelParameter(texture.Target, level, GetTextureParameter.TextureHeight, out height);
 
-					GL.ReadPixels(0, 0, (int)width, (int)height, PixelFormat.Rgba, PixelType.UnsignedByte, data);
+					GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, data);
 				}
 			}
 

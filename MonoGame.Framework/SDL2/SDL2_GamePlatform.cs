@@ -456,7 +456,10 @@ namespace Microsoft.Xna.Framework
 		public override bool BeforeUpdate(GameTime gameTime)
 		{
 			// Update our OpenAL context
-			OpenALDevice.Instance.Update();
+			if (OpenALDevice.Instance != null)
+			{
+				OpenALDevice.Instance.Update();
+			}
 
 			return true;
 		}
@@ -532,6 +535,11 @@ namespace Microsoft.Xna.Framework
 				}
 #endif
 			}
+		}
+
+		public override void ShowRuntimeError(string Title, string Message)
+		{
+			SDL2.SDL.SDL_ShowSimpleMessageBox(SDL.SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR, Title, Message, Window.Handle);
 		}
 
 		#endregion
