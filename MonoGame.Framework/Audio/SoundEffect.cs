@@ -410,7 +410,7 @@ namespace Microsoft.Xna.Framework.Audio
 				format,
 				data,
 				data.Length,
-				(int)sampleRate
+				(int) sampleRate
 			);
 
 			// Set the loop points, if applicable
@@ -420,10 +420,10 @@ namespace Microsoft.Xna.Framework.Audio
 					INTERNAL_buffer,
 					ALBufferiv.LoopPointsSoft,
 					new uint[]
-				{
-					loopStart,
-					loopEnd
-				}
+					{
+						loopStart,
+						loopEnd
+					}
 				);
 			}
 		}
