@@ -1307,8 +1307,8 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			bool readPixels = false;
 
-			if (currentAttachments != null &&
-				currentAttachments.Length == 1 &&
+			if (currentDrawBuffers == 1 &&
+				currentAttachments != null &&				
 				currentAttachments[0] == texture.Handle)
 			{
 				// GL.ReadPixels should be faster than reading back from the render target if we are already bound
