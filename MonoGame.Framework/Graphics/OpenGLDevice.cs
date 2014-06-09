@@ -602,6 +602,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Initialize XNA->GL conversion Dictionaries
 			XNAToGL.Initialize();
 
+			// Print GL information
+			System.Console.WriteLine("OpenGL Device: " + GL.GetString(StringName.Renderer));
+			System.Console.WriteLine("OpenGL Driver: " + GL.GetString(StringName.Version));
+			System.Console.WriteLine("OpenGL Vendor: " + GL.GetString(StringName.Vendor));
+			
 			// Load the extension list, initialize extension-dependent components
 			Extensions = GL.GetString(StringName.Extensions);
 			Framebuffer.Initialize();
@@ -1797,6 +1802,16 @@ namespace Microsoft.Xna.Framework.Graphics
 			public static void Initialize()
 			{
 				hasARB = OpenGLDevice.Instance.Extensions.Contains("ARB_framebuffer_object");
+
+				// If we don't have ARB framebuffers
+				if (SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffers") == IntPtr.Zero || SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebuffer") == IntPtr.Zero)
+				{
+					// If we don't have EXT framebuffers
+					if (SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffersEXT") == IntPtr.Zero || SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebufferEXT") == IntPtr.Zero)
+					{
+						throw new NoSuitableGraphicsDeviceException("The graphics device does not support framebuffer objects.");
+					}
+				}
 			}
 
 			public static int GenFramebuffer()

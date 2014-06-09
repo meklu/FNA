@@ -805,7 +805,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			// If this device doesn't have the support, just explode now before it's too late.
 			if (!OpenGLDevice.Instance.SupportsHardwareInstancing)
 			{
-				throw new Exception("Your hardware does not support hardware instancing!");
+				throw new NoSuitableGraphicsDeviceException("Your hardware does not support hardware instancing!");
 			}
 
 			// Flush the GL state before moving on!
