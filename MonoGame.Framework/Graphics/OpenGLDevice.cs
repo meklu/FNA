@@ -530,6 +530,14 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region OpenGL Extensions List, Device Capabilities Variables
 
+		public static readonly Version MIN_GL_VERSION = new Version(2, 1);
+
+		public Version Version
+		{
+			get;
+			private set;
+		}
+
 		public string Extensions
 		{
 			get;
@@ -602,6 +610,15 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Initialize XNA->GL conversion Dictionaries
 			XNAToGL.Initialize();
 
+			// Load the OpenGL version so we can test against it
+			String versionString = GL.GetString(StringName.Version);
+			// If the version string contains additional text after the actual number, remove it here.
+			versionString = versionString.Substring(0, versionString.IndexOf(' '));
+			Version = new Version(versionString);
+			if (Version < MIN_GL_VERSION)
+			{
+				throw new NoSuitableGraphicsDeviceException("OpenGL version " + MIN_GL_VERSION + " is required.");
+			}
 			// Load the extension list, initialize extension-dependent components
 			Extensions = GL.GetString(StringName.Extensions);
 			Framebuffer.Initialize();
@@ -1779,6 +1796,16 @@ namespace Microsoft.Xna.Framework.Graphics
 			public static void Initialize()
 			{
 				hasARB = OpenGLDevice.Instance.Extensions.Contains("ARB_framebuffer_object");
+
+				// If we don't have ARB framebuffers
+				if (SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffers") == IntPtr.Zero || SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebuffer") == IntPtr.Zero)
+				{
+					// If we don't have EXT framebuffers
+					if (SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffersEXT") == IntPtr.Zero || SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebufferEXT") == IntPtr.Zero)
+					{
+						throw new NoSuitableGraphicsDeviceException("The graphics device does not support framebuffer objects.");
+					}
+				}
 			}
 
 			public static int GenFramebuffer()
