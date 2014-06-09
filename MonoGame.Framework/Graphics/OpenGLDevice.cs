@@ -1811,7 +1811,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					if (	SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffersEXT") == IntPtr.Zero ||
 						SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebufferEXT") == IntPtr.Zero	)
 					{
-						throw new NoSuitableGraphicsDeviceException("The graphics card does not support framebuffer objects.");
+						throw new NoSuitableGraphicsDeviceException("The graphics device does not support framebuffer objects.");
 					}
 				}
 			}
