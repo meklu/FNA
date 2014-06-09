@@ -18,5 +18,18 @@ namespace Microsoft.Xna.Framework.Audio
 	[Serializable]
 	public sealed class NoAudioHardwareException : ExternalException
 	{
+		public NoAudioHardwareException()
+		{
+		}
+
+		public NoAudioHardwareException(String message)
+			: base(message)
+		{
+		}
+
+		public NoAudioHardwareException(String message, Exception innerException)
+			: base(message, innerException)
+		{
+		}
 	}
 }

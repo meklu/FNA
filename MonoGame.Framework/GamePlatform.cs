@@ -286,6 +286,10 @@ namespace Microsoft.Xna.Framework
 
 		public virtual void Present() {}
 
+		public abstract void ShowRuntimeError(
+			String Title,
+			String Message);
+
 		#endregion
 
 		#region Internal Methods

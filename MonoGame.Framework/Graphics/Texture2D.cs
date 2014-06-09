@@ -334,6 +334,11 @@ namespace Microsoft.Xna.Framework.Graphics
 				);
 			}
 
+			if (OpenGLDevice.Instance.ReadTargetIfApplicable(texture, level, data, rect))
+			{
+				return;
+			}
+
 			OpenGLDevice.Instance.BindTexture(texture);
 
 			if (glFormat == (PixelFormat) All.CompressedTextureFormats)

@@ -384,6 +384,11 @@ namespace Microsoft.Xna.Framework.Audio
 			bool isADPCM,
 			uint formatParameter
 		) {
+			if (Audio.OpenALDevice.Instance == null)
+			{
+				throw new NoAudioHardwareException();
+			}
+
 			// FIXME: MSADPCM Duration
 			Duration = TimeSpan.FromSeconds(data.Length / 2 / channels / ((double) sampleRate));
 

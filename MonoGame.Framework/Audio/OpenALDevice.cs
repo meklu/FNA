@@ -67,7 +67,14 @@ namespace Microsoft.Xna.Framework.Audio
 				throw new Exception("OpenALDevice already created!");
 			}
 
-			Instance = new OpenALDevice();
+			try
+			{
+				Instance = new OpenALDevice();
+			}
+			catch (Exception)
+			{
+				// We ignore and device creation exceptions, as they are handled down the line with Instance != null
+			}
 		}
 
 		#endregion
@@ -144,6 +151,7 @@ namespace Microsoft.Xna.Framework.Audio
 #if DEBUG
 			CheckALError();
 #endif
+
 			for (int i = 0; i < instancePool.Count; i += 1)
 			{
 				if (instancePool[i].State == SoundState.Stopped)
@@ -182,14 +190,16 @@ namespace Microsoft.Xna.Framework.Audio
 
 		private bool CheckALCError(string message)
 		{
+			bool retVal = false;
 			AlcError err = Alc.GetError(alDevice);
 
-			if (err == AlcError.NoError)
+			if (err != AlcError.NoError)
 			{
-				return false;
+				System.Console.WriteLine("OpenAL Error: " + err.ToString());
+				retVal = true;
 			}
 
-			throw new Exception(message + " - OpenAL Device Error: " + err.ToString());
+			return retVal;
 		}
 
 		#endregion

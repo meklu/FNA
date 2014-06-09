@@ -456,7 +456,15 @@ namespace Microsoft.Xna.Framework
 
 		public void Run()
 		{
-			Run(Platform.DefaultRunBehavior);
+			try
+			{
+				Run(Platform.DefaultRunBehavior);
+			}
+			catch (Audio.NoAudioHardwareException e)
+			{
+				String error = "Could not find a suitable audio device. Verify that a sound card is\ninstalled, and check the driver properties to make sure it is not disabled.";
+				Platform.ShowRuntimeError(this.Window.Title, error);
+			}
 		}
 
 		public void Run(GameRunBehavior runBehavior)
