@@ -336,25 +336,25 @@ namespace Microsoft.Xna.Framework
 		private void EndDeviceReset()
 		{
 			// Now, update the viewport
-			game.GraphicsDevice.Viewport = new Viewport(
+			GraphicsDevice.Viewport = new Viewport(
 				0,
 				0,
-				game.GraphicsDevice.PresentationParameters.BackBufferWidth,
-				game.GraphicsDevice.PresentationParameters.BackBufferHeight
+				GraphicsDevice.PresentationParameters.BackBufferWidth,
+				GraphicsDevice.PresentationParameters.BackBufferHeight
 			);
 
 			// Update the scissor rectangle to our new default target size
-			game.GraphicsDevice.ScissorRectangle = new Rectangle(
+			GraphicsDevice.ScissorRectangle = new Rectangle(
 				0,
 				0,
-				game.GraphicsDevice.PresentationParameters.BackBufferWidth,
-				game.GraphicsDevice.PresentationParameters.BackBufferHeight
+				GraphicsDevice.PresentationParameters.BackBufferWidth,
+				GraphicsDevice.PresentationParameters.BackBufferHeight
 			);
 
 			OpenGLDevice.Instance.Backbuffer.ResetFramebuffer(
-				game.GraphicsDevice.PresentationParameters.BackBufferWidth,
-				game.GraphicsDevice.PresentationParameters.BackBufferHeight,
-				game.GraphicsDevice.PresentationParameters.DepthStencilFormat
+				GraphicsDevice.PresentationParameters.BackBufferWidth,
+				GraphicsDevice.PresentationParameters.BackBufferHeight,
+				GraphicsDevice.PresentationParameters.DepthStencilFormat
 			);
 
 			// Apply the PresentInterval.
