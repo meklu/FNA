@@ -290,6 +290,13 @@ namespace Microsoft.Xna.Framework
 				GraphicsDevice.PresentationParameters.BackBufferHeight
 			);
 
+			// Apply the PresentInterval.
+			game.Platform.SetPresentationInterval(
+				SynchronizeWithVerticalRetrace ?
+					GraphicsDevice.PresentationParameters.PresentationInterval :
+					PresentInterval.Immediate
+			);
+
 			EndDeviceReset();
 		}
 
@@ -355,13 +362,6 @@ namespace Microsoft.Xna.Framework
 				GraphicsDevice.PresentationParameters.BackBufferWidth,
 				GraphicsDevice.PresentationParameters.BackBufferHeight,
 				GraphicsDevice.PresentationParameters.DepthStencilFormat
-			);
-
-			// Apply the PresentInterval.
-			game.Platform.SetPresentationInterval(
-				SynchronizeWithVerticalRetrace ?
-					GraphicsDevice.PresentationParameters.PresentationInterval :
-					PresentInterval.Immediate
 			);
 
 			// Notify DeviceReset EventHandlers.
