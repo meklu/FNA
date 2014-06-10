@@ -929,7 +929,7 @@ namespace Microsoft.Xna.Framework.Input
 			IntPtr device = INTERNAL_devices[(int) playerIndex];
 			if (device == IntPtr.Zero)
 			{
-				return null;
+				return String.Empty;
 			}
 
 			if (INTERNAL_isGameController[(int) playerIndex])
