@@ -1318,6 +1318,12 @@ namespace Microsoft.Xna.Framework.Graphics
 				currentAttachments != null &&				
 				currentAttachments[0] == texture.Handle	)
 			{
+				int oldReadFramebuffer = Framebuffer.CurrentReadFramebuffer;
+				if (oldReadFramebuffer != targetFramebuffer)
+				{
+					Framebuffer.BindReadFramebuffer(targetFramebuffer);
+				}
+
 				/* glReadPixels should be faster than reading
 				 * back from the render target if we are already bound.
 				 */
@@ -1338,6 +1344,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					// FIXME: Using two glGet calls here! D:
 					int width = 0;
 					int height = 0;
+					OpenGLDevice.Instance.BindTexture(texture);
 					GL.GetTexLevelParameter(
 						texture.Target,
 						level,
@@ -1361,6 +1368,7 @@ namespace Microsoft.Xna.Framework.Graphics
 						data
 					);
 				}
+				Framebuffer.BindReadFramebuffer(oldReadFramebuffer);
 				return true;
 			}
 			return false;
