@@ -248,28 +248,6 @@ namespace Microsoft.Xna.Framework
 
 			// Current flags have just been updated.
 			INTERNAL_sdlWindowFlags_Current = INTERNAL_sdlWindowFlags_Next;
-
-			// Now, update the viewport
-			Game.GraphicsDevice.Viewport = new Viewport(
-				0,
-				0,
-				clientWidth,
-				clientHeight
-			);
-
-			// Update the scissor rectangle to our new default target size
-			Game.GraphicsDevice.ScissorRectangle = new Rectangle(
-				0,
-				0,
-				clientWidth,
-				clientHeight
-			);
-
-			OpenGLDevice.Instance.Backbuffer.ResetFramebuffer(
-				clientWidth,
-				clientHeight,
-				Game.GraphicsDevice.PresentationParameters.DepthStencilFormat
-			);
 		}
 
 		#endregion

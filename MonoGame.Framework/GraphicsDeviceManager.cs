@@ -265,10 +265,8 @@ namespace Microsoft.Xna.Framework
 			{
 				return;
 			}
-
-			// Notify DeviceResetting EventHandlers.
-			OnDeviceResetting(null);
-			GraphicsDevice.OnDeviceResetting();
+			
+			BeginDeviceReset();
 
 			// Apply the GraphicsDevice changes internally.
 			GraphicsDevice.PresentationParameters.BackBufferFormat =
@@ -292,6 +290,73 @@ namespace Microsoft.Xna.Framework
 				GraphicsDevice.PresentationParameters.BackBufferHeight
 			);
 
+			EndDeviceReset();
+		}
+
+		public void ToggleFullScreen()
+		{
+			// Change settings.
+			IsFullScreen = !IsFullScreen;
+			graphicsDevice.PresentationParameters.IsFullScreen = IsFullScreen;
+
+			// Apply settings.
+			game.Platform.BeginScreenDeviceChange(IsFullScreen);
+			game.Platform.EndScreenDeviceChange(
+				"FNA",
+				Graphics.OpenGLDevice.Instance.Backbuffer.Width,
+				Graphics.OpenGLDevice.Instance.Backbuffer.Height
+			);
+		}
+
+		#endregion
+
+		#region Internal Methods
+
+		internal void INTERNAL_ResizeGraphicsDevice(int width, int height)
+		{
+			BeginDeviceReset();
+
+			GraphicsDevice.PresentationParameters.BackBufferWidth = width;
+			GraphicsDevice.PresentationParameters.BackBufferHeight = height;
+
+			EndDeviceReset();
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void BeginDeviceReset()
+		{
+			// Notify DeviceResetting EventHandlers.
+			OnDeviceResetting(null);
+			GraphicsDevice.OnDeviceResetting();
+		}
+
+		private void EndDeviceReset()
+		{
+			// Now, update the viewport
+			game.GraphicsDevice.Viewport = new Viewport(
+				0,
+				0,
+				game.GraphicsDevice.PresentationParameters.BackBufferWidth,
+				game.GraphicsDevice.PresentationParameters.BackBufferHeight
+			);
+
+			// Update the scissor rectangle to our new default target size
+			game.GraphicsDevice.ScissorRectangle = new Rectangle(
+				0,
+				0,
+				game.GraphicsDevice.PresentationParameters.BackBufferWidth,
+				game.GraphicsDevice.PresentationParameters.BackBufferHeight
+			);
+
+			OpenGLDevice.Instance.Backbuffer.ResetFramebuffer(
+				game.GraphicsDevice.PresentationParameters.BackBufferWidth,
+				game.GraphicsDevice.PresentationParameters.BackBufferHeight,
+				game.GraphicsDevice.PresentationParameters.DepthStencilFormat
+			);
+
 			// Apply the PresentInterval.
 			game.Platform.SetPresentationInterval(
 				SynchronizeWithVerticalRetrace ?
@@ -313,21 +378,6 @@ namespace Microsoft.Xna.Framework
 				graphicsDevice.PresentationParameters.BackBufferWidth;
 			TouchPanel.DisplayHeight =
 				graphicsDevice.PresentationParameters.BackBufferHeight;
-		}
-
-		public void ToggleFullScreen()
-		{
-			// Change settings.
-			IsFullScreen = !IsFullScreen;
-			graphicsDevice.PresentationParameters.IsFullScreen = IsFullScreen;
-
-			// Apply settings.
-			game.Platform.BeginScreenDeviceChange(IsFullScreen);
-			game.Platform.EndScreenDeviceChange(
-				"FNA",
-				Graphics.OpenGLDevice.Instance.Backbuffer.Width,
-				Graphics.OpenGLDevice.Instance.Backbuffer.Height
-			);
 		}
 
 		#endregion
