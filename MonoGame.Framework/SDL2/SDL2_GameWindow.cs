@@ -259,7 +259,7 @@ namespace Microsoft.Xna.Framework
 		#endregion
 
 		#region Internal Methods
-		
+
 		internal void INTERNAL_ClientSizeChanged()
 		{
 			// Update our client bounds rectangle before invoking the event
