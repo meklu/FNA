@@ -321,12 +321,18 @@ namespace Microsoft.Xna.Framework
 
 		internal void INTERNAL_ResizeGraphicsDevice(int width, int height)
 		{
-			BeginDeviceReset();
+			PresentationParameters pp = GraphicsDevice.PresentationParameters;
 
-			GraphicsDevice.PresentationParameters.BackBufferWidth = width;
-			GraphicsDevice.PresentationParameters.BackBufferHeight = height;
+			// Only reset if there's an actual change in size
+			if (pp.BackBufferWidth != width || pp.BackBufferHeight != height)
+			{
+				BeginDeviceReset();
 
-			EndDeviceReset();
+				pp.BackBufferWidth = width;
+				pp.BackBufferHeight = height;
+
+				EndDeviceReset();
+			}
 		}
 
 		#endregion

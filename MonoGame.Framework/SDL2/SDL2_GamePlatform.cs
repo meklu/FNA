@@ -353,9 +353,6 @@ namespace Microsoft.Xna.Framework
 							Mouse.INTERNAL_WindowWidth = evt.window.data1;
 							Mouse.INTERNAL_WindowHeight = evt.window.data2;
 
-							// Need to reset the graphics device with the new window size
-							Game.graphicsDeviceManager.INTERNAL_ResizeGraphicsDevice(evt.window.data1, evt.window.data2);
-
 							// Should be called on user resize only, NOT ApplyChanges!
 							((SDL2_GameWindow) Window).INTERNAL_ClientSizeChanged();
 						}
@@ -363,6 +360,9 @@ namespace Microsoft.Xna.Framework
 						{
 							Mouse.INTERNAL_WindowWidth = evt.window.data1;
 							Mouse.INTERNAL_WindowHeight = evt.window.data2;
+
+							// Need to reset the graphics device any time the window size changes
+							Game.graphicsDeviceManager.INTERNAL_ResizeGraphicsDevice(evt.window.data1, evt.window.data2);
 						}
 
 						// Mouse Focus
