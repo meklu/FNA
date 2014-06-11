@@ -51,7 +51,7 @@ namespace Microsoft.Xna.Framework.Content
 				throw new ContentLoadException();
 			}
 
-			int durationMs = input.ReadObject<int>();
+			int durationMs = input.ReadInt32();
 
 			return new Song(path, durationMs);
 		}

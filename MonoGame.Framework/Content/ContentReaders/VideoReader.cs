@@ -53,11 +53,11 @@ namespace Microsoft.Xna.Framework.Content
 				throw new ContentLoadException();
 			}
 
-			int durationMS = input.ReadObject<int>();
-			int width = input.ReadObject<int>();
-			int height = input.ReadObject<int>();
-			float framesPerSecond = input.ReadObject<Single>();
-			VideoSoundtrackType soundTrackType = (VideoSoundtrackType) input.ReadObject<int>();
+			int durationMS = input.ReadInt32();
+			int width = input.ReadInt32();
+			int height = input.ReadInt32();
+			float framesPerSecond = input.ReadSingle();
+			VideoSoundtrackType soundTrackType = (VideoSoundtrackType) input.ReadInt32();
 
 			return new Video(path, durationMS, width, height, framesPerSecond, soundTrackType);
 		}
