@@ -63,10 +63,14 @@ namespace Microsoft.Xna.Framework
 		{
 			get
 			{
-				int x = 0, y = 0, w = 0, h = 0;
-				SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out x, out y);
-				SDL.SDL_GetWindowSize(INTERNAL_sdlWindow, out w, out h);
-				return new Rectangle(x, y, w, h);
+				// If we have no client bounds yet, retrieve them
+				if (INTERNAL_clientBounds.IsEmpty)
+				{
+					SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out INTERNAL_clientBounds.X, out INTERNAL_clientBounds.Y);
+					SDL.SDL_GetWindowSize(INTERNAL_sdlWindow, out INTERNAL_clientBounds.Width, out INTERNAL_clientBounds.Height);
+				}
+
+				return INTERNAL_clientBounds;
 			}
 		}
 
@@ -130,6 +134,8 @@ namespace Microsoft.Xna.Framework
 		private SDL.SDL_WindowFlags INTERNAL_sdlWindowFlags_Next;
 
 		private string INTERNAL_deviceName;
+
+		private Rectangle INTERNAL_clientBounds;
 
 		#endregion
 
@@ -248,36 +254,18 @@ namespace Microsoft.Xna.Framework
 
 			// Current flags have just been updated.
 			INTERNAL_sdlWindowFlags_Current = INTERNAL_sdlWindowFlags_Next;
-
-			// Now, update the viewport
-			Game.GraphicsDevice.Viewport = new Viewport(
-				0,
-				0,
-				clientWidth,
-				clientHeight
-			);
-
-			// Update the scissor rectangle to our new default target size
-			Game.GraphicsDevice.ScissorRectangle = new Rectangle(
-				0,
-				0,
-				clientWidth,
-				clientHeight
-			);
-
-			OpenGLDevice.Instance.Backbuffer.ResetFramebuffer(
-				clientWidth,
-				clientHeight,
-				Game.GraphicsDevice.PresentationParameters.DepthStencilFormat
-			);
 		}
 
 		#endregion
 
 		#region Internal Methods
-
+		
 		internal void INTERNAL_ClientSizeChanged()
 		{
+			// Update our client bounds rectangle before invoking the event
+			SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out INTERNAL_clientBounds.X, out INTERNAL_clientBounds.Y);
+			SDL.SDL_GetWindowSize(INTERNAL_sdlWindow, out INTERNAL_clientBounds.Width, out INTERNAL_clientBounds.Height);
+
 			OnClientSizeChanged();
 		}
 

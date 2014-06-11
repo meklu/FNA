@@ -265,10 +265,8 @@ namespace Microsoft.Xna.Framework
 			{
 				return;
 			}
-
-			// Notify DeviceResetting EventHandlers.
-			OnDeviceResetting(null);
-			GraphicsDevice.OnDeviceResetting();
+			
+			BeginDeviceReset();
 
 			// Apply the GraphicsDevice changes internally.
 			GraphicsDevice.PresentationParameters.BackBufferFormat =
@@ -299,20 +297,7 @@ namespace Microsoft.Xna.Framework
 					PresentInterval.Immediate
 			);
 
-			// Notify DeviceReset EventHandlers.
-			OnDeviceReset(null);
-			GraphicsDevice.OnDeviceReset();
-
-			/* Set the new display size on the touch panel.
-			 * 
-			 * TODO: In XNA this seems to be done as part of the
-			 * GraphicsDevice.DeviceReset event... we need to get
-			 * those working.
-			 */
-			TouchPanel.DisplayWidth =
-				graphicsDevice.PresentationParameters.BackBufferWidth;
-			TouchPanel.DisplayHeight =
-				graphicsDevice.PresentationParameters.BackBufferHeight;
+			EndDeviceReset();
 		}
 
 		public void ToggleFullScreen()
@@ -328,6 +313,77 @@ namespace Microsoft.Xna.Framework
 				Graphics.OpenGLDevice.Instance.Backbuffer.Width,
 				Graphics.OpenGLDevice.Instance.Backbuffer.Height
 			);
+		}
+
+		#endregion
+
+		#region Internal Methods
+
+		internal void INTERNAL_ResizeGraphicsDevice(int width, int height)
+		{
+			PresentationParameters pp = GraphicsDevice.PresentationParameters;
+
+			// Only reset if there's an actual change in size
+			if (pp.BackBufferWidth != width || pp.BackBufferHeight != height)
+			{
+				BeginDeviceReset();
+
+				pp.BackBufferWidth = width;
+				pp.BackBufferHeight = height;
+
+				EndDeviceReset();
+			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void BeginDeviceReset()
+		{
+			// Notify DeviceResetting EventHandlers.
+			OnDeviceResetting(null);
+			GraphicsDevice.OnDeviceResetting();
+		}
+
+		private void EndDeviceReset()
+		{
+			// Now, update the viewport
+			GraphicsDevice.Viewport = new Viewport(
+				0,
+				0,
+				GraphicsDevice.PresentationParameters.BackBufferWidth,
+				GraphicsDevice.PresentationParameters.BackBufferHeight
+			);
+
+			// Update the scissor rectangle to our new default target size
+			GraphicsDevice.ScissorRectangle = new Rectangle(
+				0,
+				0,
+				GraphicsDevice.PresentationParameters.BackBufferWidth,
+				GraphicsDevice.PresentationParameters.BackBufferHeight
+			);
+
+			OpenGLDevice.Instance.Backbuffer.ResetFramebuffer(
+				GraphicsDevice.PresentationParameters.BackBufferWidth,
+				GraphicsDevice.PresentationParameters.BackBufferHeight,
+				GraphicsDevice.PresentationParameters.DepthStencilFormat
+			);
+
+			// Notify DeviceReset EventHandlers.
+			OnDeviceReset(null);
+			GraphicsDevice.OnDeviceReset();
+
+			/* Set the new display size on the touch panel.
+			 * 
+			 * TODO: In XNA this seems to be done as part of the
+			 * GraphicsDevice.DeviceReset event... we need to get
+			 * those working.
+			 */
+			TouchPanel.DisplayWidth =
+				graphicsDevice.PresentationParameters.BackBufferWidth;
+			TouchPanel.DisplayHeight =
+				graphicsDevice.PresentationParameters.BackBufferHeight;
 		}
 
 		#endregion
