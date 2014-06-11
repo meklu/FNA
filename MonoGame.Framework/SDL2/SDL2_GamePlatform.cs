@@ -181,7 +181,7 @@ namespace Microsoft.Xna.Framework
 			);
 
 			// Set and initialize the SDL2 window
-			Window = new SDL2_GameWindow(game);
+			Window = new SDL2_GameWindow();
 
 			// Disable the screensaver.
 			SDL.SDL_DisableScreenSaver();

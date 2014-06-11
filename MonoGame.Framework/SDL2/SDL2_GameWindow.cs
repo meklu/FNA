@@ -120,12 +120,6 @@ namespace Microsoft.Xna.Framework
 
 		#endregion
 
-		#region Private Game Instance
-
-		private Game Game;
-
-		#endregion
-
 		#region Private SDL2 Window Variables
 
 		private IntPtr INTERNAL_sdlWindow;
@@ -141,10 +135,8 @@ namespace Microsoft.Xna.Framework
 
 		#region Internal Constructor
 
-		internal SDL2_GameWindow(Game game)
+		internal SDL2_GameWindow()
 		{
-			Game = game;
-
 			INTERNAL_sdlWindowFlags_Next = (
 				SDL.SDL_WindowFlags.SDL_WINDOW_OPENGL |
 				SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN |
