@@ -362,7 +362,20 @@ namespace Microsoft.Xna.Framework
 							Mouse.INTERNAL_WindowHeight = evt.window.data2;
 
 							// Need to reset the graphics device any time the window size changes
-							Game.graphicsDeviceManager.INTERNAL_ResizeGraphicsDevice(evt.window.data1, evt.window.data2);
+							if (Game.graphicsDeviceManager.IsFullScreen)
+							{
+								Game.graphicsDeviceManager.INTERNAL_ResizeGraphicsDevice(
+									OpenGLDevice.Instance.Backbuffer.Width,
+									OpenGLDevice.Instance.Backbuffer.Height
+								);
+							}
+							else
+							{
+								Game.graphicsDeviceManager.INTERNAL_ResizeGraphicsDevice(
+									evt.window.data1,
+									evt.window.data2
+								);
+							}
 						}
 
 						// Mouse Focus
