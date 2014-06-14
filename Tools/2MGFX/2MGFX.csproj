@@ -125,9 +125,6 @@
     <Compile Include="..\..\MonoGame.Framework\Graphics\States\StencilOperation.cs">
       <Link>MonoGame.Framework\StencilOperation.cs</Link>
     </Compile>
-    <Compile Include="..\..\MonoGame.Framework\Graphics\States\TargetBlendState.cs">
-      <Link>MonoGame.Framework\TargetBlendState.cs</Link>
-    </Compile>
     <Compile Include="..\..\MonoGame.Framework\Graphics\States\TextureAddressMode.cs">
       <Link>MonoGame.Framework\TextureAddressMode.cs</Link>
     </Compile>
@@ -154,9 +151,6 @@
     </Compile>
     <Compile Include="..\..\MonoGame.Framework\Ray.cs">
       <Link>MonoGame.Framework\Ray.cs</Link>
-    </Compile>
-    <Compile Include="..\..\MonoGame.Framework\Utilities\ObjectFactoryWithReset.cs">
-      <Link>MonoGame.Framework\ObjectFactoryWithReset.cs</Link>
     </Compile>
     <Compile Include="..\..\MonoGame.Framework\Vector2.cs">
       <Link>MonoGame.Framework\Vector2.cs</Link>
