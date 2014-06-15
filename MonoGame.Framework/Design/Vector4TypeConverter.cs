@@ -74,10 +74,10 @@ namespace Microsoft.Xna.Framework.Design
 				string str = (string) value;
 				string[] words = str.Split(culture.NumberFormat.NumberGroupSeparator.ToCharArray());
 
-				vec.X = float.Parse(words[0]);
-				vec.Y = float.Parse(words[1]);
-				vec.Z = float.Parse(words[2]);
-				vec.Z = float.Parse(words[3]);
+				vec.X = float.Parse(words[0], culture);
+				vec.Y = float.Parse(words[1], culture);
+				vec.Z = float.Parse(words[2], culture);
+				vec.W = float.Parse(words[3], culture);
 
 				return vec;
 			}
