@@ -15,6 +15,7 @@ using System.Reflection;
 
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input.Touch;
 #endregion
 
 namespace Microsoft.Xna.Framework
@@ -767,6 +768,11 @@ namespace Microsoft.Xna.Framework
 			AssertNotDisposed();
 			if (Platform.BeforeUpdate(gameTime))
 			{
+				/* The TouchPanel needs to know the time for when
+				 * touches arrive.
+				 */
+				TouchPanelState.Update(gameTime);
+
 				Update(gameTime);
 			}
 		}

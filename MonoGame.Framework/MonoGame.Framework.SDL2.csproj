@@ -354,6 +354,12 @@
     <Compile Include="Media\AlbumCollection.cs" />
     <Compile Include="Media\Artist.cs" />
     <Compile Include="Media\Genre.cs" />
+    <Compile Include="Design\ColorTypeConverter.cs" />
+    <Compile Include="Design\PointTypeConverter.cs" />
+    <Compile Include="Design\Vector2TypeConverter.cs" />
+    <Compile Include="Design\Vector3TypeConverter.cs" />
+    <Compile Include="Design\Vector4TypeConverter.cs" />
+    <Compile Include="Design\VectorConversion.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ThirdParty\TheoraPlay#\TheoraPlay-CS.csproj">

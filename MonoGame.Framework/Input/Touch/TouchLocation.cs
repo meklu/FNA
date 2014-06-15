@@ -131,7 +131,8 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			state,
 			position,
 			TouchLocationState.Invalid,
-			Vector2.Zero
+			Vector2.Zero,
+			TimeSpan.FromTicks(DateTime.Now.Ticks)
 		) {
 		}
 
@@ -141,6 +142,42 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			Vector2 position,
 			TouchLocationState previousState,
 			Vector2 previousPosition
+		) : this(
+			id,
+			state,
+			position,
+			previousState,
+			previousPosition,
+			TimeSpan.FromTicks(DateTime.Now.Ticks)
+		) {
+		}
+
+		#endregion
+
+		#region Internal Constructors
+
+		internal TouchLocation(
+			int id,
+			TouchLocationState state,
+			Vector2 position,
+			TimeSpan timestamp
+		) : this(
+			id,
+			state,
+			position,
+			TouchLocationState.Invalid,
+			Vector2.Zero,
+			timestamp
+		) {
+		}
+
+		internal TouchLocation(
+			int id,
+			TouchLocationState state,
+			Vector2 position,
+			TouchLocationState previousState,
+			Vector2 previousPosition,
+			TimeSpan timestamp
 		) {
 			this.id = id;
 			this.state = state;
@@ -315,7 +352,10 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 			// Set the new state.
 			position = touchEvent.position;
-			state = touchEvent.state;
+			if (touchEvent.State == TouchLocationState.Released)
+			{
+				state = touchEvent.state;
+			}
 			pressure = touchEvent.pressure;
 
 			// If time has elapsed then update the velocity.
@@ -333,6 +373,15 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 			// Return true if the state actually changed.
 			return state != previousState || delta.LengthSquared() > 0.001f;
+		}
+
+		internal void AgeState()
+		{
+			Debug.Assert(
+				state == TouchLocationState.Pressed,
+				"Can only age the state of touches that are in the Pressed State"
+			);
+			state = TouchLocationState.Moved;
 		}
 
 		#endregion

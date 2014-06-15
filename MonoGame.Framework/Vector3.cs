@@ -38,12 +38,14 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Text;
+
+using Microsoft.Xna.Framework.Design;
 #endregion
 
 namespace Microsoft.Xna.Framework
 {
 	[DataContract]
-	[TypeConverter(typeof(XNAVector3Converter))]
+	[TypeConverter(typeof(Vector3TypeConverter))]
 	public struct Vector3 : IEquatable<Vector3>
 	{
 		#region Public Static Properties
@@ -975,58 +977,4 @@ namespace Microsoft.Xna.Framework
 
 		#endregion
 	}
-
-	#region Vector3 TypeConverter
-
-	public class XNAVector3Converter : TypeConverter
-	{
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-		{
-			if (sourceType == typeof(string))
-			{
-				return true;
-			}
-			return base.CanConvertFrom(context, sourceType);
-		}
-
-		public override object ConvertFrom(
-			ITypeDescriptorContext context,
-			System.Globalization.CultureInfo culture,
-			object value
-		) {
-			string s = value as string;
-
-			if (s != null)
-			{
-				string[] v = s.Split(
-					culture.NumberFormat.NumberGroupSeparator.ToCharArray()
-				);
-				return new Vector3(
-					float.Parse(v[0], culture),
-					float.Parse(v[1], culture),
-					float.Parse(v[2], culture)
-				);
-			}
-			return base.ConvertFrom(context, culture, value);
-		}
-
-		public override object ConvertTo(
-			ITypeDescriptorContext context,
-			System.Globalization.CultureInfo culture,
-			object value,
-			Type destinationType
-		) {
-			if (destinationType == typeof(string))
-			{
-				Vector3 src = (Vector3) value;
-				string sep = culture.NumberFormat.NumberGroupSeparator;
-				return src.X.ToString(culture) + sep +
-					src.Y.ToString(culture) + sep +
-					src.Z.ToString(culture);
-			}
-			return base.ConvertTo(context, culture, value, destinationType);
-		}
-	}
-
-	#endregion
 }

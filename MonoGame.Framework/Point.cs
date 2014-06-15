@@ -36,12 +36,14 @@ SOFTWARE.
 using System;
 using System.ComponentModel;
 using System.Runtime.Serialization;
+
+using Microsoft.Xna.Framework.Design;
 #endregion
 
 namespace Microsoft.Xna.Framework
 {
 	[DataContract]
-	[TypeConverter(typeof(XNAPointConverter))]
+	[TypeConverter(typeof(PointTypeConverter))]
 	public struct Point : IEquatable<Point>
 	{
 		#region Public Static Properties
@@ -140,58 +142,4 @@ namespace Microsoft.Xna.Framework
 
 		#endregion
 	}
-
-	#region Point TypeConverter
-
-	public class XNAPointConverter : TypeConverter
-	{
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-		{
-			if (sourceType == typeof(string))
-			{
-				return true;
-			}
-			return base.CanConvertFrom(context, sourceType);
-		}
-
-		public override object ConvertFrom(
-			ITypeDescriptorContext context,
-			System.Globalization.CultureInfo culture,
-			object value
-		) {
-			string s = value as string;
-
-			if (s != null)
-			{
-				string[] v = s.Split(
-					culture.NumberFormat.NumberGroupSeparator.ToCharArray()
-				);
-				return new Point(
-					int.Parse(v[0], culture),
-					int.Parse(v[1], culture)
-				);
-			}
-			return base.ConvertFrom(context, culture, value);
-		}
-
-		public override object ConvertTo(
-			ITypeDescriptorContext context,
-			System.Globalization.CultureInfo culture,
-			object value,
-			Type destinationType
-		) {
-			if (destinationType == typeof(string))
-			{
-				Point src = (Point) value;
-				return (
-					src.X.ToString(culture) +
-					culture.NumberFormat.NumberGroupSeparator +
-					src.Y.ToString(culture)
-				);
-			}
-			return base.ConvertTo(context, culture, value, destinationType);
-		}
-	}
-
-	#endregion
 }
