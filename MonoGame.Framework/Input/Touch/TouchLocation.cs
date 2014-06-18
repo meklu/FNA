@@ -188,7 +188,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			this.previousPosition = previousPosition;
 			previousPressure = 0.0f;
 
-			timestamp = TimeSpan.FromTicks(DateTime.Now.Ticks);
+			this.timestamp = TimeSpan.FromTicks(DateTime.Now.Ticks);
 			velocity = Vector2.Zero;
 
 			/* If this is a pressed location then store the current position
