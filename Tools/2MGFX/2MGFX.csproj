@@ -161,6 +161,24 @@
     <Compile Include="..\..\MonoGame.Framework\Vector4.cs">
       <Link>MonoGame.Framework\Vector4.cs</Link>
     </Compile>
+    <Compile Include="..\..\MonoGame.Framework\Design\ColorTypeConverter.cs">
+      <Link>MonoGame.Framework\ColorTypeConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\MonoGame.Framework\Design\Vector2TypeConverter.cs">
+      <Link>MonoGame.Framework\Vector2TypeConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\MonoGame.Framework\Design\Vector3TypeConverter.cs">
+      <Link>MonoGame.Framework\Vector3TypeConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\MonoGame.Framework\Design\Vector4TypeConverter.cs">
+      <Link>MonoGame.Framework\Vector4TypeConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\MonoGame.Framework\Design\VectorConversion.cs">
+      <Link>MonoGame.Framework\VectorConversion.cs</Link>
+    </Compile>
+    <Compile Include="..\..\MonoGame.Framework\Graphics\PackedVector\IPackedVector.cs">
+      <Link>MonoGame.Framework\IPackedVector.cs</Link>
+    </Compile>
     <Compile Include="CommandLineParser.cs" />
     <Compile Include="CompilerInclude.cs" />
     <Compile Include="ConstantBufferData.cs" />
