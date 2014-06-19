@@ -131,7 +131,9 @@ namespace Microsoft.Xna.Framework.Graphics
 		internal void Apply(Shader shader, IntPtr offset)
 		{
             VertexDeclarationAttributeInfo attrInfo;
-            int shaderHash = shader.GetHashCode();
+            int shaderHash = shader.HashKey;
+            if (GraphicsDevice.PixelShader != null)
+            	shaderHash ^= GraphicsDevice.PixelShader.HashKey;
             if (!shaderAttributeInfo.TryGetValue(shaderHash, out attrInfo))
             {
                 // Get the vertex attribute info and cache it

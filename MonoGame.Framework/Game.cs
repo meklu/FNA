@@ -438,6 +438,7 @@ namespace Microsoft.Xna.Framework
         private Stopwatch _gameTimer = Stopwatch.StartNew();
 
         public bool AssumeTargetElapsedTime;
+        public bool PowerSavingMode;
 
         void RunPendingActionsIfAny()
         {
@@ -454,14 +455,33 @@ namespace Microsoft.Xna.Framework
         {
             RunPendingActionsIfAny();
 
+        RetryTick:
             var frameTime = _gameTimer.Elapsed;
 
             // Advance the accumulated elapsed time.
             if (AssumeTargetElapsedTime)    _accumulatedElapsedTime += _targetElapsedTime;
             else                            _accumulatedElapsedTime += frameTime;
-            
+
             _gameTimer.Reset();
             _gameTimer.Start();
+
+            // If we're in the fixed timestep mode and not enough time has elapsed
+            // to perform an update we sleep off the the remaining time to save battery
+            // life and/or release CPU time to other threads and processes.
+            if (IsFixedTimeStep && PowerSavingMode && _accumulatedElapsedTime < TargetElapsedTime)
+            {
+                var sleepTime = (int)(TargetElapsedTime - _accumulatedElapsedTime).TotalMilliseconds;
+
+                // NOTE: While sleep can be inaccurate in general it is 
+                // accurate enough for frame limiting purposes if some
+                // fluctuation is an acceptable result.
+#if WINRT
+                Task.Delay(sleepTime).Wait();
+#else
+                System.Threading.Thread.Sleep(sleepTime);
+#endif
+                goto RetryTick;
+            }
 
             bool doUpdate = true;
             if (IsFixedTimeStep)

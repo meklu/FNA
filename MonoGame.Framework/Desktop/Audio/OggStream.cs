@@ -380,6 +380,7 @@ namespace Microsoft.Xna.Framework.Audio
 
         readonly HashSet<OggStream> streams = new HashSet<OggStream>();
         readonly List<OggStream> threadLocalStreams = new List<OggStream>();
+        readonly HashSet<string> underruns = new HashSet<string>();
 
         readonly Thread underlyingThread;
         volatile bool cancelled;
@@ -512,6 +513,8 @@ namespace Microsoft.Xna.Framework.Audio
         }
         internal bool RemoveStream(OggStream stream)
         {
+            underruns.Remove(stream.RealName);
+
             iterationLock.EnterWriteLock();
             bool removed = streams.Remove(stream);
             iterationLock.ExitWriteLock();
@@ -699,7 +702,11 @@ namespace Microsoft.Xna.Framework.Audio
                         ALHelper.Check();
                         if (state == ALSourceState.Stopped)
                         {
-                            ALHelper.Log("Buffer underrun on " + stream.RealName + " with source " + stream.alSourceId);
+                            if (!underruns.Contains(stream.RealName))
+                            {
+                                ALHelper.Log("Buffer underrun on " + stream.RealName + " with source " + stream.alSourceId);
+                                underruns.Add(stream.RealName);
+                            }
                             AL.SourcePlay(stream.alSourceId);
                             ALHelper.Check();
                         }

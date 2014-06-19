@@ -424,6 +424,8 @@ namespace Microsoft.Xna.Framework
         {
             window.Keyboard.ClearKeys();
             keys.Clear();
+            window.Mouse.ClearButtons();
+            Mouse.GetState();
         }
 
         public void Dispose()
