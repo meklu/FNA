@@ -190,7 +190,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					glType = PixelType.UnsignedShort;
 					break;
 				case SurfaceFormat.Rgba1010102:
-					glInternalFormat = PixelInternalFormat.Rgb10A2ui;
+					glInternalFormat = PixelInternalFormat.Rgb10A2;
 					glFormat = PixelFormat.Rgba;
 					glType = PixelType.UnsignedInt1010102;
 					break;
