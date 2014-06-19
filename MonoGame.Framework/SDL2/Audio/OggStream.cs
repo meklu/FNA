@@ -129,6 +129,7 @@ namespace Microsoft.Xna.Framework.Audio
                 {
                     case ALSourceState.Playing:
                     case ALSourceState.Paused:
+                        StoppingLock.ExitReadLock();
                         return;
                 }
 
@@ -375,7 +376,7 @@ namespace Microsoft.Xna.Framework.Audio
 
     public class OggStreamer : IDisposable
     {
-        const float DefaultUpdateRate = 60;
+        const float DefaultUpdateRate = 30;
         const int DefaultBufferSize = 22050;
 
         static readonly ReaderWriterLockSlim singletonLock = new ReaderWriterLockSlim();
@@ -383,11 +384,14 @@ namespace Microsoft.Xna.Framework.Audio
 
         public static readonly ReaderWriterLockSlim decodeLock = new ReaderWriterLockSlim();
 
+        static readonly ManualResetEventSlim newStreamNotifier = new ManualResetEventSlim();
+
         readonly float[] readSampleBuffer;
         readonly short[] castBuffer;
 
         readonly HashSet<OggStream> streams = new HashSet<OggStream>();
         readonly List<OggStream> threadLocalStreams = new List<OggStream>();
+        readonly HashSet<string> underruns = new HashSet<string>();
 
         readonly Thread underlyingThread;
         volatile bool cancelled;
@@ -462,6 +466,8 @@ namespace Microsoft.Xna.Framework.Audio
 
             Instance = null;
             singletonLock.ExitWriteLock();
+
+            newStreamNotifier.Set();
         }
 
         public float LowPassHFGain
@@ -507,6 +513,8 @@ namespace Microsoft.Xna.Framework.Audio
 
             iterationLock.EnterWriteLock();
             bool added = streams.Add(stream);
+            if (added)
+                newStreamNotifier.Set();
             iterationLock.ExitWriteLock();
 
             //if (added)
@@ -516,6 +524,8 @@ namespace Microsoft.Xna.Framework.Audio
         }
         internal bool RemoveStream(OggStream stream)
         {
+            underruns.Remove(stream.RealName);
+
             iterationLock.EnterWriteLock();
             bool removed = streams.Remove(stream);
             iterationLock.ExitWriteLock();
@@ -558,7 +568,6 @@ namespace Microsoft.Xna.Framework.Audio
         {
             while (!cancelled)
             {
-                //Thread.Sleep((int)(1000 / UpdateRate));
                 if (cancelled) break;
 
                 threadLocalStreams.Clear();
@@ -566,7 +575,12 @@ namespace Microsoft.Xna.Framework.Audio
                 threadLocalStreams.AddRange(streams);
                 iterationLock.ExitReadLock();
 
-                if (threadLocalStreams.Count == 0) continue;
+                if (threadLocalStreams.Count == 0)
+                {
+                    newStreamNotifier.Wait();
+                    newStreamNotifier.Reset();
+                    continue;
+                }
 
                 // look through buffers to know what the heck we should be doing
                 int lowestPlayingBufferCount = int.MaxValue;
@@ -599,6 +613,8 @@ namespace Microsoft.Xna.Framework.Audio
 
                 //if (lowestPlayingBufferCount < 5)
                 //    Console.WriteLine("lpbc : " + lowestPlayingBufferCount);
+
+                bool allIdle = true;
 
                 foreach (var stream in threadLocalStreams)
                 {
@@ -643,6 +659,7 @@ namespace Microsoft.Xna.Framework.Audio
                         else
                             buffer = stream.bufferStack.Pop();
 
+                        allIdle = false;
                         bool finished = FillBuffer(stream, buffer);
                         if (finished)
                         {
@@ -696,13 +713,20 @@ namespace Microsoft.Xna.Framework.Audio
                         ALHelper.Check();
                         if (state == ALSourceState.Stopped)
                         {
-                            ALHelper.Log("Buffer underrun on " + stream.RealName + " with source " + stream.alSourceId);
+                            if (!underruns.Contains(stream.RealName))
+                            {
+                                ALHelper.Log("Buffer underrun on " + stream.RealName + " with source " + stream.alSourceId);
+                                underruns.Add(stream.RealName);
+                            }
                             AL.SourcePlay(stream.alSourceId);
                             ALHelper.Check();
                         }
                     }
                     stream.StoppingLock.ExitReadLock();
                 }
+
+                if (allIdle)
+                    Thread.Sleep((int) (1000 / UpdateRate));
             }
         }
     }
