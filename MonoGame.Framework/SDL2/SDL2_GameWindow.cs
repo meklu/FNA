@@ -199,6 +199,8 @@ namespace Microsoft.Xna.Framework
         private SDL.SDL_WindowFlags INTERNAL_sdlWindowFlags_Next;
         
         private IntPtr INTERNAL_GLContext;
+
+        private bool INTERNAL_useFullscreenSpaces;
         
         private string INTERNAL_deviceName;
         
@@ -445,8 +447,14 @@ namespace Microsoft.Xna.Framework
                         {
                             IsActive = true;
                             
-                            // If we alt-tab away, we lose the 'fullscreen desktop' flag on some WMs
-                            SDL.SDL_SetWindowFullscreen(INTERNAL_sdlWindow, (uint) INTERNAL_sdlWindowFlags_Current);
+                            if (!INTERNAL_useFullscreenSpaces)
+                            {
+                                // If we alt-tab away, we lose the 'fullscreen desktop' flag on some WMs
+                                SDL.SDL_SetWindowFullscreen(
+                                    INTERNAL_sdlWindow,
+                                    (uint) INTERNAL_sdlWindowFlags_Current
+                                );
+                            }
                             
                             // Disable the screensaver when we're back.
                             SDL.SDL_DisableScreenSaver();
@@ -455,7 +463,13 @@ namespace Microsoft.Xna.Framework
                         {
                             IsActive = false;
                             
-                            SDL.SDL_SetWindowFullscreen(INTERNAL_sdlWindow, 0);
+                            if (!INTERNAL_useFullscreenSpaces)
+                            {
+                                SDL.SDL_SetWindowFullscreen(
+                                    INTERNAL_sdlWindow,
+                                    0
+                                );
+                            }
                             
                             // Give the screensaver back, we're not that important now.
                             SDL.SDL_EnableScreenSaver();
@@ -746,6 +760,17 @@ namespace Microsoft.Xna.Framework
             
             // Assume we will have focus.
             IsActive = true;
+
+            // OSX has some fancy fullscreen features, let's use them!
+            if (SDL.SDL_GetPlatform().Equals("Mac OS X"))
+            {
+                string hint = SDL.SDL_GetHint(SDL.SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES);
+                INTERNAL_useFullscreenSpaces = (String.IsNullOrEmpty(hint) || hint.Equals("1"));
+            }
+            else
+            {
+                INTERNAL_useFullscreenSpaces = false;
+            }
             
 #if THREADED_GL
             // Create a background context
