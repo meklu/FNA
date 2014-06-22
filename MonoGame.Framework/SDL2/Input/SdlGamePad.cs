@@ -40,8 +40,8 @@ purpose and non-infringement.
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 
 using SDL2;
@@ -96,6 +96,7 @@ namespace Microsoft.Xna.Framework.Input
         // The SDL device lists
         private static IntPtr[] INTERNAL_devices = new IntPtr[4];
         private static IntPtr[] INTERNAL_haptics = new IntPtr[4];
+        private static GamePad.HapticType[] INTERNAL_hapticTypes = new GamePad.HapticType[4];
   
         // The XNA Input Settings for the GamePad system
         private static Settings INTERNAL_settings;
@@ -119,16 +120,7 @@ namespace Microsoft.Xna.Framework.Input
                 SDL.SDL_QuitSubSystem(SDL.SDL_INIT_HAPTIC);
             }
         }
-        
-        // Convenience method to check for Rumble support
-        private static bool INTERNAL_HapticSupported(PlayerIndex playerIndex)
-        {
-            IntPtr haptic = INTERNAL_haptics[(int) playerIndex];
-            return (    haptic != IntPtr.Zero &&
-                        (    SDL.SDL_HapticEffectSupported(haptic, ref GamePad.INTERNAL_effect) == 1 ||
-                             SDL.SDL_HapticRumbleSupported(haptic) == 1  )       );
-        }
-  
+
         // Prepare the MonoGameJoystick configuration system
         private static void INTERNAL_AutoConfig()
         {
@@ -350,13 +342,28 @@ namespace Microsoft.Xna.Framework.Input
                 }
                 if (INTERNAL_haptics[x] != IntPtr.Zero)
                 {
-                    if (SDL.SDL_HapticEffectSupported(INTERNAL_haptics[x], ref GamePad.INTERNAL_effect) == 1)
+                    if (    SDL.SDL_GetPlatform().Equals("Mac OS X") &&
+                            SDL.SDL_HapticEffectSupported(INTERNAL_haptics[x], ref GamePad.INTERNAL_leftRightMacHackEffect) == 1    )
                     {
-                        SDL.SDL_HapticNewEffect(INTERNAL_haptics[x], ref GamePad.INTERNAL_effect);
+                        INTERNAL_hapticTypes[x] = GamePad.HapticType.LeftRightMacHack;
+                        SDL.SDL_HapticNewEffect(INTERNAL_haptics[x], ref GamePad.INTERNAL_leftRightMacHackEffect);
+                    }
+                    else if (    !SDL.SDL_GetPlatform().Equals("Mac OS X") &&
+                                 SDL.SDL_HapticEffectSupported(INTERNAL_haptics[x], ref GamePad.INTERNAL_leftRightEffect) == 1  )
+                    {
+                        INTERNAL_hapticTypes[x] = GamePad.HapticType.LeftRight;
+                        SDL.SDL_HapticNewEffect(INTERNAL_haptics[x], ref GamePad.INTERNAL_leftRightEffect);
                     }
                     else if (SDL.SDL_HapticRumbleSupported(INTERNAL_haptics[x]) == 1)
                     {
+                        INTERNAL_hapticTypes[x] = GamePad.HapticType.Simple;
                         SDL.SDL_HapticRumbleInit(INTERNAL_haptics[x]);
+                    }
+                    else
+                    {
+                        // We can't even play simple rumble, this haptic device is useless to us.
+                        SDL.SDL_HapticClose(INTERNAL_haptics[x]);
+                        INTERNAL_haptics[x] = IntPtr.Zero;
                     }
                 }
     
@@ -731,8 +738,8 @@ namespace Microsoft.Xna.Framework.Input
                 HasRightXThumbStick =       c.RightStick.X.Type != InputType.None,
                 HasRightYThumbStick =       c.RightStick.Y.Type != InputType.None,
 
-                HasLeftVibrationMotor = INTERNAL_HapticSupported(playerIndex),
-                HasRightVibrationMotor = INTERNAL_HapticSupported(playerIndex),
+                HasLeftVibrationMotor = INTERNAL_haptics[(int) playerIndex] != IntPtr.Zero,
+                HasRightVibrationMotor = INTERNAL_haptics[(int) playerIndex] != IntPtr.Zero,
                 HasVoiceSupport = false,
                 HasBigButton = false
             };
@@ -799,46 +806,54 @@ namespace Microsoft.Xna.Framework.Input
         //     motor.
         public static bool SetVibration(PlayerIndex playerIndex, float leftMotor, float rightMotor)
         {
-            if (!INTERNAL_HapticSupported(playerIndex))
+            IntPtr haptic = INTERNAL_haptics[(int) playerIndex];
+            GamePad.HapticType type = INTERNAL_hapticTypes[(int) playerIndex];
+
+            if (haptic == IntPtr.Zero)
             {
                 return false;
             }
-            
+
             if (leftMotor <= 0.0f && rightMotor <= 0.0f)
             {
-                SDL.SDL_HapticStopAll(INTERNAL_haptics[(int)playerIndex]);
-                return true;
+                SDL.SDL_HapticStopAll(haptic);
             }
-            else if (SDL.SDL_HapticEffectSupported(INTERNAL_haptics[(int) playerIndex], ref GamePad.INTERNAL_effect) == 1)
+            else if (type == GamePad.HapticType.LeftRight)
             {
-                GamePad.INTERNAL_effect.leftright.large_magnitude = (ushort) (65535.0f * leftMotor);
-                GamePad.INTERNAL_effect.leftright.small_magnitude = (ushort) (65535.0f * rightMotor);
+                GamePad.INTERNAL_leftRightEffect.leftright.large_magnitude = (ushort) (65535.0f * leftMotor);
+                GamePad.INTERNAL_leftRightEffect.leftright.small_magnitude = (ushort) (65535.0f * rightMotor);
                 SDL.SDL_HapticUpdateEffect(
-                    INTERNAL_haptics[(int) playerIndex],
+                    haptic,
                     0,
-                    ref GamePad.INTERNAL_effect
+                    ref GamePad.INTERNAL_leftRightEffect
                 );
                 SDL.SDL_HapticRunEffect(
-                    INTERNAL_haptics[(int) playerIndex],
+                    haptic,
+                    0,
+                    1
+                );
+            }
+            else if (type == GamePad.HapticType.LeftRightMacHack)
+            {
+                GamePad.leftRightMacHackData[0] = (ushort) (65535.0f * leftMotor);
+                GamePad.leftRightMacHackData[1] = (ushort) (65535.0f * rightMotor);
+                SDL.SDL_HapticUpdateEffect(
+                    haptic,
+                    0,
+                    ref GamePad.INTERNAL_leftRightMacHackEffect
+                );
+                SDL.SDL_HapticRunEffect(
+                    haptic,
                     0,
                     1
                 );
             }
             else
             {
-                float strength;
-                if (leftMotor >= rightMotor)
-                {
-                    strength = leftMotor;
-                }
-                else
-                {
-                    strength = rightMotor;
-                }
                 SDL.SDL_HapticRumblePlay(
-                    INTERNAL_haptics[(int)playerIndex],
-                    strength,
-                    uint.MaxValue // Oh dear...
+                    haptic,
+                    Math.Max(leftMotor, rightMotor),
+                    SDL.SDL_HAPTIC_INFINITY // Oh dear...
                 );
             }
             return true;
