@@ -57,10 +57,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		{
 			get
 			{
-				if (collection == null)
-				{
-					return 0;
-				}
 				return collection.Length;
 			}
 		}
@@ -74,10 +70,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		{
 			get
 			{
-				if (collection == null)
-				{
-					throw new ArgumentOutOfRangeException("index");
-				}
 				return collection[index];
 			}
 			set
@@ -92,8 +84,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 		private TouchLocation[] collection;
 
-		private static readonly TouchLocation[] emptyCollection = new TouchLocation[0];
-
 		#endregion
 
 		#region Public Constructor
@@ -107,6 +97,10 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// </param>
 		public TouchCollection(TouchLocation[] touches)
 		{
+			if (touches == null)
+			{
+				throw new ArgumentNullException("touches");
+			}
 			collection = touches;
 		}
 
@@ -122,11 +116,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <returns></returns>
 		public bool FindById(int id, out TouchLocation touchLocation)
 		{
-			if (collection == null)
-			{
-				touchLocation = default(TouchLocation);
-				return false;
-			}
 			foreach (TouchLocation location in collection)
 			{
 				if (location.Id == id)
@@ -152,10 +141,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <returns></returns>
 		public int IndexOf(TouchLocation item)
 		{
-			if (collection == null)
-			{
-				return -1;
-			}
 			for (int i = 0; i < collection.Length; i += 1)
 			{
 				if (item == collection[i])
@@ -211,11 +196,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <returns>Returns true if queried item is found, false otherwise.</returns>
 		public bool Contains(TouchLocation item)
 		{
-			if (collection == null)
-			{
-				return false;
-			}
-			foreach(TouchLocation location in collection)
+			foreach (TouchLocation location in collection)
 			{
 				if (item == location)
 				{
@@ -234,10 +215,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <param name="arrayIndex">The starting index of the copy operation.</param>
 		public void CopyTo(TouchLocation[] array, int arrayIndex)
 		{
-			if (collection != null)
-			{
-				collection.CopyTo(array, arrayIndex);
-			}
+			collection.CopyTo(array, arrayIndex);
 		}
 
 		/// <summary>
@@ -256,12 +234,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <returns>Enumerable list of <see cref="TouchLocation"/> objects.</returns>
 		public IEnumerator<TouchLocation> GetEnumerator()
 		{
-			if (collection == null)
-			{
-				return emptyCollection.AsEnumerable().GetEnumerator();
-			}
-
-			return collection.AsEnumerable().GetEnumerator();
+			return new Enumerator(this);
 		}
 
 
@@ -271,12 +244,66 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <returns>Enumerable list of objects.</returns>
 		IEnumerator IEnumerable.GetEnumerator()
 		{
-			if (collection == null)
+			return collection.GetEnumerator();
+		}
+
+		#endregion
+
+		#region Enumerator
+
+		/// <summary>
+		/// Provides the ability to iterate through the TouchLocations in an TouchCollection.
+		/// </summary>
+		public struct Enumerator : IEnumerator<TouchLocation>
+		{
+			private readonly TouchCollection collection;
+			private int position;
+
+			internal Enumerator(TouchCollection collection)
 			{
-				return emptyCollection.GetEnumerator();
+				this.collection = collection;
+				position = -1;
 			}
 
-			return collection.GetEnumerator();
+			/// <summary>
+			/// Gets the current element in the TouchCollection.
+			/// </summary>
+			public TouchLocation Current
+			{
+				get
+				{
+					return collection[position];
+				}
+			}
+
+			/// <summary>
+			/// Advances the enumerator to the next element of the TouchCollection.
+			/// </summary>
+			public bool MoveNext()
+			{
+				position += 1;
+				return (position < collection.Count);
+			}
+
+			/// <summary>
+			/// Immediately releases the unmanaged resources used by this object.
+			/// </summary>
+			public void Dispose()
+			{
+			}
+
+			object IEnumerator.Current
+			{
+				get
+				{
+					return collection[position];
+				}
+			}
+
+			public void Reset()
+			{
+				position = -1;
+			}
 		}
 
 		#endregion

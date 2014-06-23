@@ -34,6 +34,7 @@ SOFTWARE.
 
 #region Using Statements
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -45,12 +46,21 @@ namespace Microsoft.Xna.Framework.Content
 	{
 		#region Private Variables
 
-		private ContentReader reader;
-		private ContentTypeReader[] contentReaders;
-		private static string assemblyName;
+		private Dictionary<Type, ContentTypeReader> contentReaders;
+
+		#endregion
+
+		#region Private Static Variables
+
+		private static readonly object locker;
+
+		private static readonly string assemblyName;
+
+		private static readonly Dictionary<Type, ContentTypeReader> contentReadersCache;
 
 		// Trick to prevent the linker removing the code, but not actually execute the code
 		private static bool falseflag = false;
+
 		/* Static map of type names to creation functions. Required as iOS requires all
 		 * types at compile time
 		 */
@@ -63,16 +73,9 @@ namespace Microsoft.Xna.Framework.Content
 
 		static ContentTypeReaderManager()
 		{
+			locker = new object();
+			contentReadersCache = new Dictionary<Type, ContentTypeReader>(255);
 			assemblyName = Assembly.GetExecutingAssembly().FullName;
-		}
-
-		#endregion
-
-		#region Public Constructors
-
-		public ContentTypeReaderManager(ContentReader reader)
-		{
-			this.reader = reader;
 		}
 
 		#endregion
@@ -81,12 +84,10 @@ namespace Microsoft.Xna.Framework.Content
 
 		public ContentTypeReader GetTypeReader(Type targetType)
 		{
-			foreach (ContentTypeReader r in contentReaders)
+			ContentTypeReader reader;
+			if (contentReaders.TryGetValue(targetType, out reader))
 			{
-				if (targetType == r.TargetType)
-				{
-					return r;
-				}
+				return reader;
 			}
 			return null;
 		}
@@ -95,7 +96,7 @@ namespace Microsoft.Xna.Framework.Content
 
 		#region Internal Death Defying Method
 
-		internal ContentTypeReader[] LoadAssetReaders()
+		internal ContentTypeReader[] LoadAssetReaders(ContentReader reader)
 		{
 #pragma warning disable 0219, 0649
 			/* Trick to prevent the linker removing the code, but not actually execute the code
@@ -147,70 +148,109 @@ namespace Microsoft.Xna.Framework.Content
 				SongReader hSongReader = new SongReader();
 			}
 #pragma warning restore 0219, 0649
-			int numberOfReaders;
-			// The first content byte i read tells me the number of content readers in this XNB file
-			numberOfReaders = reader.Read7BitEncodedInt();
-			contentReaders = new ContentTypeReader[numberOfReaders];
-			/* For each reader in the file, we read out the length of the string which contains the type of the reader,
-			 * then we read out the string. Finally we instantiate an instance of that reader using reflection
+
+			/* The first content byte i read tells me the number of
+			 * content readers in this XNB file.
 			 */
-			for (int i = 0; i < numberOfReaders; i += 1)
+			int numberOfReaders = reader.Read7BitEncodedInt();
+			ContentTypeReader[] newReaders = new ContentTypeReader[numberOfReaders];
+			BitArray needsInitialize = new BitArray(numberOfReaders);
+			contentReaders = new Dictionary<Type, ContentTypeReader>(numberOfReaders);
+
+			/* Lock until we're done allocating and initializing any new
+			 * content type readers... this ensures we can load content
+			 * from multiple threads and still cache the readers.
+			 */
+			lock (locker)
 			{
-				/* This string tells us what reader we need to decode the following data
-				 * string readerTypeString = reader.ReadString();
+				/* For each reader in the file, we read out the
+				 * length of the string which contains the type
+				 * of the reader, then we read out the string.
+				 * Finally we instantiate an instance of that
+				 * reader using reflection.
 				 */
-				string originalReaderTypeString = reader.ReadString();
-				Func<ContentTypeReader> readerFunc;
-				if (typeCreators.TryGetValue(originalReaderTypeString, out readerFunc))
+				for (int i = 0; i < numberOfReaders; i += 1)
 				{
-					contentReaders[i] = readerFunc();
-				}
-				else
-				{
-					// Need to resolve namespace differences
-					string readerTypeString = originalReaderTypeString;
-					readerTypeString = PrepareType(readerTypeString);
-					Type l_readerType = Type.GetType(readerTypeString);
-					if (l_readerType != null)
+					/* This string tells us what reader we
+					 * need to decode the following data.
+					 */
+					string originalReaderTypeString = reader.ReadString();
+
+					Func<ContentTypeReader> readerFunc;
+					if (typeCreators.TryGetValue(originalReaderTypeString, out readerFunc))
 					{
-						try
-						{
-							contentReaders[i] = l_readerType.GetDefaultConstructor().Invoke(null) as ContentTypeReader;
-						}
-						catch (TargetInvocationException ex)
-						{
-							/* If you are getting here, the Mono runtime
-							 * is most likely not able to JIT the type.
-							 * In particular, MonoTouch needs help
-							 * instantiating types that are only defined
-							 * in strings in Xnb files.
-							 */
-							throw new InvalidOperationException(
-								"Failed to get default constructor for ContentTypeReader.\n" +
-								"To work around, add a creation function to\n" +
-								"ContentTypeReaderManager.AddTypeCreator() with\n" +
-								"the following failed type string:\n" +
-								originalReaderTypeString,
-								ex
-							);
-						}
+						newReaders[i] = readerFunc();
+						needsInitialize[i] = true;
 					}
 					else
 					{
-						throw new ContentLoadException(
-							"Could not find ContentTypeReader Type.\n" +
-							"Please ensure the name of the Assembly that contains\n" +
-							"the Type matches the assembly in the full type name:\n" +
-							originalReaderTypeString + " (" + readerTypeString + ")"
-						);
+						// Need to resolve namespace differences
+						string readerTypeString = originalReaderTypeString;
+						readerTypeString = PrepareType(readerTypeString);
+
+						Type l_readerType = Type.GetType(readerTypeString);
+						if (l_readerType != null)
+						{
+							ContentTypeReader typeReader;
+							if (!contentReadersCache.TryGetValue(l_readerType, out typeReader))
+							{
+								try
+								{
+									typeReader = l_readerType.GetDefaultConstructor().Invoke(null) as ContentTypeReader;
+								}
+								catch (TargetInvocationException ex)
+								{
+									/* If you are getting here, the Mono runtime
+									 * is most likely not able to JIT the type.
+									 * In particular, MonoTouch needs help
+									 * instantiating types that are only defined
+									 * in strings in Xnb files.
+									 */
+									throw new InvalidOperationException(
+										"Failed to get default constructor for ContentTypeReader. " +
+										"To work around, add a creation function to ContentTypeReaderManager.AddTypeCreator() " +
+										"with the following failed type string: " + originalReaderTypeString,
+										ex
+									);
+								}
+
+								needsInitialize[i] = true;
+
+								contentReadersCache.Add(l_readerType, typeReader);
+							}
+
+							newReaders[i] = typeReader;
+						}
+						else
+						{
+							throw new ContentLoadException(
+									"Could not find ContentTypeReader Type. " +
+									"Please ensure the name of the Assembly that " +
+									"contains the Type matches the assembly in the full type name: " +
+									originalReaderTypeString + " (" + readerTypeString + ")"
+							);
+						}
+					}
+
+					contentReaders.Add(newReaders[i].TargetType, newReaders[i]);
+
+					/* I think the next 4 bytes refer to the "Version" of the type reader,
+					 * although it always seems to be zero.
+					 */
+					reader.ReadInt32();
+				}
+
+				// Initialize any new readers.
+				for (int i = 0; i < newReaders.Length; i += 1)
+				{
+					if (needsInitialize.Get(i))
+					{
+						newReaders[i].Initialize(this);
 					}
 				}
-				/* I think the next 4 bytes refer to the "Version" of the type reader,
-				 * although it always seems to be zero
-				 */
-				reader.ReadInt32();
-			}
-			return contentReaders;
+			} // lock (locker)
+
+			return newReaders;
 		}
 
 		#endregion

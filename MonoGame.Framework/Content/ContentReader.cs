@@ -316,13 +316,8 @@ namespace Microsoft.Xna.Framework.Content
 
 		internal void InitializeTypeReaders()
 		{
-			typeReaderManager = new ContentTypeReaderManager(this);
-			typeReaders = typeReaderManager.LoadAssetReaders();
-			foreach (ContentTypeReader r in typeReaders)
-			{
-				r.Initialize(typeReaderManager);
-			}
-
+			typeReaderManager = new ContentTypeReaderManager();
+			typeReaders = typeReaderManager.LoadAssetReaders(this);
 			sharedResourceCount = Read7BitEncodedInt();
 			sharedResourceFixups = new List<KeyValuePair<int, Action<object>>>();
 		}

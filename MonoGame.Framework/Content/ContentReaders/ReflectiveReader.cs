@@ -11,6 +11,7 @@
 
 #region Using Statements
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 #endregion
 
@@ -18,16 +19,19 @@ namespace Microsoft.Xna.Framework.Content
 {
 	internal class ReflectiveReader<T> : ContentTypeReader
 	{
+		#region Reader Delegates
+
+		delegate void ReadElement(ContentReader input, object parent);
+
+		private List<ReadElement> readers;
+
+		#endregion
+
 		#region Private Variables
 
-		ConstructorInfo constructor;
-		PropertyInfo[] properties;
-		FieldInfo[] fields;
-		ContentTypeReaderManager manager;
+		private ConstructorInfo constructor;
 
-		Type targetType;
-		Type baseType;
-		ContentTypeReader baseTypeReader;
+		private ContentTypeReader baseTypeReader;
 
 		#endregion
 
@@ -35,63 +39,51 @@ namespace Microsoft.Xna.Framework.Content
 
 		internal ReflectiveReader() : base(typeof(T))
 		{
-			targetType = typeof(T);
 		}
 
 		#endregion
 
-		#region Private Static Child Helper Method
-
-		private static object CreateChildObject(PropertyInfo property, FieldInfo field)
-		{
-			object obj = null;
-			Type t;
-			if (property != null)
-			{
-				t = property.PropertyType;
-			}
-			else
-			{
-				t = field.FieldType;
-			}
-			if (t.IsClass && !t.IsAbstract)
-			{
-				ConstructorInfo constructor = t.GetDefaultConstructor();
-				if (constructor != null)
-				{
-					obj = constructor.Invoke(null);
-				}
-			}
-			return obj;
-		}
-
-		#endregion
-
-		#region Protected Initialization Method
+		#region Protected ContentTypeReader Methods
 
 		protected internal override void Initialize(ContentTypeReaderManager manager)
 		{
 			base.Initialize(manager);
-			this.manager = manager;
-			Type type = targetType.BaseType;
-			if (type != null && type != typeof(object))
+
+			Type baseType = TargetType.BaseType;
+			if (baseType != null && baseType != typeof(object))
 			{
-				baseType = type;
 				baseTypeReader = manager.GetTypeReader(baseType);
 			}
-			constructor = targetType.GetDefaultConstructor();
-			properties = targetType.GetAllProperties();
-			fields = targetType.GetAllFields();
+
+			constructor = TargetType.GetDefaultConstructor();
+
+			PropertyInfo[] properties = TargetType.GetAllProperties();
+			FieldInfo[] fields = TargetType.GetAllFields();
+			readers = new List<ReadElement>(fields.Length + properties.Length);
+
+			// Gather the properties.
+			foreach (PropertyInfo property in properties)
+			{
+				ReadElement read = GetElementReader(manager, property);
+				if (read != null)
+				{
+					readers.Add(read);
+				}
+			}
+
+			// Gather the fields.
+			foreach (FieldInfo field in fields)
+			{
+				ReadElement read = GetElementReader(manager, field);
+				if (read != null)
+				{
+					readers.Add(read);
+				}
+			}
 		}
 
-		#endregion
-
-		#region Protected Read Method
-
-		protected internal override object Read(
-			ContentReader input,
-			object existingInstance
-		) {
+		protected internal override object Read(ContentReader input, object existingInstance)
+		{
 			T obj;
 			if (existingInstance != null)
 			{
@@ -108,42 +100,43 @@ namespace Microsoft.Xna.Framework.Content
 					obj = (T) constructor.Invoke(null);
 				}
 			}
+		
 			if (baseTypeReader != null)
 			{
 				baseTypeReader.Read(input, obj);
 			}
+
 			// Box the type.
-			object boxed = (object) obj;
-			foreach (PropertyInfo property in properties)
+			object  boxed = (object) obj;
+
+			foreach (ReadElement reader in readers)
 			{
-				Read(boxed, input, property);
+				reader(input, boxed);
 			}
-			foreach (FieldInfo field in fields)
-			{
-				Read(boxed, input, field);
-			}
+
 			// Unbox it... required for value types.
 			obj = (T) boxed;
+
 			return obj;
 		}
 
 		#endregion
 
-		#region Private Read Method
+		#region Private Static Methods
 
-		private void Read(
-			object parent,
-			ContentReader input,
+		private static ReadElement GetElementReader(
+			ContentTypeReaderManager manager,
 			MemberInfo member
 		) {
 			PropertyInfo property = member as PropertyInfo;
 			FieldInfo field = member as FieldInfo;
+
 			// Properties must have public get and set
-			if (property != null &&
-				(property.CanWrite == false ||
-				 property.CanRead == false) )
+			if (	property != null &&
+				(	property.CanWrite == false ||
+					property.CanRead == false	)	)
 			{
-				return;
+				return null;
 			}
 
 			if (property != null && property.Name == "Item")
@@ -157,109 +150,124 @@ namespace Microsoft.Xna.Framework.Content
 					/* This is presumably a property like this[indexer] and this
 					 * should not get involved in the object deserialization
 					 */
-					return;
+					return null;
 				}
 			}
-			Attribute attr = Attribute.GetCustomAttribute(member, typeof(ContentSerializerIgnoreAttribute));
+
+			Attribute attr = Attribute.GetCustomAttribute(
+				member,
+				typeof(ContentSerializerIgnoreAttribute)
+			);
 			if (attr != null)
 			{
-				return;
+				return null;
 			}
-			Attribute attr2 = Attribute.GetCustomAttribute(member, typeof(ContentSerializerAttribute));
+
+			ContentSerializerAttribute contentSerializerAttribute = Attribute.GetCustomAttribute(
+				member,
+				typeof(ContentSerializerAttribute)
+			) as ContentSerializerAttribute;
+
 			bool isSharedResource = false;
-			if (attr2 != null)
+			if (contentSerializerAttribute != null)
 			{
-				ContentSerializerAttribute cs = attr2 as ContentSerializerAttribute;
-				isSharedResource = cs.SharedResource;
+				isSharedResource = contentSerializerAttribute.SharedResource;
 			}
 			else
 			{
 				if (property != null)
 				{
-					foreach (MethodInfo info in property.GetAccessors(true))
+					MethodInfo getMethod = property.GetGetMethod();
+					if (getMethod == null || !getMethod.IsPublic)
 					{
-						if (info.IsPublic == false)
-						{
-							return;
-						}
+						return null;
+					}
+					MethodInfo setMethod = property.GetSetMethod();
+					if (setMethod == null || !setMethod.IsPublic)
+					{
+						return null;
 					}
 				}
 				else
 				{
 					if (!field.IsPublic)
 					{
-						return;
+						return null;
 					}
 
-					// Evolutional: Added check to skip initialise only fields
+					// evolutional: Added check to skip initialise only fields
 					if (field.IsInitOnly)
 					{
-						return;
+						return null;
+					}
+
+					/* Private fields can be serialized if they have
+					 * ContentSerializerAttribute added to them.
+					 */
+					if (field.IsPrivate && contentSerializerAttribute == null)
+					{
+						return null;
 					}
 				}
 			}
-			ContentTypeReader reader = null;
-			Type elementType = null;
+
+			Action<object, object> setter;
+			ContentTypeReader reader;
+			Type elementType;
 			if (property != null)
 			{
-				reader = manager.GetTypeReader(elementType = property.PropertyType);
+				elementType = property.PropertyType;
+				reader = manager.GetTypeReader(property.PropertyType);
+				setter = (o, v) => property.SetValue(o, v, null);
 			}
 			else
 			{
-				reader = manager.GetTypeReader(elementType = field.FieldType);
+				elementType = field.FieldType;
+				reader = manager.GetTypeReader(field.FieldType);
+				setter = field.SetValue;
 			}
-			if (!isSharedResource)
-			{
-				object existingChildObject = CreateChildObject(property, field);
-				object obj2;
-				if (reader == null && elementType == typeof(object))
-				{
-					// Reading elements serialized as "object"
-					obj2 = input.ReadObject<object>();
-				}
-				else
-				{
-					// Default
 
-					/* Evolutional: Fix. We can get here and still be NULL,
-					 * exit gracefully
-					 */
-					if (reader == null)
-					{
-						return;
-					}
-					obj2 = input.ReadObject(reader, existingChildObject);
-				}
-				if (property != null)
-				{
-					property.SetValue(parent, obj2, null);
-				}
-				else
-				{
-					/* Private fields can be serialized if they have
-					 * ContentSerializerAttribute added to them
-					 */
-					if (field.IsPrivate == false || attr2 != null)
-					{
-						field.SetValue(parent, obj2);
-					}
-				}
-			}
-			else
+			if (isSharedResource)
 			{
-				Action<object> action = delegate(object value)
+				return (input, parent) =>
 				{
-					if (property != null)
-					{
-						property.SetValue(parent, value, null);
-					}
-					else
-					{
-						field.SetValue(parent, value);
-					}
+					Action<object> action = value => setter(parent, value);
+					input.ReadSharedResource(action);
 				};
-				input.ReadSharedResource(action);
 			}
+
+			Func<object> construct = () => null;
+			if (elementType.IsClass && !elementType.IsAbstract)
+			{
+				ConstructorInfo defaultConstructor = elementType.GetDefaultConstructor();
+				if (defaultConstructor != null)
+				{
+					construct = () => defaultConstructor.Invoke(null);
+				}
+			}
+
+			// Reading elements serialized as "object".
+			if (reader == null && elementType == typeof(object))
+			{
+				return (input, parent) =>
+				{
+					object obj2 = input.ReadObject<object>();
+					setter(parent, obj2);
+				};
+			}
+
+			// evolutional: Fix. We can get here and still be NULL, exit gracefully
+			if (reader == null)
+			{
+				return null;
+			}
+
+			return (input, parent) =>
+			{
+				object existing = construct();
+				object obj2 = input.ReadObject(reader, existing);
+				setter(parent, obj2);
+			};
 		}
 
 		#endregion
