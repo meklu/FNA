@@ -41,11 +41,7 @@
 #region Using Statements
 using System;
 
-#if MONOMAC
-using MonoMac.OpenAL;
-#else
 using OpenTK.Audio.OpenAL;
-#endif
 
 #endregion Statements
 

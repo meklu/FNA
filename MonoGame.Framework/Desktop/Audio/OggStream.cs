@@ -43,7 +43,18 @@ namespace Microsoft.Xna.Framework.Audio
             try
             {
                 Console.WriteLine("({0}) [{1}] {2}", DateTime.Now.ToString("HH:mm:ss.fff"), module, message);
-                using (var stream = File.Open(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\FEZ\\Debug Log.txt", FileMode.Append))
+                string filePath;
+                if (  Environment.OSVersion.Platform == PlatformID.MacOSX ||
+                      Environment.OSVersion.Platform == PlatformID.Unix  )
+                {
+                    filePath = Storage.StorageDevice.StorageRoot + "/FEZ/Debug Log.txt";
+                }
+                else
+                {
+                    filePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                    filePath += "\\FEZ\\Debug Log.txt";
+                }
+                using (var stream = File.Open(filePath, FileMode.Append))
                 {
                     using (var writer = new StreamWriter(stream))
                     {

@@ -41,11 +41,7 @@ purpose and non-infringement.
 using System;
 using System.IO;
 
-#if MONOMAC
-using MonoMac.OpenAL;
-#else
 using OpenTK.Audio.OpenAL;
-#endif
 
 namespace Microsoft.Xna.Framework.Audio
 {
@@ -224,7 +220,12 @@ namespace Microsoft.Xna.Framework.Audio
             }
         }
 
-        public SoundEffectInstance CreateInstance(bool forceNoFilter = false)
+        public SoundEffectInstance CreateInstance()
+        {
+            return CreateInstance(false);
+        }
+
+        public SoundEffectInstance CreateInstance(bool forceNoFilter)
         {
             var instance = new SoundEffectInstance(this, forceNoFilter);
             return instance;

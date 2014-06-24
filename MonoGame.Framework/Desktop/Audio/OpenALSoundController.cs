@@ -7,13 +7,12 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-#if IOS || WINDOWS || LINUX
+#if !SDL2
 using System.Windows.Forms;
+#endif
+
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
-#elif MONOMAC
-using MonoMac.OpenAL;
-#endif
 
 namespace Microsoft.Xna.Framework.Audio
 {
@@ -74,7 +73,18 @@ namespace Microsoft.Xna.Framework.Audio
             try
             {
                 Console.WriteLine("({0}) [{1}] {2}", DateTime.Now.ToString("HH:mm:ss.fff"), "OpenAL", message);
-                using (var stream = File.Open(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\FEZ\\Debug Log.txt", FileMode.Append))
+                string filePath;
+                if (    Environment.OSVersion.Platform == PlatformID.MacOSX ||
+                        Environment.OSVersion.Platform == PlatformID.Unix       )
+                {
+                    filePath = Storage.StorageDevice.StorageRoot + "/FEZ/Debug Log.txt";
+                }
+                else
+                {
+                    filePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                    filePath += "\\FEZ\\Debug Log.txt";
+                }
+                using (var stream = File.Open(filePath, FileMode.Append))
                 {
                     using (var writer = new StreamWriter(stream))
                     {
@@ -99,11 +109,22 @@ namespace Microsoft.Xna.Framework.Audio
             catch (Exception ex)
             {
                 Log(ex.ToString());
+
+#if SDL2
+                SDL2.SDL.SDL_ShowSimpleMessageBox(
+                    SDL2.SDL.SDL_MessageBoxFlags.SDL_MESSAGEBOX_ERROR,
+                    "OpenAL Error",
+                    "Error initializing audio subsystem. Game will now exit.\n" +
+                    "(see debug log for more details)",
+                    Game.Instance.Window.Handle
+                );
+#else
                 Log("Last error in enumerator is " + AudioDeviceEnumerator.LastError);
 
                 MessageBox.Show("Error initializing audio subsystem. Game will now exit.\n" +
                                 "(see debug log for more details)", "OpenAL Error",
                                 MessageBoxButtons.OK, MessageBoxIcon.Error);
+#endif
                 throw;
             }
 
