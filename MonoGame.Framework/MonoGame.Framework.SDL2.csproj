@@ -404,9 +404,9 @@
     <Compile Include="SDL2\Input\SDL2_Mouse.cs" />
     <Compile Include="SDL2\Input\Settings.cs" />
     <Compile Include="SDL2\Input\Stick.cs" />
-    <Compile Include="SDL2\Media\Song.cs" />
+    <Compile Include="Media\Song.cs" />
     <Compile Include="SDL2\Audio\OggStream.cs" />
-    <Compile Include="SDL2\Media\Video.cs" />
+    <Compile Include="Media\Video.cs" />
     <Compile Include="SDL2\Input\SdlGamePad.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
