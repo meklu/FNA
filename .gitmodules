@@ -7,6 +7,3 @@
 [submodule "ThirdParty/NVorbis"]
 	path = ThirdParty/NVorbis
 	url = https://github.com/renaudbedard/nvorbis.git
-[submodule "ThirdParty/MonoKickstart"]
-	path = ThirdParty/MonoKickstart
-	url = https://github.com/flibitijibibo/MonoKickstart.git
