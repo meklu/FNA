@@ -65,8 +65,12 @@ namespace Microsoft.Xna.Framework.Audio
         internal SoundEffectInstance(SoundEffect soundEffect, bool forceNoFilter = false) : this()
         {
             this.soundEffect = soundEffect;
-            if (OpenALSoundController.Instance != null && soundEffect.Size > 0)
-                sourceId = OpenALSoundController.Instance.RegisterSfxInstance(this, forceNoFilter);
+	        if (OpenALSoundController.Instance != null && soundEffect.Size > 0)
+	        {
+		        sourceId = OpenALSoundController.Instance.RegisterSfxInstance(this, forceNoFilter);
+				// force default gain
+		        Volume = volume;
+	        }
         }
 
         public SoundEffect SoundEffect
@@ -172,8 +176,11 @@ namespace Microsoft.Xna.Framework.Audio
                     return;
 
                 if (sourceId == -1) return;
-                pan = value;
-                AL.Source(sourceId, ALSource3f.Position, pan / 5f, 0.0f, 0.1f);
+                pan = MathHelper.Clamp(value, -1, 1);
+
+                float angle = MathHelper.ToRadians(pan * 90.0f);
+                AL.Source(sourceId, ALSource3f.Position, (float)Math.Sin(angle) * OpenALSoundController.EmitterDepth, 0.0f, (float)-Math.Cos(angle) * OpenALSoundController.EmitterDepth);
+
                 ALHelper.Check();
             }
         }
