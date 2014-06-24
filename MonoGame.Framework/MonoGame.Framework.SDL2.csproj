@@ -392,9 +392,9 @@
     <Compile Include="SDL2\Audio\Sound.cs" />
     <Compile Include="SDL2\Audio\SoundEffect.cs" />
     <Compile Include="SDL2\Audio\SoundEffectInstance.cs" />
-    <Compile Include="SDL2\GamerServices\Guide.cs" />
-    <Compile Include="SDL2\GamerServices\MonoGameGamerServicesHelper.cs" />
-    <Compile Include="SDL2\GamerServices\SignedInGamer.cs" />
+    <Compile Include="GamerServices\Guide.cs" />
+    <Compile Include="GamerServices\MonoGameGamerServicesHelper.cs" />
+    <Compile Include="GamerServices\SignedInGamer.cs" />
     <Compile Include="SDL2\Input\Axis.cs" />
     <Compile Include="SDL2\Input\DPad.cs" />
     <Compile Include="SDL2\Input\SDL2_GamePad.cs" />
