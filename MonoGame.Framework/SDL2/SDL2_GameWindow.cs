@@ -247,7 +247,7 @@ namespace Microsoft.Xna.Framework
         {
             get
             {
-                return (INTERNAL_sdlWindowFlags_Current & SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE) != SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+                return (INTERNAL_sdlWindowFlags_Current & SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE) != 0;
             }
             set
             {
@@ -295,7 +295,7 @@ namespace Microsoft.Xna.Framework
         {
             get
             {
-                return (INTERNAL_sdlWindowFlags_Current & SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS) != SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
+                return (INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS) != 0;
             }
             set
             {
@@ -407,6 +407,8 @@ namespace Microsoft.Xna.Framework
         {
             // Now that we're in the game loop, this should be safe.
             Game.GraphicsDevice.glFramebuffer = INTERNAL_glFramebuffer;
+
+            SDL.SDL_ShowWindow(INTERNAL_sdlWindow);
             
             SDL.SDL_Event evt;
             
@@ -718,7 +720,7 @@ namespace Microsoft.Xna.Framework
             
             INTERNAL_sdlWindowFlags_Next = (
                 SDL.SDL_WindowFlags.SDL_WINDOW_OPENGL |
-                SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN |
+                SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN |
                 SDL.SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS |
                 SDL.SDL_WindowFlags.SDL_WINDOW_MOUSE_FOCUS
             );
@@ -883,23 +885,29 @@ namespace Microsoft.Xna.Framework
         ) {
             // Set screen device name, not that we use it...
             INTERNAL_deviceName = screenDeviceName;
-            
-            // Bordered
-            if ((INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS) == SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS)
-            {
-                SDL.SDL_SetWindowBordered(INTERNAL_sdlWindow, SDL.SDL_bool.SDL_FALSE);
-            }
-            else
-            {
-                SDL.SDL_SetWindowBordered(INTERNAL_sdlWindow, SDL.SDL_bool.SDL_TRUE);
-            }
-            
+
             // Fullscreen (Note: this only reads the fullscreen flag)
             SDL.SDL_SetWindowFullscreen(INTERNAL_sdlWindow, (uint) INTERNAL_sdlWindowFlags_Next);
-            
+
+            // Bordered
+            SDL.SDL_SetWindowBordered(
+                INTERNAL_sdlWindow,
+                IsBorderless ? SDL.SDL_bool.SDL_FALSE : SDL.SDL_bool.SDL_TRUE
+            );
+
+            /* Because Mac windows resizes from the bottom, we have to get the position before changing
+             * the size so we can keep the window centered when resizing in windowed mode.
+             */
+            int prevX = 0;
+            int prevY = 0;
+            if ((INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == 0)
+            {
+                SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out prevX, out prevY);
+            }
+
             // Window bounds
             SDL.SDL_SetWindowSize(INTERNAL_sdlWindow, clientWidth, clientHeight);
-            
+
             // Window position
             if (    (INTERNAL_sdlWindowFlags_Current & SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP &&
                     (INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == 0 )
@@ -913,14 +921,10 @@ namespace Microsoft.Xna.Framework
             }
             else if ((INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == 0)
             {
-                // Try to center the window around the old window position.
-                int x = 0;
-                int y = 0;
-                SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out x, out y);
                 SDL.SDL_SetWindowPosition(
                     INTERNAL_sdlWindow,
-                    x + ((INTERNAL_glFramebufferWidth - clientWidth) / 2),
-                    y + ((INTERNAL_glFramebufferHeight - clientHeight) / 2)
+                    prevX + ((INTERNAL_glFramebufferWidth - clientWidth) / 2),
+                    prevY + ((INTERNAL_glFramebufferHeight - clientHeight) / 2)
                 );
             }
             
