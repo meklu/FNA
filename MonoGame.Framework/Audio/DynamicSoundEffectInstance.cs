@@ -298,7 +298,7 @@ namespace Microsoft.Xna.Framework.Audio
 		#region Internal SubmitFloatBuffer Method
 
 		/* THIS IS AN EXTENSION OF THE XNA4 API! */
-		internal void SubmitFloatBuffer(float[] buffer)
+		public void SubmitFloatBufferEXT(float[] buffer)
 		{
 			/* Float samples are the typical format received from decoders.
 			 * We currently use this for the VideoPlayer.

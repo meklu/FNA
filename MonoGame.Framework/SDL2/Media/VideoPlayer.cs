@@ -957,7 +957,7 @@ namespace Microsoft.Xna.Framework.Media
 			// If we actually got data, buffer it into OpenAL.
 			if (data.Count > 0)
 			{
-				audioStream.SubmitFloatBuffer(data.ToArray());
+				audioStream.SubmitFloatBufferEXT(data.ToArray());
 				return true;
 			}
 			return false;
