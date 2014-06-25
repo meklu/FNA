@@ -295,7 +295,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#endregion
 
-		#region Internal SubmitFloatBuffer Method
+		#region Public FNA Extension Methods
 
 		/* THIS IS AN EXTENSION OF THE XNA4 API! */
 		public void SubmitFloatBufferEXT(float[] buffer)
