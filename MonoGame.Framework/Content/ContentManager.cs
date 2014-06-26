@@ -66,7 +66,7 @@ namespace Microsoft.Xna.Framework.Content
 
 		private IServiceProvider serviceProvider;
 		private IGraphicsDeviceService graphicsDeviceService;
-		private Dictionary<string, object> loadedAssets = new Dictionary<string, object>();
+		private Dictionary<string, object> loadedAssets = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		private List<IDisposable> disposableAssets = new List<IDisposable>();
 		private bool disposed;
 
@@ -236,13 +236,14 @@ namespace Microsoft.Xna.Framework.Content
 			T result = default(T);
 
 			/* On some platforms, name and slash direction matter.
-			 * We store the asset by a lowercase, /-separating key
-			 * rather than how the path to the file was passed to us
-			 * to avoid loading "content/asset1.xnb" and
-			 * "content\\ASSET1.xnb" as if they were two different files.
-			 * this matches stock XNA behavior.
+			 * We store the asset by a /-separating key rather than
+			 * how the path to the file was passed to us to avoid
+			 * loading "content/asset1.xnb" and "content\\ASSET1.xnb"
+			 * as if they were two different files. this matches
+			 * stock XNA behavior. The Dictionary will ignore case
+			 * differences.
 			 */
-			string key = assetName.Replace('\\', '/').ToLower();
+			string key = assetName.Replace('\\', '/');
 
 			// Check for a previously loaded asset first
 			object asset = null;
