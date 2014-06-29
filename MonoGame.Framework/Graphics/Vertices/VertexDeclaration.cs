@@ -93,7 +93,6 @@ namespace Microsoft.Xna.Framework.Graphics
 							VertexAttribPointerType = OpenGLVertexAttribPointerType(ve.VertexElementFormat),
 							Normalized = OpenGLVertexAttribNormalized(ve),
 						});
-						attrInfo.EnabledAttributes[attributeLocation] = true;
 					}
 				}
 
@@ -311,10 +310,8 @@ namespace Microsoft.Xna.Framework.Graphics
 		/// <summary>
 		/// Vertex attribute information for a particular shader/vertex declaration combination.
 		/// </summary>
-		class VertexDeclarationAttributeInfo
+		private class VertexDeclarationAttributeInfo
 		{
-			internal bool[] EnabledAttributes;
-
 			internal class Element
 			{
 				public int Offset;
@@ -328,7 +325,6 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			internal VertexDeclarationAttributeInfo(int maxVertexAttributes)
 			{
-				EnabledAttributes = new bool[maxVertexAttributes];
 				Elements = new List<Element>();
 			}
 		}
