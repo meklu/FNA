@@ -32,7 +32,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		private VertexElement[] elements;
 
-		private Dictionary<int, VertexDeclarationAttributeInfo> shaderAttributeInfo = new Dictionary<int, VertexDeclarationAttributeInfo>();
+		private Dictionary<int, List<Element>> shaderAttributeInfo = new Dictionary<int, List<Element>>();
 
 		#endregion
 
@@ -71,12 +71,12 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		internal void Apply(Shader shader, IntPtr offset, int divisor = 0)
 		{
-			VertexDeclarationAttributeInfo attrInfo;
+			List<Element> attrInfo;
 			int shaderHash = shader.GetHashCode();
 			if (!shaderAttributeInfo.TryGetValue(shaderHash, out attrInfo))
 			{
 				// Get the vertex attribute info and cache it
-				attrInfo = new VertexDeclarationAttributeInfo(OpenGLDevice.Instance.MaxVertexAttributes);
+				attrInfo = new List<Element>(OpenGLDevice.Instance.MaxVertexAttributes);
 
 				foreach (VertexElement ve in elements)
 				{
@@ -85,7 +85,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					// XNA appears to ignore usages it can't find a match for, so we will do the same
 					if (attributeLocation >= 0)
 					{
-						attrInfo.Elements.Add(new VertexDeclarationAttributeInfo.Element()
+						attrInfo.Add(new Element()
 						{
 							Offset = ve.Offset,
 							AttributeLocation = attributeLocation,
@@ -100,7 +100,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			// Apply the vertex attribute info
-			foreach (VertexDeclarationAttributeInfo.Element element in attrInfo.Elements)
+			foreach (Element element in attrInfo)
 			{
 				OpenGLDevice.Instance.AttributeEnabled[element.AttributeLocation] = true;
 				OpenGLDevice.Instance.Attributes[element.AttributeLocation].Divisor.Set(divisor);
@@ -110,7 +110,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					element.VertexAttribPointerType,
 					element.Normalized,
 					VertexStride,
-					(IntPtr)(offset.ToInt64() + element.Offset)
+					(IntPtr) (offset.ToInt64() + element.Offset)
 				);
 			}
 		}
@@ -305,28 +305,15 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region Private OpenGL VertexDeclarationAttributeInfo Class
+		#region Private OpenGL Vertex Attribute Element Class
 
-		/// <summary>
-		/// Vertex attribute information for a particular shader/vertex declaration combination.
-		/// </summary>
-		private class VertexDeclarationAttributeInfo
+		private class Element
 		{
-			internal class Element
-			{
-				public int Offset;
-				public int AttributeLocation;
-				public int NumberOfElements;
-				public VertexAttribPointerType VertexAttribPointerType;
-				public bool Normalized;
-			}
-
-			internal List<Element> Elements;
-
-			internal VertexDeclarationAttributeInfo(int maxVertexAttributes)
-			{
-				Elements = new List<Element>();
-			}
+			public int Offset;
+			public int AttributeLocation;
+			public int NumberOfElements;
+			public VertexAttribPointerType VertexAttribPointerType;
+			public bool Normalized;
 		}
 
 		#endregion
