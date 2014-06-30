@@ -78,6 +78,7 @@ namespace Microsoft.Xna.Framework.Media
 		private int[] oldTextures;
 		private TextureTarget[] oldTargets;
 		private int oldShader;
+		private int oldFramebuffer;
 
 		private void GL_initialize()
 		{
@@ -282,7 +283,7 @@ namespace Microsoft.Xna.Framework.Media
 			GL.GetInteger(GetPName.CurrentProgram, out oldShader);
 
 			// Prep our samplers
-			for (int i = 0; i < 2; i += 1)
+			for (int i = 0; i < 3; i += 1)
 			{
 				oldTargets[i] = OpenGLDevice.Instance.Samplers[i].Target.GetCurrent();
 				oldTextures[i] = OpenGLDevice.Instance.Samplers[i].Texture.GetCurrent().Handle;
@@ -292,6 +293,9 @@ namespace Microsoft.Xna.Framework.Media
 					GL.BindTexture(oldTargets[i], 0);
 				}
 			}
+
+			// Store the current framebuffer, may be backbuffer or target FBO
+			oldFramebuffer = OpenGLDevice.Framebuffer.CurrentDrawFramebuffer;
 
 			// Disable various GL options
 			if (OpenGLDevice.Instance.AlphaBlendEnable.GetCurrent())
@@ -327,7 +331,7 @@ namespace Microsoft.Xna.Framework.Media
 			GL.UseProgram(oldShader);
 
 			// Restore the sampler bindings
-			for (int i = 0; i < 2; i += 1)
+			for (int i = 0; i < 3; i += 1)
 			{
 				GL.ActiveTexture(TextureUnit.Texture0 + i);
 				if (oldTargets[i] != TextureTarget.Texture2D)
@@ -341,7 +345,7 @@ namespace Microsoft.Xna.Framework.Media
 			GL.ActiveTexture(TextureUnit.Texture0);
 
 			// Restore the active framebuffer
-			OpenGLDevice.Framebuffer.BindFramebuffer(OpenGLDevice.Instance.Backbuffer.Handle);
+			OpenGLDevice.Framebuffer.BindDrawFramebuffer(oldFramebuffer);
 
 			// Flush various GL states, if applicable
 			if (OpenGLDevice.Instance.ScissorTestEnable.Flush())
@@ -685,7 +689,7 @@ namespace Microsoft.Xna.Framework.Media
 			GL.EnableVertexAttribArray(1);
 
 			// Bind our target framebuffer.
-			OpenGLDevice.Framebuffer.BindFramebuffer(rgbaFramebuffer);
+			OpenGLDevice.Framebuffer.BindDrawFramebuffer(rgbaFramebuffer);
 
 			// Prepare YUV GL textures with our current frame data
 			GL.ActiveTexture(TextureUnit.Texture0);
