@@ -1763,13 +1763,15 @@ namespace Microsoft.Xna.Framework
 		/// <param name="value2">Destination <see cref="Color"/>.</param>
 		/// <param name="amount">Interpolation factor.</param>
 		/// <returns>Interpolated <see cref="Color"/>.</returns>
-		public static Color Lerp(Color value1, Color value2, Single amount)
+		public static Color Lerp(Color value1, Color value2, float amount)
 		{
+			amount = MathHelper.Clamp(amount, 0.0f, 1.0f);
 			return new Color(
-				(int )MathHelper.Lerp(value1.R, value2.R, amount),
+				(int) MathHelper.Lerp(value1.R, value2.R, amount),
 				(int) MathHelper.Lerp(value1.G, value2.G, amount),
 				(int) MathHelper.Lerp(value1.B, value2.B, amount),
-				(int) MathHelper.Lerp(value1.A, value2.A, amount));
+				(int) MathHelper.Lerp(value1.A, value2.A, amount)
+			);
 		}
 
 		/// <summary>
