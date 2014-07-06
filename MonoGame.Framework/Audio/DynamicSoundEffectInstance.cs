@@ -317,7 +317,7 @@ namespace Microsoft.Xna.Framework.Audio
 				newBuf,
 				XNAToFloat[channels],
 				buffer,
-				buffer.Length * 2 * (int) channels,
+				buffer.Length * 4,
 				sampleRate
 			);
 
