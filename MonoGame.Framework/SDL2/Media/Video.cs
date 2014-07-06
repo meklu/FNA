@@ -128,7 +128,7 @@ namespace Microsoft.Xna.Framework.Media
 			{
 				throw new Exception("XNB/OGV width/height mismatch!");
 			}
-			if (!MathHelper.WithinEpsilon(FramesPerSecond, framesPerSecond))
+			if (Math.Abs(FramesPerSecond - framesPerSecond) >= 1.0f)
 			{
 				throw new Exception("XNB/OGV framesPerSecond mismatch!");
 			}

@@ -40,24 +40,24 @@ namespace Microsoft.Xna.Framework.Content
 			ContentReader input,
 			Video existingInstance
 		) {
-			string path = input.ReadString();
+			string path = input.ReadObject<string>();
+			path = FileHelpers.ResolveRelativePath(input.AssetName, path);
 			path = Path.Combine(input.ContentManager.RootDirectory, path);
-			path = FileHelpers.NormalizeFilePathSeparators(path);
 
 			/* The path string includes the ".wmv" extension. Let's see if this
 			 * file exists in a format we actually support...
 			 */
-			path = Normalize(Path.GetFileNameWithoutExtension(path));
+			path = Normalize(path.Substring(0, path.Length - 4));
 			if (String.IsNullOrEmpty(path))
 			{
 				throw new ContentLoadException();
 			}
 
-			int durationMS = input.ReadInt32();
-			int width = input.ReadInt32();
-			int height = input.ReadInt32();
-			float framesPerSecond = input.ReadSingle();
-			VideoSoundtrackType soundTrackType = (VideoSoundtrackType) input.ReadInt32();
+			int durationMS = input.ReadObject<int>();
+			int width = input.ReadObject<int>();
+			int height = input.ReadObject<int>();
+			float framesPerSecond = input.ReadObject<float>();
+			VideoSoundtrackType soundTrackType = (VideoSoundtrackType) input.ReadObject<int>();
 
 			return new Video(path, durationMS, width, height, framesPerSecond, soundTrackType);
 		}

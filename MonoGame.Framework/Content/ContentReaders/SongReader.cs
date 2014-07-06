@@ -39,13 +39,13 @@ namespace Microsoft.Xna.Framework.Content
 		protected internal override Song Read(ContentReader input, Song existingInstance)
 		{
 			string path = input.ReadString();
+			path = FileHelpers.ResolveRelativePath(input.AssetName, path);
 			path = Path.Combine(input.ContentManager.RootDirectory, path);
-			path = FileHelpers.NormalizeFilePathSeparators(path);
 
 			/* The path string includes the ".wma" extension. Let's see if this
 			 * file exists in a format we actually support...
 			 */
-			path = Normalize(Path.GetFileNameWithoutExtension(path));
+			path = Normalize(path.Substring(0, path.Length - 4));
 			if (String.IsNullOrEmpty(path))
 			{
 				throw new ContentLoadException();
