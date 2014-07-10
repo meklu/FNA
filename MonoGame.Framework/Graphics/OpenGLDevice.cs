@@ -502,7 +502,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		#region Render Target Cache Variables
 
 		private int targetFramebuffer = 0;
-		private int[] currentAttachments;
+		private AttachmentInfo[] currentAttachments;
 		private int currentDrawBuffers;
 		private DrawBuffersEnum[] drawBuffersArray;
 		private uint currentRenderbuffer;
@@ -668,11 +668,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Initialize render target FBO and state arrays
 			int numAttachments;
 			GL.GetInteger(GetPName.MaxDrawBuffers, out numAttachments);
-			currentAttachments = new int[numAttachments];
+			currentAttachments = new AttachmentInfo[numAttachments];
 			drawBuffersArray = new DrawBuffersEnum[numAttachments];
 			for (int i = 0; i < numAttachments; i += 1)
 			{
-				currentAttachments[i] = 0;
+				currentAttachments[i] .ColorAttachment = 0;
 				drawBuffersArray[i] = DrawBuffersEnum.ColorAttachment0 + i;
 			}
 			currentDrawBuffers = 0;
@@ -1287,10 +1287,10 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			for (int i = 0; i < currentAttachments.Length; i += 1)
 			{
-				if (texture.Handle == currentAttachments[i])
+				if (texture.Handle == currentAttachments[i].ColorAttachment)
 				{
 					// Force an attachment update, this no longer exists!
-					currentAttachments[i] = -1;
+					currentAttachments[i].ColorAttachment = -1;
 				}
 			}
 			texture.Dispose();
@@ -1317,7 +1317,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		) where T : struct {
 			if (	currentDrawBuffers == 1 &&
 				currentAttachments != null &&				
-				currentAttachments[0] == texture.Handle	)
+				currentAttachments[0].ColorAttachment == texture.Handle	)
 			{
 				int oldReadFramebuffer = Framebuffer.CurrentReadFramebuffer;
 				if (oldReadFramebuffer != targetFramebuffer)
@@ -1482,7 +1482,25 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region SetRenderTargets Method
 
-		public void SetRenderTargets(int[] attachments, uint renderbuffer, DepthFormat depthFormat)
+        public struct AttachmentInfo
+        {
+            public int ColorAttachment;
+            public TextureTarget TextureTarget;
+
+            public AttachmentInfo(int colorAttachment)
+                : this(colorAttachment, TextureTarget.Texture2D)
+            {
+
+            }
+
+            public AttachmentInfo(int colorAttachment, TextureTarget target)
+            {
+                ColorAttachment = colorAttachment;
+                TextureTarget = target;
+            }
+        }
+
+		public void SetRenderTargets(AttachmentInfo[] attachments, uint renderbuffer, DepthFormat depthFormat)
 		{
 			// Bind the right framebuffer, if needed
 			if (attachments == null)
@@ -1499,18 +1517,19 @@ namespace Microsoft.Xna.Framework.Graphics
 			int i = 0;
 			for (i = 0; i < attachments.Length; i += 1)
 			{
-				if (attachments[i] != currentAttachments[i])
+                if (attachments[i].ColorAttachment != currentAttachments[i].ColorAttachment ||
+                    attachments[i].TextureTarget != currentAttachments[i].TextureTarget)
 				{
-					Framebuffer.AttachColor(attachments[i], i);
+					Framebuffer.AttachColor(attachments[i].ColorAttachment, i, attachments[i].TextureTarget);
 					currentAttachments[i] = attachments[i];
 				}
 			}
 			while (i < currentAttachments.Length)
 			{
-				if (currentAttachments[i] != 0)
+				if (currentAttachments[i].ColorAttachment != 0)
 				{
 					Framebuffer.AttachColor(0, i);
-					currentAttachments[i] = 0;
+					currentAttachments[i].ColorAttachment = 0;
 				}
 				i += 1;
 			}
@@ -2003,14 +2022,19 @@ namespace Microsoft.Xna.Framework.Graphics
 				}
 			}
 
-			public static void AttachColor(int colorAttachment, int index)
+		    public static void AttachColor(int colorAttachment, int index)
+		    {
+		        AttachColor(colorAttachment,index, TextureTarget.Texture2D);
+		    }
+
+			public static void AttachColor(int colorAttachment, int index, TextureTarget target)
 			{
 				if (hasARB)
 				{
 					GL.FramebufferTexture2D(
 						FramebufferTarget.Framebuffer,
 						FramebufferAttachment.ColorAttachment0 + index,
-						TextureTarget.Texture2D,
+						target,
 						colorAttachment,
 						0
 					);
@@ -2020,7 +2044,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					GL.Ext.FramebufferTexture2D(
 						FramebufferTarget.FramebufferExt,
 						FramebufferAttachment.ColorAttachment0Ext + index,
-						TextureTarget.Texture2D,
+						target,
 						colorAttachment,
 						0
 					);

@@ -52,6 +52,16 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
+        #region Internal OpenGL Properties
+
+        internal uint[] glDepthStencilBuffer
+        {
+            get;
+            private set;
+        }
+
+        #endregion
+
 		#region IRenderTarget Properties
 
 		/// <inheritdoc/>
@@ -133,7 +143,25 @@ namespace Microsoft.Xna.Framework.Graphics
 			MultiSampleCount = preferredMultiSampleCount;
 			RenderTargetUsage = usage;
 
-			throw new NotImplementedException();
+            glDepthStencilBuffer = new uint[6];
+
+            // If we don't need a depth buffer then we're done.
+            if (preferredDepthFormat == DepthFormat.None)
+            {
+                return;
+            }
+
+            Threading.ForceToMainThread(() =>
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    glDepthStencilBuffer[i] = OpenGLDevice.Framebuffer.GenRenderbuffer(
+                    size,
+                    size,
+                    preferredDepthFormat
+                );
+                }
+            });
 		}
 
 		#endregion
@@ -153,6 +181,16 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (!IsDisposed)
 			{
+                GraphicsDevice.AddDisposeAction(() =>
+                {
+                    for (int i = 0; i < 6; i++)
+                    {
+                        if (glDepthStencilBuffer[i] != 0)
+                        {
+                            OpenGLDevice.Instance.DeleteRenderbuffer(glDepthStencilBuffer[i]);
+                        }
+                    }
+                });
 				base.Dispose(disposing);
 			}
 		}
