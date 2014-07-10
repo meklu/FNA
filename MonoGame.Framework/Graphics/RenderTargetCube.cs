@@ -52,15 +52,15 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-        #region Internal OpenGL Properties
+		#region Internal OpenGL Properties
 
-        internal uint[] glDepthStencilBuffer
-        {
-            get;
-            private set;
-        }
+		internal uint[] glDepthStencilBuffer
+		{
+			get;
+			private set;
+		}
 
-        #endregion
+		 #endregion
 
 		#region IRenderTarget Properties
 
@@ -143,25 +143,25 @@ namespace Microsoft.Xna.Framework.Graphics
 			MultiSampleCount = preferredMultiSampleCount;
 			RenderTargetUsage = usage;
 
-            glDepthStencilBuffer = new uint[6];
+			glDepthStencilBuffer = new uint[6];
 
-            // If we don't need a depth buffer then we're done.
-            if (preferredDepthFormat == DepthFormat.None)
-            {
-                return;
-            }
+			// If we don't need a depth buffer then we're done.
+			if (preferredDepthFormat == DepthFormat.None)
+			{
+				return;
+			}
 
-            Threading.ForceToMainThread(() =>
-            {
-                for (int i = 0; i < 6; i++)
-                {
-                    glDepthStencilBuffer[i] = OpenGLDevice.Framebuffer.GenRenderbuffer(
-                    size,
-                    size,
-                    preferredDepthFormat
-                );
-                }
-            });
+			Threading.ForceToMainThread(() =>
+			{
+				for (int i = 0; i < 6; i++)
+				{
+					glDepthStencilBuffer[i] = OpenGLDevice.Framebuffer.GenRenderbuffer(
+					size,
+					size,
+					preferredDepthFormat
+					);
+				}
+			});
 		}
 
 		#endregion
@@ -181,16 +181,16 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (!IsDisposed)
 			{
-                GraphicsDevice.AddDisposeAction(() =>
-                {
-                    for (int i = 0; i < 6; i+=1)
-                    {
-                        if (glDepthStencilBuffer[i] != 0)
-                        {
-                            OpenGLDevice.Instance.DeleteRenderbuffer(glDepthStencilBuffer[i]);
-                        }
-                    }
-                });
+				GraphicsDevice.AddDisposeAction(() =>
+				{
+					for (int i = 0; i < 6; i+=1)
+					{
+						if (glDepthStencilBuffer[i] != 0)
+						{
+							OpenGLDevice.Instance.DeleteRenderbuffer(glDepthStencilBuffer[i]);
+						}
+					}
+				});
 				base.Dispose(disposing);
 			}
 		}

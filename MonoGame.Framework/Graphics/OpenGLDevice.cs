@@ -1482,23 +1482,23 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region SetRenderTargets Method
 
-        public struct AttachmentInfo
-        {
-            public int ColorAttachment;
-            public TextureTarget TextureTarget;
+		public struct AttachmentInfo
+		{
+			public int ColorAttachment;
+			public TextureTarget TextureTarget;
 
-            public AttachmentInfo(int colorAttachment)
-                : this(colorAttachment, TextureTarget.Texture2D)
-            {
+			public AttachmentInfo(int colorAttachment)
+				: this(colorAttachment, TextureTarget.Texture2D)
+			{
 
-            }
+			}
 
-            public AttachmentInfo(int colorAttachment, TextureTarget target)
-            {
-                ColorAttachment = colorAttachment;
-                TextureTarget = target;
-            }
-        }
+			public AttachmentInfo(int colorAttachment, TextureTarget target)
+			{
+				ColorAttachment = colorAttachment;
+				TextureTarget = target;
+			}
+		}
 
 		public void SetRenderTargets(AttachmentInfo[] attachments, uint renderbuffer, DepthFormat depthFormat)
 		{
@@ -1517,8 +1517,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			int i = 0;
 			for (i = 0; i < attachments.Length; i += 1)
 			{
-                if (attachments[i].ColorAttachment != currentAttachments[i].ColorAttachment ||
-                    attachments[i].TextureTarget != currentAttachments[i].TextureTarget)
+				if (attachments[i].ColorAttachment != currentAttachments[i].ColorAttachment ||
+					attachments[i].TextureTarget != currentAttachments[i].TextureTarget)
 				{
 					Framebuffer.AttachColor(attachments[i].ColorAttachment, i, attachments[i].TextureTarget);
 					currentAttachments[i] = attachments[i];
