@@ -672,7 +672,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			drawBuffersArray = new DrawBuffersEnum[numAttachments];
 			for (int i = 0; i < numAttachments; i += 1)
 			{
-				currentAttachments[i] .ColorAttachment = 0;
+				currentAttachments[i].ColorAttachment = 0;
 				drawBuffersArray[i] = DrawBuffersEnum.ColorAttachment0 + i;
 			}
 			currentDrawBuffers = 0;

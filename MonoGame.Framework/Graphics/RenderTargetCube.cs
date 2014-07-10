@@ -183,7 +183,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
                 GraphicsDevice.AddDisposeAction(() =>
                 {
-                    for (int i = 0; i < 6; i++)
+                    for (int i = 0; i < 6; i+=1)
                     {
                         if (glDepthStencilBuffer[i] != 0)
                         {
