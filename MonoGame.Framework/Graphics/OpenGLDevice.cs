@@ -503,6 +503,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		private int targetFramebuffer = 0;
 		private int[] currentAttachments;
+		private TextureTarget[] currentAttachmentFaces;
 		private int currentDrawBuffers;
 		private DrawBuffersEnum[] drawBuffersArray;
 		private uint currentRenderbuffer;
@@ -669,10 +670,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			int numAttachments;
 			GL.GetInteger(GetPName.MaxDrawBuffers, out numAttachments);
 			currentAttachments = new int[numAttachments];
+			currentAttachmentFaces = new TextureTarget[numAttachments];
 			drawBuffersArray = new DrawBuffersEnum[numAttachments];
 			for (int i = 0; i < numAttachments; i += 1)
 			{
 				currentAttachments[i] = 0;
+				currentAttachmentFaces[i] = TextureTarget.Texture2D;
 				drawBuffersArray[i] = DrawBuffersEnum.ColorAttachment0 + i;
 			}
 			currentDrawBuffers = 0;
@@ -1482,8 +1485,12 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region SetRenderTargets Method
 
-		public void SetRenderTargets(int[] attachments, uint renderbuffer, DepthFormat depthFormat)
-		{
+		public void SetRenderTargets(
+			int[] attachments,
+			TextureTarget[] textureTargets,
+			uint renderbuffer,
+			DepthFormat depthFormat
+		) {
 			// Bind the right framebuffer, if needed
 			if (attachments == null)
 			{
@@ -1499,10 +1506,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			int i = 0;
 			for (i = 0; i < attachments.Length; i += 1)
 			{
-				if (attachments[i] != currentAttachments[i])
+				if (	attachments[i] != currentAttachments[i] ||
+					textureTargets[i] != currentAttachmentFaces[i]	)
 				{
-					Framebuffer.AttachColor(attachments[i], i, TextureTarget.Texture2D);
+					Framebuffer.AttachColor(attachments[i], i, textureTargets[i]);
 					currentAttachments[i] = attachments[i];
+					currentAttachmentFaces[i] = textureTargets[i];
 				}
 			}
 			while (i < currentAttachments.Length)
@@ -1511,6 +1520,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				{
 					Framebuffer.AttachColor(0, i, TextureTarget.Texture2D);
 					currentAttachments[i] = 0;
+					currentAttachmentFaces[i] = TextureTarget.Texture2D;
 				}
 				i += 1;
 			}

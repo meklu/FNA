@@ -616,7 +616,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			Array.Clear(renderTargetBindings, 0, renderTargetBindings.Length);
 			if (renderTargets == null || renderTargets.Length == 0)
 			{
-				OpenGLDevice.Instance.SetRenderTargets(null, 0, DepthFormat.None);
+				OpenGLDevice.Instance.SetRenderTargets(null, null, 0, DepthFormat.None);
 
 				RenderTargetCount = 0;
 
@@ -633,14 +633,27 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 			else
 			{
-				// TODO: CubeMapFace, other target types??
 				int[] glTarget = new int[renderTargets.Length];
+				TextureTarget[] glTargetFace = new TextureTarget[renderTargets.Length];
 				for (int i = 0; i < renderTargets.Length; i += 1)
 				{
 					glTarget[i] = renderTargets[i].RenderTarget.texture.Handle;
+					if (renderTargets[i].RenderTarget is RenderTarget2D)
+					{
+						glTargetFace[i] = TextureTarget.Texture2D;
+					}
+					else
+					{
+						glTargetFace[i] = TextureTarget.TextureCubeMapPositiveX + renderTargets[i].ArraySlice;
+					}
 				}
 				IRenderTarget target = renderTargets[0].RenderTarget as IRenderTarget;
-				OpenGLDevice.Instance.SetRenderTargets(glTarget, target.DepthStencilBuffer, target.DepthStencilFormat);
+				OpenGLDevice.Instance.SetRenderTargets(
+					glTarget,
+					glTargetFace,
+					target.DepthStencilBuffer,
+					target.DepthStencilFormat
+				);
 
 				Array.Copy(renderTargets, renderTargetBindings, renderTargets.Length);
 				RenderTargetCount = renderTargets.Length;
