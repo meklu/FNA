@@ -45,13 +45,22 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region Internal OpenGL Properties
+		#region IRenderTarget Properties
 
-		internal uint glDepthStencilBuffer
+		/// <inheritdoc/>
+		uint IRenderTarget.DepthStencilBuffer
 		{
-			get;
-			private set;
+			get
+			{
+				return glDepthStencilBuffer;
+			}
 		}
+
+		#endregion
+
+		#region Private Variables
+
+		private uint glDepthStencilBuffer;
 
 		#endregion
 

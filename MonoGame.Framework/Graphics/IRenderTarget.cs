@@ -40,5 +40,23 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			get;
 		}
+
+		/// <summary>
+		/// Gets the DepthFormat of the depth-stencil buffer.
+		/// </summary>
+		/// <value>The DepthFormat of the DepthStencilBuffer.</value>
+		DepthFormat DepthStencilFormat
+		{
+			get;
+		}
+
+		/// <summary>
+		/// Gets the handle of the depth-stencil buffer.
+		/// </summary>
+		/// <value>The depth-stencil buffer handle.</value>
+		uint DepthStencilBuffer
+		{
+			get;
+		}
 	}
 }

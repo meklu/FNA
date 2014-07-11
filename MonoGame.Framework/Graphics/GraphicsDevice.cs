@@ -639,8 +639,8 @@ namespace Microsoft.Xna.Framework.Graphics
 				{
 					glTarget[i] = renderTargets[i].RenderTarget.texture.Handle;
 				}
-				RenderTarget2D target = (RenderTarget2D) renderTargets[0].RenderTarget;
-				OpenGLDevice.Instance.SetRenderTargets(glTarget, target.glDepthStencilBuffer, target.DepthStencilFormat);
+				IRenderTarget target = renderTargets[0].RenderTarget as IRenderTarget;
+				OpenGLDevice.Instance.SetRenderTargets(glTarget, target.DepthStencilBuffer, target.DepthStencilFormat);
 
 				Array.Copy(renderTargets, renderTargetBindings, renderTargets.Length);
 				RenderTargetCount = renderTargets.Length;

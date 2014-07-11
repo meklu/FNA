@@ -72,6 +72,30 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
+		/// <inheritdoc/>
+		uint IRenderTarget.DepthStencilBuffer
+		{
+			get
+			{
+				return glDepthStencilBuffer;
+			}
+		}
+
+		#endregion
+
+		#region Private Variables
+
+		private uint glDepthStencilBuffer;
+
+		#endregion
+
+		#region ContentLost Event
+
+#pragma warning disable 0067
+		// We never lose data, but lol XNA4 compliance -flibit
+		public event EventHandler<EventArgs> ContentLost;
+#pragma warning restore 0067
+
 		#endregion
 
 		#region Public Constructors
@@ -133,7 +157,20 @@ namespace Microsoft.Xna.Framework.Graphics
 			MultiSampleCount = preferredMultiSampleCount;
 			RenderTargetUsage = usage;
 
-			throw new NotImplementedException();
+			// If we don't need a depth buffer then we're done.
+			if (preferredDepthFormat == DepthFormat.None)
+			{
+				return;
+			}
+
+			Threading.ForceToMainThread(() =>
+			{
+				glDepthStencilBuffer = OpenGLDevice.Framebuffer.GenRenderbuffer(
+					size,
+					size,
+					preferredDepthFormat
+				);
+			});
 		}
 
 		#endregion
@@ -153,6 +190,13 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (!IsDisposed)
 			{
+				GraphicsDevice.AddDisposeAction(() =>
+				{
+					if (glDepthStencilBuffer != 0)
+					{
+						OpenGLDevice.Instance.DeleteRenderbuffer(glDepthStencilBuffer);
+					}
+				});
 				base.Dispose(disposing);
 			}
 		}
