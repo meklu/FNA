@@ -646,6 +646,8 @@ namespace Microsoft.Xna.Framework.Graphics
 						TextureTarget.TextureCubeMapPositiveX + renderTargets[i].ArraySlice);
 					}
 				}
+				IRenderTarget target = renderTargets[0].RenderTarget as IRenderTarget;
+				OpenGLDevice.Instance.SetRenderTargets(glTarget, target.DepthStencilBuffer, target.DepthStencilFormat);
 
 				IRenderTarget renderTarget = renderTargets[0].RenderTarget as IRenderTarget;
 

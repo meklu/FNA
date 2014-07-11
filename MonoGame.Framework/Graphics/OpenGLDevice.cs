@@ -1520,7 +1520,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				if (attachments[i].ColorAttachment != currentAttachments[i].ColorAttachment ||
 					attachments[i].TextureTarget != currentAttachments[i].TextureTarget)
 				{
-					Framebuffer.AttachColor(attachments[i].ColorAttachment, i, attachments[i].TextureTarget);
+					Framebuffer.AttachColor(attachments[i], i, TextureTarget.Texture2D);
 					currentAttachments[i] = attachments[i];
 				}
 			}
@@ -1528,7 +1528,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				if (currentAttachments[i].ColorAttachment != 0)
 				{
-					Framebuffer.AttachColor(0, i);
+					Framebuffer.AttachColor(0, i, TextureTarget.Texture2D);
 					currentAttachments[i].ColorAttachment = 0;
 				}
 				i += 1;
@@ -2022,11 +2022,6 @@ namespace Microsoft.Xna.Framework.Graphics
 				}
 			}
 
-		    public static void AttachColor(int colorAttachment, int index)
-		    {
-		        AttachColor(colorAttachment,index, TextureTarget.Texture2D);
-		    }
-
 			public static void AttachColor(int colorAttachment, int index, TextureTarget target)
 			{
 				if (hasARB)
@@ -2212,7 +2207,8 @@ namespace Microsoft.Xna.Framework.Graphics
 				Framebuffer.BindFramebuffer(Handle);
 				Framebuffer.AttachColor(
 					colorAttachment,
-					0
+					0,
+					TextureTarget.Texture2D
 				);
 				Framebuffer.AttachDepthTexture(
 					depthStencilAttachment,

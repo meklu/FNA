@@ -228,7 +228,7 @@ namespace Microsoft.Xna.Framework.Media
 			int prevReadFramebuffer = OpenGLDevice.Framebuffer.CurrentReadFramebuffer;
 			int prevDrawFramebuffer = OpenGLDevice.Framebuffer.CurrentDrawFramebuffer;
 			OpenGLDevice.Framebuffer.BindFramebuffer(rgbaFramebuffer);
-			OpenGLDevice.Framebuffer.AttachColor(videoTexture.texture.Handle, 0);
+			OpenGLDevice.Framebuffer.AttachColor(videoTexture.texture.Handle, 0, TextureTarget.Texture2D);
 			OpenGLDevice.Framebuffer.BindReadFramebuffer(prevReadFramebuffer);
 			OpenGLDevice.Framebuffer.BindDrawFramebuffer(prevDrawFramebuffer);
 
