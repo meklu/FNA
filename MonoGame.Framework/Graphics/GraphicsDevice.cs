@@ -616,7 +616,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			Array.Clear(renderTargetBindings, 0, renderTargetBindings.Length);
 			if (renderTargets == null || renderTargets.Length == 0)
 			{
-				OpenGLDevice.Instance.SetRenderTargets(null, 0, DepthFormat.None);
+				OpenGLDevice.Instance.SetRenderTargets(null, null, 0, DepthFormat.None);
 
 				RenderTargetCount = 0;
 
@@ -633,46 +633,29 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 			else
 			{
-				OpenGLDevice.AttachmentInfo[] glTarget = new OpenGLDevice.AttachmentInfo[renderTargets.Length];
+				int[] glTarget = new int[renderTargets.Length];
+				TextureTarget[] textureTargets = new TextureTarget[renderTargets.Length];
 				for (int i = 0; i < renderTargets.Length; i += 1)
 				{
-					if (renderTargets[i].RenderTarget is RenderTarget2D)
+					glTarget[i] = renderTargets[i].RenderTarget.texture.Handle;
+					if (renderTargets[i].RenderTarget is RenderTargetCube)
 					{
-						glTarget[i] = new OpenGLDevice.AttachmentInfo(renderTargets[i].RenderTarget.texture.Handle);
-					}
-					else
-					{
-						glTarget[i] = new OpenGLDevice.AttachmentInfo(renderTargets[i].RenderTarget.texture.Handle,
-						TextureTarget.TextureCubeMapPositiveX + renderTargets[i].ArraySlice);
+						textureTargets[i] = TextureTarget.TextureCubeMapPositiveX + renderTargets[i].ArraySlice;
 					}
 				}
 				IRenderTarget target = renderTargets[0].RenderTarget as IRenderTarget;
-				OpenGLDevice.Instance.SetRenderTargets(glTarget, target.DepthStencilBuffer, target.DepthStencilFormat);
-
-				IRenderTarget renderTarget = renderTargets[0].RenderTarget as IRenderTarget;
-
-				if (renderTargets[0].RenderTarget is RenderTarget2D)
-				{
-					RenderTarget2D target = (RenderTarget2D) renderTargets[0].RenderTarget;
-					OpenGLDevice.Instance.SetRenderTargets(glTarget, target.glDepthStencilBuffer, target.DepthStencilFormat);
-				}
-				else
-				{
-					RenderTargetCube target = (RenderTargetCube) renderTargets[0].RenderTarget;
-					OpenGLDevice.Instance.SetRenderTargets(glTarget, target.glDepthStencilBuffer[renderTargets[0].ArraySlice],
-						target.DepthStencilFormat);
-				}
+				OpenGLDevice.Instance.SetRenderTargets(glTarget, textureTargets, target.DepthStencilBuffer, target.DepthStencilFormat);
 
 				Array.Copy(renderTargets, renderTargetBindings, renderTargets.Length);
 				RenderTargetCount = renderTargets.Length;
 
 				// Set the viewport to the size of the first render target.
-				Viewport = new Viewport(0, 0, renderTarget.Width, renderTarget.Height);
+				Viewport = new Viewport(0, 0, target.Width, target.Height);
 
 				// Set the scissor rectangle to the size of the first render target.
-				ScissorRectangle = new Rectangle(0, 0, renderTarget.Width, renderTarget.Height);
+				ScissorRectangle = new Rectangle(0, 0, target.Width, target.Height);
 
-				if (renderTarget.RenderTargetUsage == RenderTargetUsage.DiscardContents)
+				if (target.RenderTargetUsage == RenderTargetUsage.DiscardContents)
 				{
 					Clear(DiscardColor);
 				}
