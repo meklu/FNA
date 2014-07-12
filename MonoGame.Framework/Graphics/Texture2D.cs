@@ -276,8 +276,6 @@ namespace Microsoft.Xna.Framework.Graphics
 							4
 						);
 					}
-
-					GL.Finish();
 				}
 				finally
 				{
