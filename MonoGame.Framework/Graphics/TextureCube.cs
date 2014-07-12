@@ -86,15 +86,6 @@ namespace Microsoft.Xna.Framework.Graphics
 					}
 				}
 				texture.Flush(true);
-
-				if (mipMap)
-				{
-					GL.TexParameter(
-						TextureTarget.TextureCubeMap,
-						TextureParameterName.GenerateMipmap,
-						1
-					);
-				}
 			});
 		}
 
