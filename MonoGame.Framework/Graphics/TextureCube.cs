@@ -64,8 +64,6 @@ namespace Microsoft.Xna.Framework.Graphics
 				OpenGLDevice.Instance.BindTexture(texture);
 				for (int i = 0; i < 6; i += 1)
 				{
-					TextureTarget target = GetGLCubeFace((CubeMapFace) i);
-
 					if (glFormat == (PixelFormat) All.CompressedTextureFormats)
 					{
 						throw new NotImplementedException();
@@ -73,7 +71,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					else
 					{
 						GL.TexImage2D(
-							target,
+							GetGLCubeFace((CubeMapFace) i),
 							0,
 							glInternalFormat,
 							size,
