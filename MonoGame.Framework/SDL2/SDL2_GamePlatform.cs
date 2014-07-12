@@ -219,7 +219,7 @@ namespace Microsoft.Xna.Framework
 			// Create a background context
 			SDL.SDL_GL_SetAttribute(SDL.SDL_GLattr.SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 			Threading.WindowInfo = Window.Handle;
-			Threading.BackgroundContext = new GL_ContextHandle()
+			Threading.BackgroundContext = new Threading.GL_ContextHandle()
 			{
 				context = SDL.SDL_GL_CreateContext(Window.Handle)
 			};
