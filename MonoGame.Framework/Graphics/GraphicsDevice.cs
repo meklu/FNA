@@ -510,8 +510,6 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public void Present()
 		{
-			GL.Flush();
-
 			// Dispose of any GL resources that were disposed in another thread
 			lock (disposeActionsLock)
 			{
