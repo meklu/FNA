@@ -153,6 +153,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			Threading.ForceToMainThread(() =>
 			{
 				GCHandle dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
+				IntPtr dataPtr = (IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startIndex * Marshal.SizeOf(typeof(T)));
 
 				try
 				{
@@ -163,17 +164,34 @@ namespace Microsoft.Xna.Framework.Graphics
 					}
 					else
 					{
-						GL.TexSubImage2D(
-							GetGLCubeFace(face),
-							level,
-							xOffset,
-							yOffset,
-							width,
-							height,
-							glFormat,
-							glType,
-							(IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startIndex * Marshal.SizeOf(typeof(T)))
-						);
+						if (rect.HasValue)
+						{
+							GL.TexSubImage2D(
+								GetGLCubeFace(face),
+								level,
+								xOffset,
+								yOffset,
+								width,
+								height,
+								glFormat,
+								glType,
+								dataPtr
+							);
+						}
+						else
+						{
+							GL.TexImage2D(
+								GetGLCubeFace(face),
+								level,
+								glInternalFormat,
+								width,
+								height,
+								0,
+								glFormat,
+								glType,
+								dataPtr
+							);
+						}
 					}
 				}
 				finally
