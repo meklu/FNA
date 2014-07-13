@@ -58,8 +58,8 @@ namespace Microsoft.Xna.Framework.Input
 			uint flags = SDL.SDL_GetMouseState(out x, out y);
 
 			// Scale the mouse coordinates for the faux-backbuffer
-			x = (int) ((double) x * Graphics.OpenGLDevice.Instance.Backbuffer.Width / INTERNAL_WindowWidth);
-			y = (int) ((double) y * Graphics.OpenGLDevice.Instance.Backbuffer.Height / INTERNAL_WindowHeight);
+			x = (int) ((double) x * Game.Instance.GraphicsDevice.GLDevice.Backbuffer.Width / INTERNAL_WindowWidth);
+			y = (int) ((double) y * Game.Instance.GraphicsDevice.GLDevice.Backbuffer.Height / INTERNAL_WindowHeight);
 
 			if (!INTERNAL_IsWarped)
 			{
@@ -97,8 +97,8 @@ namespace Microsoft.Xna.Framework.Input
 		public static void SetPosition(int x, int y)
 		{
 			// Scale the mouse coordinates for the faux-backbuffer
-			x = (int) ((double) x * INTERNAL_WindowWidth / Graphics.OpenGLDevice.Instance.Backbuffer.Width);
-			y = (int) ((double) y * INTERNAL_WindowHeight / Graphics.OpenGLDevice.Instance.Backbuffer.Height);
+			x = (int) ((double) x * INTERNAL_WindowWidth / Game.Instance.GraphicsDevice.GLDevice.Backbuffer.Width);
+			y = (int) ((double) y * INTERNAL_WindowHeight / Game.Instance.GraphicsDevice.GLDevice.Backbuffer.Height);
 
 			PrimaryWindow.MouseState.X = x;
 			PrimaryWindow.MouseState.Y = y;

@@ -18,7 +18,8 @@
  * With THREADED_GL we instead allow you to run threaded rendering using
  * multiple GL contexts. This is more flexible, but much more dangerous.
  *
- * Also note that this affects Threading.cs! Check THREADED_GL there too.
+ * Also note that this affects Threading.cs and Graphics/OpenGLDevice.cs!
+ * Check THREADED_GL there too.
  *
  * Basically, if you have to enable this, you should feel very bad.
  * -flibit
@@ -126,9 +127,7 @@ namespace Microsoft.Xna.Framework
 
 		#endregion
 
-		#region Private Window/GLContext Variables
-
-		private IntPtr INTERNAL_GLContext;
+		#region Private OSX-specific Variables
 
 		private bool INTERNAL_useFullscreenSpaces;
 
@@ -211,26 +210,6 @@ namespace Microsoft.Xna.Framework
 				INTERNAL_useFullscreenSpaces = false;
 			}
 
-			// Create OpenGL context
-			INTERNAL_GLContext = SDL.SDL_GL_CreateContext(Window.Handle);
-			OpenTK.Graphics.GraphicsContext.CurrentContext = INTERNAL_GLContext;
-
-#if THREADED_GL
-			// Create a background context
-			SDL.SDL_GL_SetAttribute(SDL.SDL_GLattr.SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
-			Threading.WindowInfo = Window.Handle;
-			Threading.BackgroundContext = new Threading.GL_ContextHandle()
-			{
-				context = SDL.SDL_GL_CreateContext(Window.Handle)
-			};
-
-			// Make the foreground context current.
-			SDL.SDL_GL_MakeCurrent(Window.Handle, INTERNAL_GLContext);
-#endif
-
-			// Set up the OpenGL Device. Loads entry points.
-			OpenGLDevice.Initialize();
-
 			// Create the OpenAL device
 			OpenALDevice.Initialize();
 
@@ -262,11 +241,8 @@ namespace Microsoft.Xna.Framework
 				return;
 			}
 			DRC.drc_enable_system_input_feeder(wiiuStream);
-			wiiuPixelData = new byte[
-				OpenGLDevice.Instance.Backbuffer.Width *
-				OpenGLDevice.Instance.Backbuffer.Height *
-				4
-			];
+			Rectangle bounds = Window.ClientBounds;
+			wiiuPixelData = new byte[bounds.Width * bounds.Height * 4];
 #endif
 		}
 
@@ -364,9 +340,10 @@ namespace Microsoft.Xna.Framework
 							// Need to reset the graphics device any time the window size changes
 							if (Game.graphicsDeviceManager.IsFullScreen)
 							{
+								GraphicsDevice device = Game.GraphicsDevice;
 								Game.graphicsDeviceManager.INTERNAL_ResizeGraphicsDevice(
-									OpenGLDevice.Instance.Backbuffer.Width,
-									OpenGLDevice.Instance.Backbuffer.Height
+									device.GLDevice.Backbuffer.Width,
+									device.GLDevice.Backbuffer.Height
 								);
 							}
 							else
@@ -520,13 +497,14 @@ namespace Microsoft.Xna.Framework
 				int windowWidth, windowHeight;
 				SDL.SDL_GetWindowSize(Window.Handle, out windowWidth, out windowHeight);
 				OpenGLDevice.Framebuffer.BlitToBackbuffer(
-					OpenGLDevice.Instance.Backbuffer.Width,
-					OpenGLDevice.Instance.Backbuffer.Height,
+					device,
+					device.GLDevice.Backbuffer.Width,
+					device.GLDevice.Backbuffer.Height,
 					windowWidth,
 					windowHeight
 				);
 				SDL.SDL_GL_SwapWindow(Window.Handle);
-				OpenGLDevice.Framebuffer.BindFramebuffer(OpenGLDevice.Instance.Backbuffer.Handle);
+				OpenGLDevice.Framebuffer.BindFramebuffer(device.GLDevice.Backbuffer.Handle);
 
 #if WIIU_GAMEPAD
 				if (wiiuStream != IntPtr.Zero)
@@ -534,8 +512,8 @@ namespace Microsoft.Xna.Framework
 					OpenTK.Graphics.OpenGL.GL.ReadPixels(
 						0,
 						0,
-						OpenGLDevice.Instance.Backbuffer.Width,
-						OpenGLDevice.Instance.Backbuffer.Height,
+						device.GLDevice.Backbuffer.Width,
+						device.GLDevice.Backbuffer.Height,
 						OpenTK.Graphics.OpenGL.PixelFormat.Rgba,
 						OpenTK.Graphics.OpenGL.PixelType.UnsignedByte,
 						wiiuPixelData
@@ -544,8 +522,8 @@ namespace Microsoft.Xna.Framework
 						wiiuStream,
 						wiiuPixelData,
 						(uint) wiiuPixelData.Length,
-						(ushort) Graphics.OpenGLDevice.Instance.Backbuffer.Width,
-						(ushort) Graphics.OpenGLDevice.Instance.Backbuffer.Height,
+						(ushort) device.GLDevice.Backbuffer.Width,
+						(ushort) device.GLDevice.Backbuffer.Height,
 						DRC.drc_pixel_format.DRC_RGBA,
 						DRC.drc_flipping_mode.DRC_FLIP_VERTICALLY
 					);
@@ -667,13 +645,6 @@ namespace Microsoft.Xna.Framework
 			{
 				if (Window != null)
 				{
-					OpenGLDevice.Instance.Dispose();
-
-#if THREADED_GL
-					SDL.SDL_GL_DeleteContext(Threading.BackgroundContext.context);
-#endif
-					SDL.SDL_GL_DeleteContext(INTERNAL_GLContext);
-
 					/* Some window managers might try to minimize the window as we're
 					 * destroying it. This looks pretty stupid and could cause problems,
 					 * so set this hint right before we destroy everything.

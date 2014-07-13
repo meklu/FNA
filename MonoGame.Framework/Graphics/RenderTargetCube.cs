@@ -194,7 +194,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				{
 					if (glDepthStencilBuffer != 0)
 					{
-						OpenGLDevice.Instance.DeleteRenderbuffer(glDepthStencilBuffer);
+						GraphicsDevice.GLDevice.DeleteRenderbuffer(glDepthStencilBuffer);
 					}
 				});
 				base.Dispose(disposing);

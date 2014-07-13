@@ -237,10 +237,11 @@ namespace Microsoft.Xna.Framework
 			}
 			else if ((INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == 0)
 			{
+				Rectangle curBounds = ClientBounds;
 				SDL.SDL_SetWindowPosition(
 					INTERNAL_sdlWindow,
-					prevX + ((OpenGLDevice.Instance.Backbuffer.Width - clientWidth) / 2),
-					prevY + ((OpenGLDevice.Instance.Backbuffer.Height - clientHeight) / 2)
+					prevX + ((curBounds.Width - clientWidth) / 2),
+					prevY + ((curBounds.Height - clientHeight) / 2)
 				);
 			}
 

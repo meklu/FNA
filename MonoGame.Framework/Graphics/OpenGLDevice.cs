@@ -14,11 +14,31 @@
  */
 #endregion
 
+#region THREADED_GL Option
+// #define THREADED_GL
+/* Ah, so I see you've run into some issues with threaded GL...
+ *
+ * This class is designed to handle rendering coming from multiple threads, but
+ * if you're too wreckless with how many threads are calling the GL, this will
+ * hang.
+ *
+ * With THREADED_GL we instead allow you to run threaded rendering using
+ * multiple GL contexts. This is more flexible, but much more dangerous.
+ *
+ * Also note that this affects Threading.cs and SDL2/SDL2_GamePlatform.cs!
+ * Check THREADED_GL there too.
+ *
+ * Basically, if you have to enable this, you should feel very bad.
+ * -flibit
+ */
+#endregion
+
 #region Using Statements
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
+using SDL2;
 using OpenTK.Graphics.OpenGL;
 #endregion
 
@@ -26,16 +46,6 @@ namespace Microsoft.Xna.Framework.Graphics
 {
 	internal class OpenGLDevice
 	{
-		#region The OpenGL Device Instance
-
-		public static OpenGLDevice Instance
-		{
-			get;
-			private set;
-		}
-
-		#endregion
-
 		#region OpenGL State Container Class
 
 		public class OpenGLState<T>
@@ -268,12 +278,16 @@ namespace Microsoft.Xna.Framework.Graphics
 				private set;
 			}
 
-			public OpenGLVertexBuffer(bool dynamic, int vertexCount, int vertexStride)
-			{
+			public OpenGLVertexBuffer(
+				GraphicsDevice graphicsDevice,
+				bool dynamic,
+				int vertexCount,
+				int vertexStride
+			) {
 				Handle = GL.GenBuffer();
 				Dynamic = dynamic ? BufferUsageHint.StreamDraw : BufferUsageHint.StaticDraw;
 
-				OpenGLDevice.Instance.BindVertexBuffer(this);
+				graphicsDevice.GLDevice.BindVertexBuffer(this);
 				GL.BufferData(
 					BufferTarget.ArrayBuffer,
 					new IntPtr(vertexStride * vertexCount),
@@ -313,13 +327,17 @@ namespace Microsoft.Xna.Framework.Graphics
 				private set;
 			}
 
-			public OpenGLIndexBuffer(bool dynamic, int indexCount, IndexElementSize elementSize)
-			{
+			public OpenGLIndexBuffer(
+				GraphicsDevice graphicsDevice,
+				bool dynamic,
+				int indexCount,
+				IndexElementSize elementSize
+			) {
 				Handle = GL.GenBuffer();
 				Dynamic = dynamic ? BufferUsageHint.StreamDraw : BufferUsageHint.StaticDraw;
 				BufferSize = (IntPtr) (indexCount * (elementSize == IndexElementSize.SixteenBits ? 2 : 4));
 
-				OpenGLDevice.Instance.BindIndexBuffer(this);
+				graphicsDevice.GLDevice.BindIndexBuffer(this);
 				GL.BufferData(
 					BufferTarget.ElementArrayBuffer,
 					BufferSize,
@@ -519,6 +537,12 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
+		#region Private OpenGL Context Variable
+
+		private IntPtr glContext;
+
+		#endregion
+
 		#region Faux-Backbuffer Variable
 
 		public FauxBackbuffer Backbuffer
@@ -569,30 +593,26 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region Public Initializer
+		#region Public Constructor
 
-		public static void Initialize()
+		public OpenGLDevice()
 		{
-			// We should only have one of these!
-			if (Instance != null)
+			// Create OpenGL context
+			glContext = SDL.SDL_GL_CreateContext(Game.Instance.Window.Handle);
+			OpenTK.Graphics.GraphicsContext.CurrentContext = glContext;
+
+#if THREADED_GL
+			// Create a background context
+			SDL.SDL_GL_SetAttribute(SDL.SDL_GLattr.SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
+			Threading.WindowInfo = Game.Instance.Window.Handle;
+			Threading.BackgroundContext = new Threading.GL_ContextHandle()
 			{
-				throw new Exception("OpenGLDevice already created!");
-			}
+				context = SDL.SDL_GL_CreateContext(Game.Instance.Window.Handle)
+			};
 
-			Instance = new OpenGLDevice();
-		}
-
-		#endregion
-
-		#region Private Constructor
-
-		private OpenGLDevice()
-		{
-			/* This looks redundant, but Framebuffer needs this.
-			 * Remove this when we have our own entry points.
-			 * -flibit
-			 */
-			Instance = this;
+			// Make the foreground context current.
+			SDL.SDL_GL_MakeCurrent(Game.Instance.Window.Handle, glContext);
+#endif
 
 			// Load OpenGL entry points
 			GL.LoadAll();
@@ -699,9 +719,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			Backbuffer = null;
 			Framebuffer.Clear();
 
-			XNAToGL.Clear();
+#if THREADED_GL
+			SDL.SDL_GL_DeleteContext(Threading.BackgroundContext.context);
+#endif
+			SDL.SDL_GL_DeleteContext(glContext);
 
-			Instance = null;
+			XNAToGL.Clear();
 		}
 
 		#endregion
@@ -1348,7 +1371,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					// FIXME: Using two glGet calls here! D:
 					int width = 0;
 					int height = 0;
-					OpenGLDevice.Instance.BindTexture(texture);
+					BindTexture(texture);
 					GL.GetTexLevelParameter(
 						texture.Target,
 						level,
@@ -2088,19 +2111,20 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			public static void BlitToBackbuffer(
+				GraphicsDevice graphicsDevice,
 				int srcWidth,
 				int srcHeight,
 				int dstWidth,
 				int dstHeight
 			) {
 #if !DISABLE_FAUXBACKBUFFER
-				bool scissorTest = OpenGLDevice.Instance.ScissorTestEnable.GetCurrent();
+				bool scissorTest = graphicsDevice.GLDevice.ScissorTestEnable.GetCurrent();
 				if (scissorTest)
 				{
 					GL.Disable(EnableCap.ScissorTest);
 				}
 
-				BindReadFramebuffer(OpenGLDevice.Instance.Backbuffer.Handle);
+				BindReadFramebuffer(graphicsDevice.GLDevice.Backbuffer.Handle);
 				BindDrawFramebuffer(0);
 
 				if (hasARB)
@@ -2222,8 +2246,12 @@ namespace Microsoft.Xna.Framework.Graphics
 #endif
 			}
 
-			public void ResetFramebuffer(int width, int height, DepthFormat depthFormat)
-			{
+			public void ResetFramebuffer(
+				GraphicsDevice graphicsDevice,
+				int width,
+				int height,
+				DepthFormat depthFormat
+			) {
 #if DISABLE_FAUXBACKBUFFER
 				Width = width;
 				Height = height;
@@ -2309,7 +2337,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					if (Game.Instance.GraphicsDevice.RenderTargetCount > 0)
 					{
 						Framebuffer.BindFramebuffer(
-							OpenGLDevice.Instance.targetFramebuffer
+							graphicsDevice.GLDevice.targetFramebuffer
 						);
 					}
 
@@ -2318,7 +2346,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 				GL.BindTexture(
 					TextureTarget.Texture2D,
-					OpenGLDevice.Instance.Samplers[0].Texture.Get().Handle
+					graphicsDevice.GLDevice.Samplers[0].Texture.Get().Handle
 				);
 
 				Width = width;

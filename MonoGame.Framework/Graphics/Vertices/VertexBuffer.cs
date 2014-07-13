@@ -108,6 +108,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			Threading.ForceToMainThread(() =>
 			{
 				Handle = new OpenGLDevice.OpenGLVertexBuffer(
+					GraphicsDevice,
 					dynamic,
 					VertexCount,
 					VertexDeclaration.VertexStride
@@ -125,7 +126,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				GraphicsDevice.AddDisposeAction(() =>
 				{
-					OpenGLDevice.Instance.DeleteVertexBuffer(Handle);
+					GraphicsDevice.GLDevice.DeleteVertexBuffer(Handle);
 					Handle = null;
 				});
 			}
@@ -192,7 +193,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			Threading.ForceToMainThread(() =>
-				OpenGLDevice.Instance.GetVertexBufferData(
+				GraphicsDevice.GLDevice.GetVertexBufferData(
 					Handle,
 					offsetInBytes,
 					data,
@@ -287,7 +288,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			int elementSizeInBytes = Marshal.SizeOf(typeof(T));
 
 			Threading.ForceToMainThread(() =>
-				OpenGLDevice.Instance.SetVertexBufferData(
+				GraphicsDevice.GLDevice.SetVertexBufferData(
 					Handle,
 					bufferSize,
 					elementSizeInBytes,

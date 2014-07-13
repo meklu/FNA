@@ -61,7 +61,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				texture.WrapS.Set(TextureAddressMode.Clamp);
 				texture.WrapT.Set(TextureAddressMode.Clamp);
 
-				OpenGLDevice.Instance.BindTexture(texture);
+				GraphicsDevice.GLDevice.BindTexture(texture);
 				for (int i = 0; i < 6; i += 1)
 				{
 					if (glFormat == (PixelFormat) All.CompressedTextureFormats)
@@ -157,7 +157,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 				try
 				{
-					OpenGLDevice.Instance.BindTexture(texture);
+					GraphicsDevice.GLDevice.BindTexture(texture);
 					if (glFormat == (PixelFormat) All.CompressedTextureFormats)
 					{
 						throw new NotImplementedException();
@@ -222,7 +222,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			TextureTarget target = GetGLCubeFace(cubeMapFace);
-			OpenGLDevice.Instance.BindTexture(texture);
+			GraphicsDevice.GLDevice.BindTexture(texture);
 			GL.GetTexImage<T>(
 				target,
 				0,

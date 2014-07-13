@@ -117,6 +117,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			Threading.ForceToMainThread(() =>
 			{
 				Handle = new OpenGLDevice.OpenGLIndexBuffer(
+					GraphicsDevice,
 					dynamic,
 					IndexCount,
 					IndexElementSize
@@ -134,7 +135,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				GraphicsDevice.AddDisposeAction(() =>
 				{
-					OpenGLDevice.Instance.DeleteIndexBuffer(Handle);
+					GraphicsDevice.GLDevice.DeleteIndexBuffer(Handle);
 					Handle = null;
 				});
 			}
@@ -191,7 +192,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			Threading.ForceToMainThread(() =>
-				OpenGLDevice.Instance.GetIndexBufferData(
+				GraphicsDevice.GLDevice.GetIndexBufferData(
 					Handle,
 					offsetInBytes,
 					data,
@@ -268,7 +269,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			Threading.ForceToMainThread(() =>
-				OpenGLDevice.Instance.SetIndexBufferData(
+				GraphicsDevice.GLDevice.SetIndexBufferData(
 					Handle,
 					offsetInBytes,
 					data,

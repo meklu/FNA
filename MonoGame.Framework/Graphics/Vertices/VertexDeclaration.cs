@@ -76,7 +76,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (!shaderAttributeInfo.TryGetValue(shaderHash, out attrInfo))
 			{
 				// Get the vertex attribute info and cache it
-				attrInfo = new List<Element>(OpenGLDevice.Instance.MaxVertexAttributes);
+				attrInfo = new List<Element>(GraphicsDevice.GLDevice.MaxVertexAttributes);
 
 				foreach (VertexElement ve in elements)
 				{
@@ -102,9 +102,9 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Apply the vertex attribute info
 			foreach (Element element in attrInfo)
 			{
-				OpenGLDevice.Instance.AttributeEnabled[element.AttributeLocation] = true;
-				OpenGLDevice.Instance.Attributes[element.AttributeLocation].Divisor.Set(divisor);
-				OpenGLDevice.Instance.VertexAttribPointer(
+				GraphicsDevice.GLDevice.AttributeEnabled[element.AttributeLocation] = true;
+				GraphicsDevice.GLDevice.Attributes[element.AttributeLocation].Divisor.Set(divisor);
+				GraphicsDevice.GLDevice.VertexAttribPointer(
 					element.AttributeLocation,
 					element.NumberOfElements,
 					element.VertexAttribPointerType,

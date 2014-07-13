@@ -91,7 +91,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					texture.WrapS.Set(TextureAddressMode.Clamp);
 					texture.WrapT.Set(TextureAddressMode.Clamp);
 				}
-				OpenGLDevice.Instance.BindTexture(texture);
+				GraphicsDevice.GLDevice.BindTexture(texture);
 
 				if (	Format == SurfaceFormat.Dxt1 ||
 					Format == SurfaceFormat.Dxt3 ||
@@ -193,7 +193,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					int startByte = startIndex * elementSizeInBytes;
 					IntPtr dataPtr = (IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startByte);
 
-					OpenGLDevice.Instance.BindTexture(texture);
+					GraphicsDevice.GLDevice.BindTexture(texture);
 					if (glFormat == (PixelFormat) All.CompressedTextureFormats)
 					{
 						int dataLength;
@@ -332,12 +332,12 @@ namespace Microsoft.Xna.Framework.Graphics
 				);
 			}
 
-			if (OpenGLDevice.Instance.ReadTargetIfApplicable(texture, level, data, rect))
+			if (GraphicsDevice.GLDevice.ReadTargetIfApplicable(texture, level, data, rect))
 			{
 				return;
 			}
 
-			OpenGLDevice.Instance.BindTexture(texture);
+			GraphicsDevice.GLDevice.BindTexture(texture);
 
 			if (glFormat == (PixelFormat) All.CompressedTextureFormats)
 			{

@@ -75,8 +75,8 @@ namespace Microsoft.Xna.Framework.Graphics
 				if (PresentationParameters.IsFullScreen)
 				{
 					return new DisplayMode(
-						OpenGLDevice.Instance.Backbuffer.Width,
-						OpenGLDevice.Instance.Backbuffer.Height,
+						GLDevice.Backbuffer.Width,
+						GLDevice.Backbuffer.Height,
 						SurfaceFormat.Color
 					);
 				}
@@ -138,7 +138,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					value.Y = Viewport.Height - ScissorRectangle.Y - ScissorRectangle.Height;
 				}
 
-				OpenGLDevice.Instance.ScissorRectangle.Set(value);
+				GLDevice.ScissorRectangle.Set(value);
 			}
 		}
 
@@ -162,9 +162,9 @@ namespace Microsoft.Xna.Framework.Graphics
 					value.Y = PresentationParameters.BackBufferHeight - value.Y - value.Height;
 				}
 
-				OpenGLDevice.Instance.GLViewport.Set(value.Bounds);
-				OpenGLDevice.Instance.DepthRangeMin.Set(value.MinDepth);
-				OpenGLDevice.Instance.DepthRangeMax.Set(value.MaxDepth);
+				GLDevice.GLViewport.Set(value.Bounds);
+				GLDevice.DepthRangeMin.Set(value.MinDepth);
+				GLDevice.DepthRangeMax.Set(value.MaxDepth);
 
 				/* In OpenGL we have to re-apply the special "posFixup"
 				 * vertex shader uniform if the viewport changes.
@@ -191,6 +191,16 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			get;
 			set;
+		}
+
+		#endregion
+
+		#region Internal OpenGL Device Property
+
+		internal OpenGLDevice GLDevice
+		{
+			get;
+			private set;
 		}
 
 		#endregion
@@ -378,14 +388,17 @@ namespace Microsoft.Xna.Framework.Graphics
 			PresentationParameters = presentationParameters;
 			GraphicsProfile = graphicsProfile;
 
+			// Set up the OpenGL Device. Loads entry points.
+			GLDevice = new OpenGLDevice();
+
 			// Force set the default render states.
 			BlendState = BlendState.Opaque;
 			DepthStencilState = DepthStencilState.Default;
 			RasterizerState = RasterizerState.CullCounterClockwise;
 
 			// Initialize the Texture/Sampler state containers
-			Textures = new TextureCollection(OpenGLDevice.Instance.MaxTextureSlots);
-			SamplerStates = new SamplerStateCollection(OpenGLDevice.Instance.MaxTextureSlots);
+			Textures = new TextureCollection(GLDevice.MaxTextureSlots);
+			SamplerStates = new SamplerStateCollection(GLDevice.MaxTextureSlots);
 			Textures.Clear();
 			SamplerStates.Clear();
 
@@ -394,7 +407,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			pixelConstantBuffers.Clear();
 
 			// Force set the buffers and shaders on next ApplyState() call
-			vertexBufferBindings = new VertexBufferBinding[OpenGLDevice.Instance.MaxVertexAttributes];
+			vertexBufferBindings = new VertexBufferBinding[GLDevice.MaxVertexAttributes];
 
 			// First draw will need to set the shaders.
 			vertexShaderDirty = true;
@@ -496,7 +509,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public void Clear(ClearOptions options, Vector4 color, float depth, int stencil)
 		{
-			OpenGLDevice.Instance.Clear(
+			GLDevice.Clear(
 				options,
 				color,
 				depth,
@@ -533,11 +546,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Store off the old frame buffer components
 			int prevReadBuffer = OpenGLDevice.Framebuffer.CurrentReadFramebuffer;
 
-			OpenGLDevice.Framebuffer.BindReadFramebuffer(OpenGLDevice.Instance.Backbuffer.Handle);
+			OpenGLDevice.Framebuffer.BindReadFramebuffer(GLDevice.Backbuffer.Handle);
 			GL.ReadPixels(
 				0, 0,
-				OpenGLDevice.Instance.Backbuffer.Width,
-				OpenGLDevice.Instance.Backbuffer.Height,
+				GLDevice.Backbuffer.Width,
+				GLDevice.Backbuffer.Height,
 				PixelFormat.Rgba,
 				PixelType.UnsignedByte,
 				data
@@ -547,8 +560,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			OpenGLDevice.Framebuffer.BindReadFramebuffer(prevReadBuffer);
 
 			// Now we get to do a software-based flip! Yes, really! -flibit
-			int width = OpenGLDevice.Instance.Backbuffer.Width;
-			int height = OpenGLDevice.Instance.Backbuffer.Height;
+			int width = GLDevice.Backbuffer.Width;
+			int height = GLDevice.Backbuffer.Height;
 			int pitch = width * 4 / Marshal.SizeOf(typeof(T));
 			T[] tempRow = new T[pitch];
 			for (int row = 0; row < height / 2; row += 1)
@@ -614,7 +627,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			Array.Clear(renderTargetBindings, 0, renderTargetBindings.Length);
 			if (renderTargets == null || renderTargets.Length == 0)
 			{
-				OpenGLDevice.Instance.SetRenderTargets(null, null, 0, DepthFormat.None);
+				GLDevice.SetRenderTargets(null, null, 0, DepthFormat.None);
 
 				RenderTargetCount = 0;
 
@@ -646,7 +659,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					}
 				}
 				IRenderTarget target = renderTargets[0].RenderTarget as IRenderTarget;
-				OpenGLDevice.Instance.SetRenderTargets(
+				GLDevice.SetRenderTargets(
 					glTarget,
 					glTargetFace,
 					target.DepthStencilBuffer,
@@ -777,7 +790,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				if (vertBuffer.VertexBuffer != null)
 				{
-					OpenGLDevice.Instance.BindVertexBuffer(vertBuffer.VertexBuffer.Handle);
+					GLDevice.BindVertexBuffer(vertBuffer.VertexBuffer.Handle);
 					vertBuffer.VertexBuffer.VertexDeclaration.Apply(
 						VertexShader,
 						(IntPtr) (vertBuffer.VertexBuffer.VertexDeclaration.VertexStride * (vertBuffer.VertexOffset + baseVertex))
@@ -786,10 +799,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			// Enable the appropriate vertex attributes.
-			OpenGLDevice.Instance.FlushGLVertexAttributes();
+			GLDevice.FlushGLVertexAttributes();
 
 			// Bind the index buffer
-			OpenGLDevice.Instance.BindIndexBuffer(Indices.Handle);
+			GLDevice.BindIndexBuffer(Indices.Handle);
 
 			// Draw!
 			GL.DrawRangeElements(
@@ -814,7 +827,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Note that minVertexIndex and numVertices are NOT used!
 
 			// If this device doesn't have the support, just explode now before it's too late.
-			if (!OpenGLDevice.Instance.SupportsHardwareInstancing)
+			if (!GLDevice.SupportsHardwareInstancing)
 			{
 				throw new NoSuitableGraphicsDeviceException("Your hardware does not support hardware instancing!");
 			}
@@ -830,7 +843,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				if (vertBuffer.VertexBuffer != null)
 				{
-					OpenGLDevice.Instance.BindVertexBuffer(vertBuffer.VertexBuffer.Handle);
+					GLDevice.BindVertexBuffer(vertBuffer.VertexBuffer.Handle);
 					vertBuffer.VertexBuffer.VertexDeclaration.Apply(
 						VertexShader,
 						(IntPtr) (vertBuffer.VertexBuffer.VertexDeclaration.VertexStride * (vertBuffer.VertexOffset + baseVertex)),
@@ -840,10 +853,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			// Enable the appropriate vertex attributes.
-			OpenGLDevice.Instance.FlushGLVertexAttributes();
+			GLDevice.FlushGLVertexAttributes();
 
 			// Bind the index buffer
-			OpenGLDevice.Instance.BindIndexBuffer(Indices.Handle);
+			GLDevice.BindIndexBuffer(Indices.Handle);
 
 			// Draw!
 			GL.DrawElementsInstanced(
@@ -885,7 +898,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			ApplyState();
 
 			// Unbind current VBOs.
-			OpenGLDevice.Instance.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
+			GLDevice.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
 
 			// Pin the buffers.
 			GCHandle vbHandle = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
@@ -895,7 +908,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			vertexDeclaration.Apply(VertexShader, vbHandle.AddrOfPinnedObject());
 
 			// Enable the appropriate vertex attributes.
-			OpenGLDevice.Instance.FlushGLVertexAttributes();
+			GLDevice.FlushGLVertexAttributes();
 
 			// Draw!
 			GL.DrawArrays(
@@ -922,7 +935,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				if (vertBuffer.VertexBuffer != null)
 				{
-					OpenGLDevice.Instance.BindVertexBuffer(vertBuffer.VertexBuffer.Handle);
+					GLDevice.BindVertexBuffer(vertBuffer.VertexBuffer.Handle);
 					vertBuffer.VertexBuffer.VertexDeclaration.Apply(
 						VertexShader,
 						(IntPtr) (vertBuffer.VertexBuffer.VertexDeclaration.VertexStride * vertBuffer.VertexOffset)
@@ -931,7 +944,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			// Enable the appropriate vertex attributes.
-			OpenGLDevice.Instance.FlushGLVertexAttributes();
+			GLDevice.FlushGLVertexAttributes();
 
 			// Draw!
 			GL.DrawArrays(
@@ -980,8 +993,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			ApplyState();
 
 			// Unbind current buffer objects.
-			OpenGLDevice.Instance.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
-			OpenGLDevice.Instance.BindIndexBuffer(OpenGLDevice.OpenGLIndexBuffer.NullBuffer);
+			GLDevice.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
+			GLDevice.BindIndexBuffer(OpenGLDevice.OpenGLIndexBuffer.NullBuffer);
 
 			// Pin the buffers.
 			GCHandle vbHandle = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
@@ -995,7 +1008,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			);
 
 			// Enable the appropriate vertex attributes.
-			OpenGLDevice.Instance.FlushGLVertexAttributes();
+			GLDevice.FlushGLVertexAttributes();
 
 			// Draw!
 			GL.DrawRangeElements(
@@ -1047,8 +1060,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			ApplyState();
 
 			// Unbind current buffer objects.
-			OpenGLDevice.Instance.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
-			OpenGLDevice.Instance.BindIndexBuffer(OpenGLDevice.OpenGLIndexBuffer.NullBuffer);
+			GLDevice.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
+			GLDevice.BindIndexBuffer(OpenGLDevice.OpenGLIndexBuffer.NullBuffer);
 
 			// Pin the buffers.
 			GCHandle vbHandle = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
@@ -1062,7 +1075,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			);
 
 			// Enable the appropriate vertex attributes.
-			OpenGLDevice.Instance.FlushGLVertexAttributes();
+			GLDevice.FlushGLVertexAttributes();
 
 			// Draw!
 			GL.DrawRangeElements(
@@ -1124,64 +1137,64 @@ namespace Microsoft.Xna.Framework.Graphics
 		private void ApplyState()
 		{
 			// Apply BlendState
-			OpenGLDevice.Instance.AlphaBlendEnable.Set(
+			GLDevice.AlphaBlendEnable.Set(
 				!(	BlendState.ColorSourceBlend == Blend.One &&
 					BlendState.ColorDestinationBlend == Blend.Zero &&
 					BlendState.AlphaSourceBlend == Blend.One &&
 					BlendState.AlphaDestinationBlend == Blend.Zero	)
 			);
-			OpenGLDevice.Instance.BlendColor.Set(BlendState.BlendFactor);
-			OpenGLDevice.Instance.BlendOp.Set(BlendState.ColorBlendFunction);
-			OpenGLDevice.Instance.BlendOpAlpha.Set(BlendState.AlphaBlendFunction);
-			OpenGLDevice.Instance.SrcBlend.Set(BlendState.ColorSourceBlend);
-			OpenGLDevice.Instance.DstBlend.Set(BlendState.ColorDestinationBlend);
-			OpenGLDevice.Instance.SrcBlendAlpha.Set(BlendState.AlphaSourceBlend);
-			OpenGLDevice.Instance.DstBlendAlpha.Set(BlendState.AlphaDestinationBlend);
-			OpenGLDevice.Instance.ColorWriteEnable.Set(BlendState.ColorWriteChannels);
+			GLDevice.BlendColor.Set(BlendState.BlendFactor);
+			GLDevice.BlendOp.Set(BlendState.ColorBlendFunction);
+			GLDevice.BlendOpAlpha.Set(BlendState.AlphaBlendFunction);
+			GLDevice.SrcBlend.Set(BlendState.ColorSourceBlend);
+			GLDevice.DstBlend.Set(BlendState.ColorDestinationBlend);
+			GLDevice.SrcBlendAlpha.Set(BlendState.AlphaSourceBlend);
+			GLDevice.DstBlendAlpha.Set(BlendState.AlphaDestinationBlend);
+			GLDevice.ColorWriteEnable.Set(BlendState.ColorWriteChannels);
 
 			// Apply DepthStencilState
-			OpenGLDevice.Instance.ZEnable.Set(DepthStencilState.DepthBufferEnable);
-			OpenGLDevice.Instance.ZWriteEnable.Set(DepthStencilState.DepthBufferWriteEnable);
-			OpenGLDevice.Instance.DepthFunc.Set(DepthStencilState.DepthBufferFunction);
-			OpenGLDevice.Instance.StencilEnable.Set(DepthStencilState.StencilEnable);
-			OpenGLDevice.Instance.StencilWriteMask.Set(DepthStencilState.StencilWriteMask);
-			OpenGLDevice.Instance.SeparateStencilEnable.Set(DepthStencilState.TwoSidedStencilMode);
-			OpenGLDevice.Instance.StencilRef.Set(DepthStencilState.ReferenceStencil);
-			OpenGLDevice.Instance.StencilMask.Set(DepthStencilState.StencilMask);
-			OpenGLDevice.Instance.StencilFunc.Set(DepthStencilState.StencilFunction);
-			OpenGLDevice.Instance.CCWStencilFunc.Set(DepthStencilState.CounterClockwiseStencilFunction);
-			OpenGLDevice.Instance.StencilFail.Set(DepthStencilState.StencilFail);
-			OpenGLDevice.Instance.StencilZFail.Set(DepthStencilState.StencilDepthBufferFail);
-			OpenGLDevice.Instance.StencilPass.Set(DepthStencilState.StencilPass);
-			OpenGLDevice.Instance.CCWStencilFail.Set(DepthStencilState.CounterClockwiseStencilFail);
-			OpenGLDevice.Instance.CCWStencilZFail.Set(DepthStencilState.CounterClockwiseStencilDepthBufferFail);
-			OpenGLDevice.Instance.CCWStencilPass.Set(DepthStencilState.CounterClockwiseStencilPass);
+			GLDevice.ZEnable.Set(DepthStencilState.DepthBufferEnable);
+			GLDevice.ZWriteEnable.Set(DepthStencilState.DepthBufferWriteEnable);
+			GLDevice.DepthFunc.Set(DepthStencilState.DepthBufferFunction);
+			GLDevice.StencilEnable.Set(DepthStencilState.StencilEnable);
+			GLDevice.StencilWriteMask.Set(DepthStencilState.StencilWriteMask);
+			GLDevice.SeparateStencilEnable.Set(DepthStencilState.TwoSidedStencilMode);
+			GLDevice.StencilRef.Set(DepthStencilState.ReferenceStencil);
+			GLDevice.StencilMask.Set(DepthStencilState.StencilMask);
+			GLDevice.StencilFunc.Set(DepthStencilState.StencilFunction);
+			GLDevice.CCWStencilFunc.Set(DepthStencilState.CounterClockwiseStencilFunction);
+			GLDevice.StencilFail.Set(DepthStencilState.StencilFail);
+			GLDevice.StencilZFail.Set(DepthStencilState.StencilDepthBufferFail);
+			GLDevice.StencilPass.Set(DepthStencilState.StencilPass);
+			GLDevice.CCWStencilFail.Set(DepthStencilState.CounterClockwiseStencilFail);
+			GLDevice.CCWStencilZFail.Set(DepthStencilState.CounterClockwiseStencilDepthBufferFail);
+			GLDevice.CCWStencilPass.Set(DepthStencilState.CounterClockwiseStencilPass);
 
 			// Apply RasterizerState
 			if (RenderTargetCount > 0)
 			{
-				OpenGLDevice.Instance.CullFrontFace.Set(RasterizerState.CullMode);
+				GLDevice.CullFrontFace.Set(RasterizerState.CullMode);
 			}
 			else
 			{
 				// When not rendering offscreen the faces change order.
 				if (RasterizerState.CullMode == CullMode.None)
 				{
-					OpenGLDevice.Instance.CullFrontFace.Set(RasterizerState.CullMode);
+					GLDevice.CullFrontFace.Set(RasterizerState.CullMode);
 				}
 				else
 				{
-					OpenGLDevice.Instance.CullFrontFace.Set(
+					GLDevice.CullFrontFace.Set(
 						RasterizerState.CullMode == CullMode.CullClockwiseFace ?
 							CullMode.CullCounterClockwiseFace :
 							CullMode.CullClockwiseFace
 					);
 				}
 			}
-			OpenGLDevice.Instance.GLFillMode.Set(RasterizerState.FillMode);
-			OpenGLDevice.Instance.ScissorTestEnable.Set(RasterizerState.ScissorTestEnable);
-			OpenGLDevice.Instance.DepthBias.Set(RasterizerState.DepthBias);
-			OpenGLDevice.Instance.SlopeScaleDepthBias.Set(RasterizerState.SlopeScaleDepthBias);
+			GLDevice.GLFillMode.Set(RasterizerState.FillMode);
+			GLDevice.ScissorTestEnable.Set(RasterizerState.ScissorTestEnable);
+			GLDevice.DepthBias.Set(RasterizerState.DepthBias);
+			GLDevice.SlopeScaleDepthBias.Set(RasterizerState.SlopeScaleDepthBias);
 
 			// TODO: MSAA?
 
@@ -1204,15 +1217,15 @@ namespace Microsoft.Xna.Framework.Graphics
 			pixelConstantBuffers.SetConstantBuffers(this, shaderProgram);
 
 			// Apply Textures/Samplers
-			for (int i = 0; i < OpenGLDevice.Instance.MaxTextureSlots; i += 1)
+			for (int i = 0; i < GLDevice.MaxTextureSlots; i += 1)
 			{
 				SamplerState sampler = SamplerStates[i];
 				Texture texture = Textures[i];
 
 				if (sampler != null && texture != null)
 				{
-					OpenGLDevice.Instance.Samplers[i].Texture.Set(texture.texture);
-					OpenGLDevice.Instance.Samplers[i].Target.Set(texture.texture.Target);
+					GLDevice.Samplers[i].Texture.Set(texture.texture);
+					GLDevice.Samplers[i].Target.Set(texture.texture.Target);
 					texture.texture.WrapS.Set(sampler.AddressU);
 					texture.texture.WrapT.Set(sampler.AddressV);
 					texture.texture.WrapR.Set(sampler.AddressW);
@@ -1223,12 +1236,12 @@ namespace Microsoft.Xna.Framework.Graphics
 				}
 				else if (texture == null)
 				{
-					OpenGLDevice.Instance.Samplers[i].Texture.Set(OpenGLDevice.OpenGLTexture.NullTexture);
+					GLDevice.Samplers[i].Texture.Set(OpenGLDevice.OpenGLTexture.NullTexture);
 				}
 			}
 
 			// Flush the GL state!
-			OpenGLDevice.Instance.FlushGLState();
+			GLDevice.FlushGLState();
 		}
 
 		/// <summary>

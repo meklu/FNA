@@ -310,8 +310,8 @@ namespace Microsoft.Xna.Framework
 			game.Platform.BeginScreenDeviceChange(IsFullScreen);
 			game.Platform.EndScreenDeviceChange(
 				"FNA",
-				Graphics.OpenGLDevice.Instance.Backbuffer.Width,
-				Graphics.OpenGLDevice.Instance.Backbuffer.Height
+				GraphicsDevice.GLDevice.Backbuffer.Width,
+				GraphicsDevice.GLDevice.Backbuffer.Height
 			);
 		}
 
@@ -364,7 +364,8 @@ namespace Microsoft.Xna.Framework
 				GraphicsDevice.PresentationParameters.BackBufferHeight
 			);
 
-			OpenGLDevice.Instance.Backbuffer.ResetFramebuffer(
+			GraphicsDevice.GLDevice.Backbuffer.ResetFramebuffer(
+				GraphicsDevice,
 				GraphicsDevice.PresentationParameters.BackBufferWidth,
 				GraphicsDevice.PresentationParameters.BackBufferHeight,
 				GraphicsDevice.PresentationParameters.DepthStencilFormat

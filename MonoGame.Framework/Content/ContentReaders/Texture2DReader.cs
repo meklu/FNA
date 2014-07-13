@@ -110,14 +110,14 @@ namespace Microsoft.Xna.Framework.Content
 			switch (surfaceFormat)
 			{
 			case SurfaceFormat.Dxt1:
-				if (!OpenGLDevice.Instance.SupportsDxt1)
+				if (!Game.Instance.GraphicsDevice.GLDevice.SupportsDxt1)
 				{
 					convertedFormat = SurfaceFormat.Color;
 				}
 				break;
 			case SurfaceFormat.Dxt3:
 			case SurfaceFormat.Dxt5:
-				if (!OpenGLDevice.Instance.SupportsS3tc)
+				if (!Game.Instance.GraphicsDevice.GLDevice.SupportsS3tc)
 				{
 					convertedFormat = SurfaceFormat.Color;
 				}
@@ -155,7 +155,7 @@ namespace Microsoft.Xna.Framework.Content
 				switch (surfaceFormat)
 				{
 				case SurfaceFormat.Dxt1:
-					if (!OpenGLDevice.Instance.SupportsDxt1)
+					if (!Game.Instance.GraphicsDevice.GLDevice.SupportsDxt1)
 					{
 						levelData = reader.ReadBytes(levelDataSizeInBytes);
 						levelData = DxtUtil.DecompressDxt1(
@@ -166,7 +166,7 @@ namespace Microsoft.Xna.Framework.Content
 					}
 					break;
 				case SurfaceFormat.Dxt3:
-					if (!OpenGLDevice.Instance.SupportsS3tc)
+					if (!Game.Instance.GraphicsDevice.GLDevice.SupportsS3tc)
 					{
 						levelData = reader.ReadBytes(levelDataSizeInBytes);
 						levelData = DxtUtil.DecompressDxt3(
@@ -177,7 +177,7 @@ namespace Microsoft.Xna.Framework.Content
 					}
 					break;
 				case SurfaceFormat.Dxt5:
-					if (!OpenGLDevice.Instance.SupportsS3tc)
+					if (!Game.Instance.GraphicsDevice.GLDevice.SupportsS3tc)
 					{
 						levelData = reader.ReadBytes(levelDataSizeInBytes);
 						levelData = DxtUtil.DecompressDxt5(

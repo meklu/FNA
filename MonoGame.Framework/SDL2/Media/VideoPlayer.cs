@@ -221,8 +221,8 @@ namespace Microsoft.Xna.Framework.Media
 		private void GL_setupTargets(int width, int height)
 		{
 			// We're going to mess with sampler 0's texture.
-			TextureTarget prevTarget = OpenGLDevice.Instance.Samplers[0].Target.GetCurrent();
-			int prevTexture = OpenGLDevice.Instance.Samplers[0].Texture.GetCurrent().Handle;
+			TextureTarget prevTarget = currentDevice.GLDevice.Samplers[0].Target.GetCurrent();
+			int prevTexture = currentDevice.GLDevice.Samplers[0].Texture.GetCurrent().Handle;
 
 			// Attach the Texture2D to the framebuffer.
 			int prevReadFramebuffer = OpenGLDevice.Framebuffer.CurrentReadFramebuffer;
@@ -285,8 +285,8 @@ namespace Microsoft.Xna.Framework.Media
 			// Prep our samplers
 			for (int i = 0; i < 3; i += 1)
 			{
-				oldTargets[i] = OpenGLDevice.Instance.Samplers[i].Target.GetCurrent();
-				oldTextures[i] = OpenGLDevice.Instance.Samplers[i].Texture.GetCurrent().Handle;
+				oldTargets[i] = currentDevice.GLDevice.Samplers[i].Target.GetCurrent();
+				oldTextures[i] = currentDevice.GLDevice.Samplers[i].Texture.GetCurrent().Handle;
 				if (oldTargets[i] != TextureTarget.Texture2D)
 				{
 					GL.ActiveTexture(TextureUnit.Texture0 + i);
@@ -298,19 +298,19 @@ namespace Microsoft.Xna.Framework.Media
 			oldFramebuffer = OpenGLDevice.Framebuffer.CurrentDrawFramebuffer;
 
 			// Disable various GL options
-			if (OpenGLDevice.Instance.AlphaBlendEnable.GetCurrent())
+			if (currentDevice.GLDevice.AlphaBlendEnable.GetCurrent())
 			{
 				GL.Disable(EnableCap.Blend);
 			}
-			if (OpenGLDevice.Instance.ZEnable.GetCurrent())
+			if (currentDevice.GLDevice.ZEnable.GetCurrent())
 			{
 				GL.Disable(EnableCap.DepthTest);
 			}
-			if (OpenGLDevice.Instance.CullFrontFace.GetCurrent() != CullMode.None)
+			if (currentDevice.GLDevice.CullFrontFace.GetCurrent() != CullMode.None)
 			{
 				GL.Disable(EnableCap.CullFace);
 			}
-			if (OpenGLDevice.Instance.ScissorTestEnable.GetCurrent())
+			if (currentDevice.GLDevice.ScissorTestEnable.GetCurrent())
 			{
 				GL.Disable(EnableCap.ScissorTest);
 			}
@@ -319,7 +319,7 @@ namespace Microsoft.Xna.Framework.Media
 		private void GL_popState()
 		{
 			// Flush the viewport, reset.
-			Rectangle oldViewport = OpenGLDevice.Instance.GLViewport.Flush();
+			Rectangle oldViewport = currentDevice.GLDevice.GLViewport.Flush();
 			GL.Viewport(
 				oldViewport.X,
 				oldViewport.Y,
@@ -348,19 +348,19 @@ namespace Microsoft.Xna.Framework.Media
 			OpenGLDevice.Framebuffer.BindDrawFramebuffer(oldFramebuffer);
 
 			// Flush various GL states, if applicable
-			if (OpenGLDevice.Instance.ScissorTestEnable.Flush())
+			if (currentDevice.GLDevice.ScissorTestEnable.Flush())
 			{
 				GL.Enable(EnableCap.ScissorTest);
 			}
-			if (OpenGLDevice.Instance.CullFrontFace.GetCurrent() != CullMode.None)
+			if (currentDevice.GLDevice.CullFrontFace.GetCurrent() != CullMode.None)
 			{
 				GL.Enable(EnableCap.CullFace);
 			}
-			if (OpenGLDevice.Instance.ZEnable.Flush())
+			if (currentDevice.GLDevice.ZEnable.Flush())
 			{
 				GL.Enable(EnableCap.DepthTest);
 			}
-			if (OpenGLDevice.Instance.AlphaBlendEnable.Flush())
+			if (currentDevice.GLDevice.AlphaBlendEnable.Flush())
 			{
 				GL.Enable(EnableCap.Blend);
 			}
@@ -452,6 +452,9 @@ namespace Microsoft.Xna.Framework.Media
 		// Store this to optimize things on our end.
 		private Texture2D videoTexture;
 
+		// We need to access the GLDevice frequently.
+		private GraphicsDevice currentDevice;
+
 		#endregion
 
 		#region Private Member Data: TheoraPlay
@@ -515,9 +518,12 @@ namespace Microsoft.Xna.Framework.Media
 			// Initialize private members.
 			timer = new Stopwatch();
 
+			// The VideoPlayer will use the GraphicsDevice that is set now.
+			currentDevice = Game.Instance.GraphicsDevice;
+
 			// Initialize this here to prevent null GetTexture returns.
 			videoTexture = new Texture2D(
-				Game.Instance.GraphicsDevice,
+				currentDevice,
 				1280,
 				720
 			);
@@ -667,8 +673,8 @@ namespace Microsoft.Xna.Framework.Media
 			GL.UseProgram(shaderProgram);
 
 			// Set up the vertex pointers/arrays.
-			OpenGLDevice.Instance.Attributes[0].CurrentBuffer = int.MaxValue;
-			OpenGLDevice.Instance.Attributes[1].CurrentBuffer = int.MaxValue;
+			currentDevice.GLDevice.Attributes[0].CurrentBuffer = int.MaxValue;
+			currentDevice.GLDevice.Attributes[1].CurrentBuffer = int.MaxValue;
 			GL.VertexAttribPointer(
 				0,
 				2,
@@ -823,7 +829,7 @@ namespace Microsoft.Xna.Framework.Media
 
 				Texture2D overlap = videoTexture;
 				videoTexture = new Texture2D(
-					Game.Instance.GraphicsDevice,
+					currentDevice,
 					(int) currentVideo.width,
 					(int) currentVideo.height,
 					false,
