@@ -350,6 +350,8 @@ namespace Microsoft.Xna.Framework
 						Content = null;
 					}
 
+					Effect.FlushCache();
+
 					if (_graphicsDeviceManager != null)
 					{
 						(_graphicsDeviceManager as GraphicsDeviceManager).Dispose();
@@ -365,7 +367,6 @@ namespace Microsoft.Xna.Framework
 						Platform = null;
 					}
 
-					Effect.FlushCache();
 					ContentTypeReaderManager.ClearTypeCreators();
 				}
 
