@@ -350,10 +350,11 @@ namespace Microsoft.Xna.Framework
 						Content = null;
 					}
 
-					Effect.FlushCache();
 
 					if (_graphicsDeviceManager != null)
 					{
+						Effect.FlushCache();
+
 						(_graphicsDeviceManager as GraphicsDeviceManager).Dispose();
 						_graphicsDeviceManager = null;
 					}
