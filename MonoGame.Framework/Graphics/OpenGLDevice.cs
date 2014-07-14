@@ -620,9 +620,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Initialize ARB_debug_output callback
 			DebugOutput.Initialize();
 
-			// Initialize XNA->GL conversion Dictionaries
-			XNAToGL.Initialize();
-
 			// Print GL information
 			System.Console.WriteLine("OpenGL Device: " + GL.GetString(StringName.Renderer));
 			System.Console.WriteLine("OpenGL Driver: " + GL.GetString(StringName.Version));
@@ -723,8 +720,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			SDL.SDL_GL_DeleteContext(Threading.BackgroundContext.context);
 #endif
 			SDL.SDL_GL_DeleteContext(glContext);
-
-			XNAToGL.Clear();
 		}
 
 		#endregion
@@ -1591,228 +1586,145 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		private static class XNAToGL
 		{
-			public static Dictionary<Blend, BlendingFactorSrc> BlendModeSrc
+			/* Ideally we would be using arrays, rather than Dictionaries.
+			 * The problem is that we don't support every enum, and dealing
+			 * with gaps would be a headache. So whatever, Dictionaries!
+			 * -flibit
+			 */
+
+			public static readonly Dictionary<Blend, BlendingFactorSrc> BlendModeSrc = new Dictionary<Blend, BlendingFactorSrc>()
 			{
-				get;
-				private set;
-			}
+				{ Blend.DestinationAlpha,		BlendingFactorSrc.DstAlpha },
+				{ Blend.DestinationColor,		BlendingFactorSrc.DstColor },
+				{ Blend.InverseDestinationAlpha,	BlendingFactorSrc.OneMinusDstAlpha },
+				{ Blend.InverseDestinationColor,	BlendingFactorSrc.OneMinusDstColor },
+				{ Blend.InverseSourceAlpha,		BlendingFactorSrc.OneMinusSrcAlpha },
+				{ Blend.InverseSourceColor,		(BlendingFactorSrc) All.OneMinusSrcColor }, // Why -flibit
+				{ Blend.One,				BlendingFactorSrc.One },
+				{ Blend.SourceAlpha,			BlendingFactorSrc.SrcAlpha },
+				{ Blend.SourceAlphaSaturation,		BlendingFactorSrc.SrcAlphaSaturate },
+				{ Blend.SourceColor,			(BlendingFactorSrc) All.SrcColor }, // Why -flibit
+				{ Blend.Zero,				BlendingFactorSrc.Zero }
+			};
 
-			public static Dictionary<Blend, BlendingFactorDest> BlendModeDst
+			public static readonly Dictionary<Blend, BlendingFactorDest> BlendModeDst = new Dictionary<Blend, BlendingFactorDest>()
 			{
-				get;
-				private set;
-			}
+				{ Blend.DestinationAlpha,		BlendingFactorDest.DstAlpha },
+				{ Blend.InverseDestinationAlpha,	BlendingFactorDest.OneMinusDstAlpha },
+				{ Blend.InverseSourceAlpha,		BlendingFactorDest.OneMinusSrcAlpha },
+				{ Blend.InverseSourceColor,		BlendingFactorDest.OneMinusSrcColor },
+				{ Blend.One,				BlendingFactorDest.One },
+				{ Blend.SourceAlpha,			BlendingFactorDest.SrcAlpha },
+				{ Blend.SourceColor,			BlendingFactorDest.SrcColor },
+				{ Blend.Zero,				BlendingFactorDest.Zero }
+			};
 
-			public static Dictionary<BlendFunction, BlendEquationMode> BlendEquation
+			public static readonly Dictionary<BlendFunction, BlendEquationMode> BlendEquation = new Dictionary<BlendFunction, BlendEquationMode>()
 			{
-				get;
-				private set;
-			}
+				{ BlendFunction.Add,			BlendEquationMode.FuncAdd },
+				{ BlendFunction.Max,			BlendEquationMode.Max },
+				{ BlendFunction.Min,			BlendEquationMode.Min },
+				{ BlendFunction.ReverseSubtract,	BlendEquationMode.FuncReverseSubtract },
+				{ BlendFunction.Subtract,		BlendEquationMode.FuncSubtract }
+			};
 
-			public static Dictionary<CompareFunction, DepthFunction> DepthFunc
+			public static readonly Dictionary<CompareFunction, DepthFunction> DepthFunc = new Dictionary<CompareFunction, DepthFunction>()
 			{
-				get;
-				private set;
-			}
+				{ CompareFunction.Always,	DepthFunction.Always },
+				{ CompareFunction.Equal,	DepthFunction.Equal },
+				{ CompareFunction.Greater,	DepthFunction.Greater },
+				{ CompareFunction.GreaterEqual,	DepthFunction.Gequal },
+				{ CompareFunction.Less,		DepthFunction.Less },
+				{ CompareFunction.LessEqual,	DepthFunction.Lequal },
+				{ CompareFunction.Never,	DepthFunction.Never },
+				{ CompareFunction.NotEqual,	DepthFunction.Notequal }
+			};
 
-			public static Dictionary<CompareFunction, StencilFunction> StencilFunc
+			public static readonly Dictionary<CompareFunction, StencilFunction> StencilFunc = new Dictionary<CompareFunction, StencilFunction>()
 			{
-				get;
-				private set;
-			}
+				{ CompareFunction.Always,	StencilFunction.Always },
+				{ CompareFunction.Equal,	StencilFunction.Equal },
+				{ CompareFunction.Greater,	StencilFunction.Greater },
+				{ CompareFunction.GreaterEqual,	StencilFunction.Gequal },
+				{ CompareFunction.Less,		StencilFunction.Less },
+				{ CompareFunction.LessEqual,	StencilFunction.Lequal },
+				{ CompareFunction.Never,	StencilFunction.Never },
+				{ CompareFunction.NotEqual,	StencilFunction.Notequal }
+			};
 
-			public static Dictionary<StencilOperation, StencilOp> GLStencilOp
+			public static readonly Dictionary<StencilOperation, StencilOp> GLStencilOp = new Dictionary<StencilOperation, StencilOp>()
 			{
-				get;
-				private set;
-			}
+				{ StencilOperation.Decrement,		StencilOp.DecrWrap },
+				{ StencilOperation.DecrementSaturation,	StencilOp.Decr },
+				{ StencilOperation.Increment,		StencilOp.IncrWrap },
+				{ StencilOperation.IncrementSaturation,	StencilOp.Incr },
+				{ StencilOperation.Invert,		StencilOp.Invert },
+				{ StencilOperation.Keep,		StencilOp.Keep },
+				{ StencilOperation.Replace,		StencilOp.Replace },
+				{ StencilOperation.Zero,		StencilOp.Zero }
+			};
 
-			public static Dictionary<CullMode, FrontFaceDirection> FrontFace
+			public static readonly Dictionary<CullMode, FrontFaceDirection> FrontFace = new Dictionary<CullMode, FrontFaceDirection>()
 			{
-				get;
-				private set;
-			}
+				{ CullMode.CullClockwiseFace,		FrontFaceDirection.Cw },
+				{ CullMode.CullCounterClockwiseFace,	FrontFaceDirection.Ccw }
+			};
 
-			public static Dictionary<FillMode, PolygonMode> GLFillMode
+			public static readonly Dictionary<FillMode, PolygonMode> GLFillMode = new Dictionary<FillMode, PolygonMode>()
 			{
-				get;
-				private set;
-			}
+				{ FillMode.Solid,	PolygonMode.Fill },
+				{ FillMode.WireFrame,	PolygonMode.Line }
+			};
 
-			public static Dictionary<TextureAddressMode, TextureWrapMode> Wrap
+			public static readonly Dictionary<TextureAddressMode, TextureWrapMode> Wrap = new Dictionary<TextureAddressMode, TextureWrapMode>()
 			{
-				get;
-				private set;
-			}
+				{ TextureAddressMode.Clamp,	TextureWrapMode.ClampToEdge },
+				{ TextureAddressMode.Mirror,	TextureWrapMode.MirroredRepeat },
+				{ TextureAddressMode.Wrap,	TextureWrapMode.Repeat }
+			};
 
-			public static Dictionary<TextureFilter, TextureMagFilter> MagFilter
+			public static readonly Dictionary<TextureFilter, TextureMagFilter> MagFilter = new Dictionary<TextureFilter, TextureMagFilter>()
 			{
-				get;
-				private set;
-			}
+				{ TextureFilter.Point,				TextureMagFilter.Nearest },
+				{ TextureFilter.Linear,				TextureMagFilter.Linear },
+				{ TextureFilter.Anisotropic,			TextureMagFilter.Linear },
+				{ TextureFilter.LinearMipPoint,			TextureMagFilter.Linear },
+				{ TextureFilter.MinPointMagLinearMipPoint,	TextureMagFilter.Linear },
+				{ TextureFilter.MinPointMagLinearMipLinear,	TextureMagFilter.Linear },
+				{ TextureFilter.MinLinearMagPointMipPoint,	TextureMagFilter.Nearest },
+				{ TextureFilter.MinLinearMagPointMipLinear,	TextureMagFilter.Nearest }
+			};
 
-			public static Dictionary<TextureFilter, TextureMinFilter> MinMipFilter
+			public static readonly Dictionary<TextureFilter, TextureMinFilter> MinMipFilter = new Dictionary<TextureFilter, TextureMinFilter>()
 			{
-				get;
-				private set;
-			}
+				{ TextureFilter.Point,				TextureMinFilter.NearestMipmapNearest },
+				{ TextureFilter.Linear,				TextureMinFilter.LinearMipmapLinear },
+				{ TextureFilter.Anisotropic,			TextureMinFilter.LinearMipmapLinear },
+				{ TextureFilter.LinearMipPoint,			TextureMinFilter.LinearMipmapNearest },
+				{ TextureFilter.MinPointMagLinearMipPoint,	TextureMinFilter.NearestMipmapNearest },
+				{ TextureFilter.MinPointMagLinearMipLinear,	TextureMinFilter.NearestMipmapLinear },
+				{ TextureFilter.MinLinearMagPointMipPoint,	TextureMinFilter.LinearMipmapNearest },
+				{ TextureFilter.MinLinearMagPointMipLinear,	TextureMinFilter.LinearMipmapLinear }
+			};
 
-			public static Dictionary<TextureFilter, TextureMinFilter> MinFilter
+			public static readonly Dictionary<TextureFilter, TextureMinFilter> MinFilter = new Dictionary<TextureFilter, TextureMinFilter>()
 			{
-				get;
-				private set;
-			}
+				{ TextureFilter.Point,				TextureMinFilter.Nearest },
+				{ TextureFilter.Linear,				TextureMinFilter.Linear },
+				{ TextureFilter.Anisotropic,			TextureMinFilter.Linear },
+				{ TextureFilter.LinearMipPoint,			TextureMinFilter.Linear },
+				{ TextureFilter.MinPointMagLinearMipPoint,	TextureMinFilter.Nearest },
+				{ TextureFilter.MinPointMagLinearMipLinear,	TextureMinFilter.Nearest },
+				{ TextureFilter.MinLinearMagPointMipPoint,	TextureMinFilter.Linear },
+				{ TextureFilter.MinLinearMagPointMipLinear,	TextureMinFilter.Linear }
+			};
 
-			public static Dictionary<DepthFormat, FramebufferAttachment> DepthStencilAttachment
+			public static readonly Dictionary<DepthFormat, FramebufferAttachment> DepthStencilAttachment = new Dictionary<DepthFormat, FramebufferAttachment>()
 			{
-				get;
-				private set;
-			}
-
-			public static void Initialize()
-			{
-				/* Ideally we would be using arrays, rather than Dictionaries.
-				 * The problem is that we don't support every enum, and dealing
-				 * with gaps would be a headache. So whatever, Dictionaries!
-				 * -flibit
-				 */
-
-				BlendModeSrc = new Dictionary<Blend, BlendingFactorSrc>();
-				BlendModeSrc.Add(Blend.DestinationAlpha,	BlendingFactorSrc.DstAlpha);
-				BlendModeSrc.Add(Blend.DestinationColor,	BlendingFactorSrc.DstColor);
-				BlendModeSrc.Add(Blend.InverseDestinationAlpha, BlendingFactorSrc.OneMinusDstAlpha);
-				BlendModeSrc.Add(Blend.InverseDestinationColor, BlendingFactorSrc.OneMinusDstColor);
-				BlendModeSrc.Add(Blend.InverseSourceAlpha,	BlendingFactorSrc.OneMinusSrcAlpha);
-				BlendModeSrc.Add(Blend.InverseSourceColor,	(BlendingFactorSrc) All.OneMinusSrcColor); // Why -flibit
-				BlendModeSrc.Add(Blend.One,			BlendingFactorSrc.One);
-				BlendModeSrc.Add(Blend.SourceAlpha,		BlendingFactorSrc.SrcAlpha);
-				BlendModeSrc.Add(Blend.SourceAlphaSaturation,	BlendingFactorSrc.SrcAlphaSaturate);
-				BlendModeSrc.Add(Blend.SourceColor,		(BlendingFactorSrc) All.SrcColor); // Why -flibit
-				BlendModeSrc.Add(Blend.Zero,			BlendingFactorSrc.Zero);
-
-				BlendModeDst = new Dictionary<Blend, BlendingFactorDest>();
-				BlendModeDst.Add(Blend.DestinationAlpha,	BlendingFactorDest.DstAlpha);
-				BlendModeDst.Add(Blend.InverseDestinationAlpha,	BlendingFactorDest.OneMinusDstAlpha);
-				BlendModeDst.Add(Blend.InverseSourceAlpha,	BlendingFactorDest.OneMinusSrcAlpha);
-				BlendModeDst.Add(Blend.InverseSourceColor,	BlendingFactorDest.OneMinusSrcColor);
-				BlendModeDst.Add(Blend.One,			BlendingFactorDest.One);
-				BlendModeDst.Add(Blend.SourceAlpha,		BlendingFactorDest.SrcAlpha);
-				BlendModeDst.Add(Blend.SourceColor,		BlendingFactorDest.SrcColor);
-				BlendModeDst.Add(Blend.Zero,			BlendingFactorDest.Zero);
-
-				BlendEquation = new Dictionary<BlendFunction, BlendEquationMode>();
-				BlendEquation.Add(BlendFunction.Add,			BlendEquationMode.FuncAdd);
-				BlendEquation.Add(BlendFunction.Max,			BlendEquationMode.Max);
-				BlendEquation.Add(BlendFunction.Min,			BlendEquationMode.Min);
-				BlendEquation.Add(BlendFunction.ReverseSubtract,	BlendEquationMode.FuncReverseSubtract);
-				BlendEquation.Add(BlendFunction.Subtract,		BlendEquationMode.FuncSubtract);
-
-				DepthFunc = new Dictionary<CompareFunction, DepthFunction>();
-				DepthFunc.Add(CompareFunction.Always,		DepthFunction.Always);
-				DepthFunc.Add(CompareFunction.Equal,		DepthFunction.Equal);
-				DepthFunc.Add(CompareFunction.Greater,		DepthFunction.Greater);
-				DepthFunc.Add(CompareFunction.GreaterEqual,	DepthFunction.Gequal);
-				DepthFunc.Add(CompareFunction.Less,		DepthFunction.Less);
-				DepthFunc.Add(CompareFunction.LessEqual,	DepthFunction.Lequal);
-				DepthFunc.Add(CompareFunction.Never,		DepthFunction.Never);
-				DepthFunc.Add(CompareFunction.NotEqual,		DepthFunction.Notequal);
-
-				StencilFunc = new Dictionary<CompareFunction, StencilFunction>();
-				StencilFunc.Add(CompareFunction.Always,		StencilFunction.Always);
-				StencilFunc.Add(CompareFunction.Equal,		StencilFunction.Equal);
-				StencilFunc.Add(CompareFunction.Greater,	StencilFunction.Greater);
-				StencilFunc.Add(CompareFunction.GreaterEqual,	StencilFunction.Gequal);
-				StencilFunc.Add(CompareFunction.Less,		StencilFunction.Less);
-				StencilFunc.Add(CompareFunction.LessEqual,	StencilFunction.Lequal);
-				StencilFunc.Add(CompareFunction.Never,		StencilFunction.Never);
-				StencilFunc.Add(CompareFunction.NotEqual,	StencilFunction.Notequal);
-
-				GLStencilOp = new Dictionary<StencilOperation, StencilOp>();
-				GLStencilOp.Add(StencilOperation.Decrement,		StencilOp.DecrWrap);
-				GLStencilOp.Add(StencilOperation.DecrementSaturation,	StencilOp.Decr);
-				GLStencilOp.Add(StencilOperation.Increment,		StencilOp.IncrWrap);
-				GLStencilOp.Add(StencilOperation.IncrementSaturation,	StencilOp.Incr);
-				GLStencilOp.Add(StencilOperation.Invert,		StencilOp.Invert);
-				GLStencilOp.Add(StencilOperation.Keep,			StencilOp.Keep);
-				GLStencilOp.Add(StencilOperation.Replace,		StencilOp.Replace);
-				GLStencilOp.Add(StencilOperation.Zero,			StencilOp.Zero);
-
-				FrontFace = new Dictionary<CullMode, FrontFaceDirection>();
-				FrontFace.Add(CullMode.CullClockwiseFace,		FrontFaceDirection.Cw);
-				FrontFace.Add(CullMode.CullCounterClockwiseFace,	FrontFaceDirection.Ccw);
-
-				GLFillMode = new Dictionary<FillMode, PolygonMode>();
-				GLFillMode.Add(FillMode.Solid,		PolygonMode.Fill);
-				GLFillMode.Add(FillMode.WireFrame,	PolygonMode.Line);
-
-				Wrap = new Dictionary<TextureAddressMode, TextureWrapMode>();
-				Wrap.Add(TextureAddressMode.Clamp,	TextureWrapMode.ClampToEdge);
-				Wrap.Add(TextureAddressMode.Mirror,	TextureWrapMode.MirroredRepeat);
-				Wrap.Add(TextureAddressMode.Wrap,	TextureWrapMode.Repeat);
-
-				MagFilter = new Dictionary<TextureFilter, TextureMagFilter>();
-				MagFilter.Add(TextureFilter.Point,			TextureMagFilter.Nearest);
-				MagFilter.Add(TextureFilter.Linear,			TextureMagFilter.Linear);
-				MagFilter.Add(TextureFilter.Anisotropic,		TextureMagFilter.Linear);
-				MagFilter.Add(TextureFilter.LinearMipPoint,		TextureMagFilter.Linear);
-				MagFilter.Add(TextureFilter.MinPointMagLinearMipPoint,	TextureMagFilter.Linear);
-				MagFilter.Add(TextureFilter.MinPointMagLinearMipLinear,	TextureMagFilter.Linear);
-				MagFilter.Add(TextureFilter.MinLinearMagPointMipPoint,	TextureMagFilter.Nearest);
-				MagFilter.Add(TextureFilter.MinLinearMagPointMipLinear,	TextureMagFilter.Nearest);
-
-				MinMipFilter = new Dictionary<TextureFilter, TextureMinFilter>();
-				MinMipFilter.Add(TextureFilter.Point,				TextureMinFilter.NearestMipmapNearest);
-				MinMipFilter.Add(TextureFilter.Linear,				TextureMinFilter.LinearMipmapLinear);
-				MinMipFilter.Add(TextureFilter.Anisotropic,			TextureMinFilter.LinearMipmapLinear);
-				MinMipFilter.Add(TextureFilter.LinearMipPoint,			TextureMinFilter.LinearMipmapNearest);
-				MinMipFilter.Add(TextureFilter.MinPointMagLinearMipPoint,	TextureMinFilter.NearestMipmapNearest);
-				MinMipFilter.Add(TextureFilter.MinPointMagLinearMipLinear,	TextureMinFilter.NearestMipmapLinear);
-				MinMipFilter.Add(TextureFilter.MinLinearMagPointMipPoint,	TextureMinFilter.LinearMipmapNearest);
-				MinMipFilter.Add(TextureFilter.MinLinearMagPointMipLinear,	TextureMinFilter.LinearMipmapLinear);
-
-				MinFilter = new Dictionary<TextureFilter, TextureMinFilter>();
-				MinFilter.Add(TextureFilter.Point,			TextureMinFilter.Nearest);
-				MinFilter.Add(TextureFilter.Linear,			TextureMinFilter.Linear);
-				MinFilter.Add(TextureFilter.Anisotropic,		TextureMinFilter.Linear);
-				MinFilter.Add(TextureFilter.LinearMipPoint,		TextureMinFilter.Linear);
-				MinFilter.Add(TextureFilter.MinPointMagLinearMipPoint,	TextureMinFilter.Nearest);
-				MinFilter.Add(TextureFilter.MinPointMagLinearMipLinear,	TextureMinFilter.Nearest);
-				MinFilter.Add(TextureFilter.MinLinearMagPointMipPoint,	TextureMinFilter.Linear);
-				MinFilter.Add(TextureFilter.MinLinearMagPointMipLinear,	TextureMinFilter.Linear);
-
-				DepthStencilAttachment = new Dictionary<DepthFormat, FramebufferAttachment>();
-				DepthStencilAttachment.Add(DepthFormat.Depth16,		FramebufferAttachment.DepthAttachment);
-				DepthStencilAttachment.Add(DepthFormat.Depth24,		FramebufferAttachment.DepthAttachment);
-				DepthStencilAttachment.Add(DepthFormat.Depth24Stencil8,	FramebufferAttachment.DepthStencilAttachment);
-			}
-
-			public static void Clear()
-			{
-				BlendModeSrc.Clear();
-				BlendModeSrc = null;
-				BlendModeDst.Clear();
-				BlendModeDst = null;
-				BlendEquation.Clear();
-				BlendEquation = null;
-				DepthFunc.Clear();
-				DepthFunc = null;
-				StencilFunc.Clear();
-				StencilFunc = null;
-				GLStencilOp.Clear();
-				GLStencilOp = null;
-				FrontFace.Clear();
-				FrontFace = null;
-				GLFillMode.Clear();
-				GLFillMode = null;
-				Wrap.Clear();
-				Wrap = null;
-				MagFilter.Clear();
-				MagFilter = null;
-				MinMipFilter.Clear();
-				MinMipFilter = null;
-				DepthStencilAttachment.Clear();
-				DepthStencilAttachment = null;
-			}
+				{ DepthFormat.Depth16,		FramebufferAttachment.DepthAttachment },
+				{ DepthFormat.Depth24,		FramebufferAttachment.DepthAttachment },
+				{ DepthFormat.Depth24Stencil8,	FramebufferAttachment.DepthStencilAttachment }
+			};
 		}
 
 		#endregion
