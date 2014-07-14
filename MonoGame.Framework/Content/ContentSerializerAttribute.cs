@@ -13,11 +13,6 @@ using System;
 
 namespace Microsoft.Xna.Framework.Content
 {
-	/* http://msdn.microsoft.com/en-us/library/microsoft.xna.framework.content.contentserializerattribute.aspx
-	 * The class definition on msdn site shows: [AttributeUsageAttribute(384)]
-	 * The following code var ff = (AttributeTargets)384; shows that ff is Field | Property
-	 * so that is what we use.
-	 */
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
 	public sealed class ContentSerializerAttribute : Attribute
 	{
@@ -25,116 +20,97 @@ namespace Microsoft.Xna.Framework.Content
 
 		public bool AllowNull
 		{
-			get
-			{
-				return this.allowNull;
-			}
-			set
-			{
-				this.allowNull = value;
-			}
+			get;
+			set;
 		}
 
+		/// <summary>
+		/// Returns the overriden XML element name or the default "Item".
+		/// </summary>
 		public string CollectionItemName
 		{
 			get
 			{
-				return this.collectionItemName;
+				// Return the default if unset.
+				if (string.IsNullOrEmpty(collectionItemName))
+				{
+					return "Item";
+				}
+
+				return collectionItemName;
 			}
 			set
 			{
-				this.collectionItemName = value;
+				collectionItemName = value;
 			}
 		}
 
 		public string ElementName
 		{
-			get
-			{
-				return this.elementName;
-			}
-			set
-			{
-				this.elementName = value;
-			}
+			get;
+			set;
 		}
 
 		public bool FlattenContent
 		{
-			get
-			{
-				return this.flattenContent;
-			}
-			set
-			{
-				this.flattenContent = value;
-			}
+			get;
+			set;
 		}
 
+		/// <summary>
+		/// Returns true if the default CollectionItemName value was overridden.
+		/// </summary>
 		public bool HasCollectionItemName
 		{
 			get
 			{
-				return this.hasCollectionItemName;
+				return !string.IsNullOrEmpty(collectionItemName);
 			}
 		}
 
 		public bool Optional
 		{
-			get
-			{
-				return this.optional;
-			}
-			set
-			{
-				this.optional = value;
-			}
+			get;
+			set;
 		}
 
 		public bool SharedResource
 		{
-			get{
-				return this.sharedResource;
-			}
-			set{
-				this.sharedResource = value;
-			}
+			get;
+			set;
 		}
 
 		#endregion
 
 		#region Private Variables
 
-		private bool allowNull;
 		private string collectionItemName;
-		private string elementName;
-		private bool flattenContent;
-		private bool hasCollectionItemName;
-		private bool optional;
-		private bool sharedResource;
 
 		#endregion
 
 		#region Public Constructor
 
+		/// <summary>
+		/// Creates an instance of the attribute.
+		/// </summary>
 		public ContentSerializerAttribute()
 		{
+			AllowNull = true;
 		}
 
 		#endregion
 
-		#region Public Methods
+		#region Public Clone Method
 
 		public ContentSerializerAttribute Clone()
 		{
 			ContentSerializerAttribute clone = new ContentSerializerAttribute();
-			clone.allowNull = this.allowNull;
-			clone.collectionItemName = this.collectionItemName;
-			clone.elementName = this.elementName;
-			clone.flattenContent = this.flattenContent;
-			clone.hasCollectionItemName = this.hasCollectionItemName;
-			clone.optional = this.optional;
-			clone.sharedResource = this.sharedResource;
+			clone.AllowNull = AllowNull;
+			clone.collectionItemName = collectionItemName;
+			clone.ElementName = ElementName;
+			clone.FlattenContent = FlattenContent;
+			clone.Optional = Optional;
+			clone.SharedResource = SharedResource;
 			return clone;
 		}
 

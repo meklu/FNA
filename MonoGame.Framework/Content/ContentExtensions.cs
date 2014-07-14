@@ -47,7 +47,7 @@ namespace Microsoft.Xna.Framework.Content
 			);
 			List<PropertyInfo> allProps = type.GetProperties(attrs).ToList();
 			PropertyInfo[] props = allProps.FindAll(
-				p => p.GetGetMethod(true) == p.GetGetMethod(true).GetBaseDefinition()
+				p => p.GetGetMethod(true) != null && p.GetGetMethod(true) == p.GetGetMethod(true).GetBaseDefinition()
 			).ToArray();
 			return props;
 		}
