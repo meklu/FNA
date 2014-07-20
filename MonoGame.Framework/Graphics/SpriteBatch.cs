@@ -157,7 +157,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			_matrix = transformMatrix;
 
-			// Setup things now so a user can chage them.
+			// Setup things now so a user can change them.
 			if (sortMode == SpriteSortMode.Immediate)
 			{
 				Setup();
