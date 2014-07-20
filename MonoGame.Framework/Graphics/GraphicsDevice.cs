@@ -749,7 +749,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region DrawPrimitives: VertexBuffer and IndexBuffer
+		#region DrawPrimitives: VertexBuffer, IndexBuffer
 
 		/// <summary>
 		/// Draw geometry by indexing into the vertex buffer.
@@ -870,60 +870,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region DrawPrimitives: Vertex Arrays, No Indices
-
-		public void DrawUserPrimitives<T>(
-			PrimitiveType primitiveType,
-			T[] vertexData,
-			int vertexOffset,
-			int primitiveCount
-		) where T : struct, IVertexType {
-			DrawUserPrimitives(
-				primitiveType,
-				vertexData,
-				vertexOffset,
-				primitiveCount,
-				VertexDeclarationCache<T>.VertexDeclaration
-			);
-		}
-
-		public void DrawUserPrimitives<T>(
-			PrimitiveType primitiveType,
-			T[] vertexData,
-			int vertexOffset,
-			int primitiveCount,
-			VertexDeclaration vertexDeclaration
-		) where T : struct {
-			// Flush the GL state before moving on!
-			ApplyState();
-
-			// Unbind current VBOs.
-			GLDevice.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
-
-			// Pin the buffers.
-			GCHandle vbHandle = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
-
-			// Setup the vertex declaration to point at the VB data.
-			vertexDeclaration.GraphicsDevice = this;
-			vertexDeclaration.Apply(VertexShader, vbHandle.AddrOfPinnedObject());
-
-			// Enable the appropriate vertex attributes.
-			GLDevice.FlushGLVertexAttributes();
-
-			// Draw!
-			GL.DrawArrays(
-				PrimitiveTypeGL(primitiveType),
-				vertexOffset,
-				GetElementCountArray(primitiveType, primitiveCount)
-			);
-
-			// Release the handles.
-			vbHandle.Free();
-		}
-
-		#endregion
-
-		#region DrawPrimitives: Vertex Buffer, No Indices
+		#region DrawPrimitives: VertexBuffer, No Indices
 
 		public void DrawPrimitives(PrimitiveType primitiveType, int vertexStart, int primitiveCount)
 		{
@@ -1089,6 +1036,59 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			// Release the handles.
 			ibHandle.Free();
+			vbHandle.Free();
+		}
+
+		#endregion
+
+		#region DrawPrimitives: Vertex Arrays, No Indices
+
+		public void DrawUserPrimitives<T>(
+			PrimitiveType primitiveType,
+			T[] vertexData,
+			int vertexOffset,
+			int primitiveCount
+		) where T : struct, IVertexType {
+			DrawUserPrimitives(
+				primitiveType,
+				vertexData,
+				vertexOffset,
+				primitiveCount,
+				VertexDeclarationCache<T>.VertexDeclaration
+			);
+		}
+
+		public void DrawUserPrimitives<T>(
+			PrimitiveType primitiveType,
+			T[] vertexData,
+			int vertexOffset,
+			int primitiveCount,
+			VertexDeclaration vertexDeclaration
+		) where T : struct {
+			// Flush the GL state before moving on!
+			ApplyState();
+
+			// Unbind current VBOs.
+			GLDevice.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
+
+			// Pin the buffers.
+			GCHandle vbHandle = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
+
+			// Setup the vertex declaration to point at the VB data.
+			vertexDeclaration.GraphicsDevice = this;
+			vertexDeclaration.Apply(VertexShader, vbHandle.AddrOfPinnedObject());
+
+			// Enable the appropriate vertex attributes.
+			GLDevice.FlushGLVertexAttributes();
+
+			// Draw!
+			GL.DrawArrays(
+				PrimitiveTypeGL(primitiveType),
+				vertexOffset,
+				GetElementCountArray(primitiveType, primitiveCount)
+			);
+
+			// Release the handles.
 			vbHandle.Free();
 		}
 
