@@ -450,6 +450,7 @@ namespace Microsoft.Xna.Framework
 			}
 
 			BeginRun();
+			_gameTimer = Stopwatch.StartNew();
 
 			// FIXME: Not quite right..
 			Tick();

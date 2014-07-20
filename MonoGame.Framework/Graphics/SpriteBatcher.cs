@@ -108,7 +108,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		/// sets that do not overflow the 16 bit array indices for vertices.
 		/// </summary>
 		/// <param name="sortMode">The type of depth sorting desired for the rendering.</param>
-		public void DrawBatch(SpriteSortMode sortMode)
+		public void DrawBatch(SpriteSortMode sortMode, EffectPass prePass, Effect effect = null)
 		{
 			// Nothing to do
 			if (_batchItemList.Count == 0)
@@ -155,7 +155,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					bool shouldFlush = !ReferenceEquals(item.Texture, tex);
 					if (shouldFlush)
 					{
-						FlushVertexArray(startIndex, index);
+						FlushVertexArray(startIndex, index, prePass, effect);
 
 						tex = item.Texture;
 						startIndex = index = 0;
@@ -173,7 +173,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					_freeBatchItemQueue.Enqueue(item);
 				}
 				// Flush the remaining vertexArray data
-				FlushVertexArray(startIndex, index);
+				FlushVertexArray(startIndex, index, prePass, effect);
 
 				/* Update our batch count to continue the process of culling down
 				 * large batches
@@ -244,7 +244,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		/// End index of vertices to draw. Not used except to compute the count of vertices
 		/// to draw.
 		/// </param>
-		private void FlushVertexArray(int start, int end)
+		private void FlushVertexArray(int start, int end, EffectPass prePass, Effect effect)
 		{
 			if (start == end)
 			{
@@ -253,16 +253,38 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			int vertexCount = end - start;
 
-			_device.DrawUserIndexedPrimitives(
-				PrimitiveType.TriangleList,
-				_vertexArray,
-				0,
-				vertexCount,
-				_index,
-				0,
-				(vertexCount / 4) * 2,
-				VertexPositionColorTexture.VertexDeclaration
-			);
+			if (effect != null)
+			{
+				foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+				{
+					prePass.Apply();
+					pass.Apply();
+					_device.DrawUserIndexedPrimitives(
+						PrimitiveType.TriangleList,
+						_vertexArray,
+						0,
+						vertexCount,
+						_index,
+						0,
+						(vertexCount / 4) * 2,
+						VertexPositionColorTexture.VertexDeclaration
+					);
+				}
+			}
+			else
+			{
+				prePass.Apply();
+				_device.DrawUserIndexedPrimitives(
+					PrimitiveType.TriangleList,
+					_vertexArray,
+					0,
+					vertexCount,
+					_index,
+					0,
+					(vertexCount / 4) * 2,
+					VertexPositionColorTexture.VertexDeclaration
+				);
+			}
 		}
 
 		#endregion

@@ -175,7 +175,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				Setup();
 			}
 
-			_batcher.DrawBatch(_sortMode);
+			_batcher.DrawBatch(_sortMode, _spritePass, _effect);
 		}
 
 		#endregion
@@ -685,7 +685,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (_sortMode == SpriteSortMode.Immediate)
 			{
-				_batcher.DrawBatch(_sortMode);
+				_batcher.DrawBatch(_sortMode, _spritePass, _effect);
 			}
 		}
 
@@ -732,15 +732,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			Matrix.Multiply(ref _matrix, ref projection, out projection);
 
 			_matrixTransform.SetValue(projection);
-			_spritePass.Apply();
-
-			/* If the user supplied a custom effect then apply
-			 * it now to override the sprite effect.
-			 */
-			if (_effect != null)
-			{
-				_effect.CurrentTechnique.Passes[0].Apply();
-			}
 		}
 
 		void CheckValid(Texture2D texture)
