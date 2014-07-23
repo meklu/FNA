@@ -135,7 +135,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				GraphicsDevice.AddDisposeAction(() =>
 				{
-					GraphicsDevice.GLDevice.DeleteIndexBuffer(Handle);
+					Game.Instance.GraphicsDevice.GLDevice.DeleteIndexBuffer(Handle);
 					Handle = null;
 				});
 			}

@@ -61,7 +61,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				GraphicsDevice.AddDisposeAction(() =>
 				{
-					GraphicsDevice.GLDevice.DeleteTexture(texture);
+					Game.Instance.GraphicsDevice.GLDevice.DeleteTexture(texture);
 				});
 			}
 			base.Dispose(disposing);
