@@ -808,7 +808,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL.DrawRangeElements(
 				PrimitiveTypeGL(primitiveType),
 				minVertexIndex,
-				minVertexIndex + numVertices,
+				minVertexIndex + numVertices - 1,
 				GetElementCountArray(primitiveType, primitiveCount),
 				shortIndices ? DrawElementsType.UnsignedShort : DrawElementsType.UnsignedInt,
 				(IntPtr) (startIndex * (shortIndices ? 2 : 4))
@@ -961,7 +961,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL.DrawRangeElements(
 				PrimitiveTypeGL(primitiveType),
 				0,
-				numVertices,
+				numVertices - 1,
 				GetElementCountArray(primitiveType, primitiveCount),
 				DrawElementsType.UnsignedShort,
 				(IntPtr) (ibHandle.AddrOfPinnedObject().ToInt64() + (indexOffset * sizeof(short)))
@@ -1028,7 +1028,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL.DrawRangeElements(
 				PrimitiveTypeGL(primitiveType),
 				0,
-				numVertices,
+				numVertices - 1,
 				GetElementCountArray(primitiveType, primitiveCount),
 				DrawElementsType.UnsignedInt,
 				(IntPtr) (ibHandle.AddrOfPinnedObject().ToInt64() + (indexOffset * sizeof(int)))
