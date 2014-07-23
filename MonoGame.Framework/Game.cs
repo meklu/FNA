@@ -46,6 +46,13 @@ namespace Microsoft.Xna.Framework
 			}
 			set
 			{
+				if (value < TimeSpan.Zero)
+				{
+					throw new ArgumentOutOfRangeException(
+						"The time must be positive.",
+						default(Exception)
+					);
+				}
 				if (_inactiveSleepTime != value)
 				{
 					_inactiveSleepTime = value;
@@ -89,7 +96,8 @@ namespace Microsoft.Xna.Framework
 				if (value <= TimeSpan.Zero)
 				{
 					throw new ArgumentOutOfRangeException(
-						"value must be positive and non-zero."
+						"The time must be positive and non-zero.",
+						default(Exception)
 					);
 				}
 
@@ -123,8 +131,18 @@ namespace Microsoft.Xna.Framework
 
 		public ContentManager Content
 		{
-			get;
-			set;
+			get
+			{
+				return _content;
+			}
+			set
+			{
+				if (value == null)
+				{
+					throw new ArgumentNullException();
+				}
+				_content = value;
+			}
 		}
 
 		public GraphicsDevice GraphicsDevice
@@ -215,10 +233,9 @@ namespace Microsoft.Xna.Framework
 
 		#region Private Fields
 
-		private const float DefaultTargetFramesPerSecond = 60.0f;
-
 		private GameComponentCollection _components;
 		private GameServiceContainer _services;
+		private ContentManager _content;
 
 		private SortingFilteringCollection<IDrawable> _drawables =
 			new SortingFilteringCollection<IDrawable>(
@@ -246,12 +263,9 @@ namespace Microsoft.Xna.Framework
 		private bool _initialized = false;
 		private bool _isFixedTimeStep = true;
 
-		private TimeSpan _targetElapsedTime = TimeSpan.FromTicks(
-			(long) 10000000 /
-			(long) DefaultTargetFramesPerSecond
-		);
+		private TimeSpan _targetElapsedTime = TimeSpan.FromTicks(166667); // 60fps
 
-		private TimeSpan _inactiveSleepTime = TimeSpan.FromSeconds(1);
+		private TimeSpan _inactiveSleepTime = TimeSpan.FromSeconds(0.02);
 
 		private readonly TimeSpan _maxElapsedTime = TimeSpan.FromMilliseconds(500);
 
@@ -270,7 +284,7 @@ namespace Microsoft.Xna.Framework
 			LaunchParameters = new LaunchParameters();
 			_services = new GameServiceContainer();
 			_components = new GameComponentCollection();
-			Content = new ContentManager(_services);
+			_content = new ContentManager(_services);
 
 			Platform = GamePlatform.Create(this);
 			Platform.Activated += OnActivated;
@@ -344,10 +358,10 @@ namespace Microsoft.Xna.Framework
 					}
 					_components = null;
 
-					if (Content != null)
+					if (_content != null)
 					{
-						Content.Dispose();
-						Content = null;
+						_content.Dispose();
+						_content = null;
 					}
 
 
@@ -437,8 +451,7 @@ namespace Microsoft.Xna.Framework
 
 		public void RunOneFrame()
 		{
-			AssertNotDisposed();
-			if (!Platform.BeforeRun())
+			if (Platform == null || !Platform.BeforeRun())
 			{
 				return;
 			}
