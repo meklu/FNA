@@ -100,16 +100,38 @@ namespace Microsoft.Xna.Framework.Graphics
 			private set;
 		}
 
+		private BlendState INTERNAL_blendState;
 		public BlendState BlendState
 		{
-			get;
-			set;
+			get
+			{
+				return INTERNAL_blendState;
+			}
+			set
+			{
+				if (value != INTERNAL_blendState)
+				{
+					GLDevice.SetBlendState(value);
+					INTERNAL_blendState = value;
+				}
+			}
 		}
 
+		private DepthStencilState INTERNAL_depthStencilState;
 		public DepthStencilState DepthStencilState
 		{
-			get;
-			set;
+			get
+			{
+				return INTERNAL_depthStencilState;
+			}
+			set
+			{
+				if (value != INTERNAL_depthStencilState)
+				{
+					GLDevice.SetDepthStencilState(value);
+					INTERNAL_depthStencilState = value;
+				}
+			}
 		}
 
 		public RasterizerState RasterizerState
@@ -138,7 +160,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					value.Y = Viewport.Height - ScissorRectangle.Y - ScissorRectangle.Height;
 				}
 
-				GLDevice.ScissorRectangle.Set(value);
+				GLDevice.SetScissorRect(value);
 			}
 		}
 
@@ -162,9 +184,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					value.Y = PresentationParameters.BackBufferHeight - value.Y - value.Height;
 				}
 
-				GLDevice.GLViewport.Set(value.Bounds);
-				GLDevice.DepthRangeMin.Set(value.MinDepth);
-				GLDevice.DepthRangeMax.Set(value.MaxDepth);
+				GLDevice.SetViewport(value);
 
 				/* In OpenGL we have to re-apply the special "posFixup"
 				 * vertex shader uniform if the viewport changes.
@@ -397,10 +417,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			RasterizerState = RasterizerState.CullCounterClockwise;
 
 			// Initialize the Texture/Sampler state containers
-			Textures = new TextureCollection(GLDevice.MaxTextureSlots);
-			SamplerStates = new SamplerStateCollection(GLDevice.MaxTextureSlots);
-			Textures.Clear();
-			SamplerStates.Clear();
+			Textures = new TextureCollection(this);
+			SamplerStates = new SamplerStateCollection(this);
 
 			// Clear constant buffers
 			vertexConstantBuffers.Clear();
@@ -1136,65 +1154,11 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		private void ApplyState()
 		{
-			// Apply BlendState
-			GLDevice.AlphaBlendEnable.Set(
-				!(	BlendState.ColorSourceBlend == Blend.One &&
-					BlendState.ColorDestinationBlend == Blend.Zero &&
-					BlendState.AlphaSourceBlend == Blend.One &&
-					BlendState.AlphaDestinationBlend == Blend.Zero	)
+			// Apply RasterizerState now, as it depends on other device states
+			GLDevice.ApplyRasterizerState(
+				RasterizerState,
+				RenderTargetCount > 0
 			);
-			GLDevice.BlendColor.Set(BlendState.BlendFactor);
-			GLDevice.BlendOp.Set(BlendState.ColorBlendFunction);
-			GLDevice.BlendOpAlpha.Set(BlendState.AlphaBlendFunction);
-			GLDevice.SrcBlend.Set(BlendState.ColorSourceBlend);
-			GLDevice.DstBlend.Set(BlendState.ColorDestinationBlend);
-			GLDevice.SrcBlendAlpha.Set(BlendState.AlphaSourceBlend);
-			GLDevice.DstBlendAlpha.Set(BlendState.AlphaDestinationBlend);
-			GLDevice.ColorWriteEnable.Set(BlendState.ColorWriteChannels);
-
-			// Apply DepthStencilState
-			GLDevice.ZEnable.Set(DepthStencilState.DepthBufferEnable);
-			GLDevice.ZWriteEnable.Set(DepthStencilState.DepthBufferWriteEnable);
-			GLDevice.DepthFunc.Set(DepthStencilState.DepthBufferFunction);
-			GLDevice.StencilEnable.Set(DepthStencilState.StencilEnable);
-			GLDevice.StencilWriteMask.Set(DepthStencilState.StencilWriteMask);
-			GLDevice.SeparateStencilEnable.Set(DepthStencilState.TwoSidedStencilMode);
-			GLDevice.StencilRef.Set(DepthStencilState.ReferenceStencil);
-			GLDevice.StencilMask.Set(DepthStencilState.StencilMask);
-			GLDevice.StencilFunc.Set(DepthStencilState.StencilFunction);
-			GLDevice.CCWStencilFunc.Set(DepthStencilState.CounterClockwiseStencilFunction);
-			GLDevice.StencilFail.Set(DepthStencilState.StencilFail);
-			GLDevice.StencilZFail.Set(DepthStencilState.StencilDepthBufferFail);
-			GLDevice.StencilPass.Set(DepthStencilState.StencilPass);
-			GLDevice.CCWStencilFail.Set(DepthStencilState.CounterClockwiseStencilFail);
-			GLDevice.CCWStencilZFail.Set(DepthStencilState.CounterClockwiseStencilDepthBufferFail);
-			GLDevice.CCWStencilPass.Set(DepthStencilState.CounterClockwiseStencilPass);
-
-			// Apply RasterizerState
-			if (RenderTargetCount > 0)
-			{
-				GLDevice.CullFrontFace.Set(RasterizerState.CullMode);
-			}
-			else
-			{
-				// When not rendering offscreen the faces change order.
-				if (RasterizerState.CullMode == CullMode.None)
-				{
-					GLDevice.CullFrontFace.Set(RasterizerState.CullMode);
-				}
-				else
-				{
-					GLDevice.CullFrontFace.Set(
-						RasterizerState.CullMode == CullMode.CullClockwiseFace ?
-							CullMode.CullCounterClockwiseFace :
-							CullMode.CullClockwiseFace
-					);
-				}
-			}
-			GLDevice.GLFillMode.Set(RasterizerState.FillMode);
-			GLDevice.ScissorTestEnable.Set(RasterizerState.ScissorTestEnable);
-			GLDevice.DepthBias.Set(RasterizerState.DepthBias);
-			GLDevice.SlopeScaleDepthBias.Set(RasterizerState.SlopeScaleDepthBias);
 
 			// TODO: MSAA?
 
@@ -1215,33 +1179,6 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			vertexConstantBuffers.SetConstantBuffers(this, shaderProgram);
 			pixelConstantBuffers.SetConstantBuffers(this, shaderProgram);
-
-			// Apply Textures/Samplers
-			for (int i = 0; i < GLDevice.MaxTextureSlots; i += 1)
-			{
-				SamplerState sampler = SamplerStates[i];
-				Texture texture = Textures[i];
-
-				if (sampler != null && texture != null)
-				{
-					GLDevice.Samplers[i].Texture.Set(texture.texture);
-					GLDevice.Samplers[i].Target.Set(texture.texture.Target);
-					texture.texture.WrapS.Set(sampler.AddressU);
-					texture.texture.WrapT.Set(sampler.AddressV);
-					texture.texture.WrapR.Set(sampler.AddressW);
-					texture.texture.Filter.Set(sampler.Filter);
-					texture.texture.Anistropy.Set(sampler.MaxAnisotropy);
-					texture.texture.MaxMipmapLevel.Set(sampler.MaxMipLevel);
-					texture.texture.LODBias.Set(sampler.MipMapLevelOfDetailBias);
-				}
-				else if (texture == null)
-				{
-					GLDevice.Samplers[i].Texture.Set(OpenGLDevice.OpenGLTexture.NullTexture);
-				}
-			}
-
-			// Flush the GL state!
-			GLDevice.FlushGLState();
 		}
 
 		/// <summary>

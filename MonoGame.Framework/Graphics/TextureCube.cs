@@ -58,8 +58,8 @@ namespace Microsoft.Xna.Framework.Graphics
 					Format,
 					LevelCount > 1
 				);
-				texture.WrapS.Set(TextureAddressMode.Clamp);
-				texture.WrapT.Set(TextureAddressMode.Clamp);
+				texture.WrapS = TextureAddressMode.Clamp;
+				texture.WrapT = TextureAddressMode.Clamp;
 
 				GraphicsDevice.GLDevice.BindTexture(texture);
 				for (int i = 0; i < 6; i += 1)
@@ -83,7 +83,7 @@ namespace Microsoft.Xna.Framework.Graphics
 						);
 					}
 				}
-				texture.Flush(true);
+				texture.InitState();
 			});
 		}
 

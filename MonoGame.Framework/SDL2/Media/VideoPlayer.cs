@@ -221,8 +221,8 @@ namespace Microsoft.Xna.Framework.Media
 		private void GL_setupTargets(int width, int height)
 		{
 			// We're going to mess with sampler 0's texture.
-			TextureTarget prevTarget = currentDevice.GLDevice.Samplers[0].Target.GetCurrent();
-			int prevTexture = currentDevice.GLDevice.Samplers[0].Texture.GetCurrent().Handle;
+			TextureTarget prevTarget = currentDevice.GLDevice.Samplers[0].Target;
+			int prevTexture = currentDevice.GLDevice.Samplers[0].Texture.Handle;
 
 			// Attach the Texture2D to the framebuffer.
 			int prevReadFramebuffer = OpenGLDevice.Framebuffer.CurrentReadFramebuffer;
@@ -285,8 +285,8 @@ namespace Microsoft.Xna.Framework.Media
 			// Prep our samplers
 			for (int i = 0; i < 3; i += 1)
 			{
-				oldTargets[i] = currentDevice.GLDevice.Samplers[i].Target.GetCurrent();
-				oldTextures[i] = currentDevice.GLDevice.Samplers[i].Texture.GetCurrent().Handle;
+				oldTargets[i] = currentDevice.GLDevice.Samplers[i].Target;
+				oldTextures[i] = currentDevice.GLDevice.Samplers[i].Texture.Handle;
 				if (oldTargets[i] != TextureTarget.Texture2D)
 				{
 					GL.ActiveTexture(TextureUnit.Texture0 + i);
@@ -298,19 +298,19 @@ namespace Microsoft.Xna.Framework.Media
 			oldFramebuffer = OpenGLDevice.Framebuffer.CurrentDrawFramebuffer;
 
 			// Disable various GL options
-			if (currentDevice.GLDevice.AlphaBlendEnable.GetCurrent())
+			if (currentDevice.GLDevice.alphaBlendEnable)
 			{
 				GL.Disable(EnableCap.Blend);
 			}
-			if (currentDevice.GLDevice.ZEnable.GetCurrent())
+			if (currentDevice.GLDevice.zEnable)
 			{
 				GL.Disable(EnableCap.DepthTest);
 			}
-			if (currentDevice.GLDevice.CullFrontFace.GetCurrent() != CullMode.None)
+			if (currentDevice.GLDevice.cullFrontFace != CullMode.None)
 			{
 				GL.Disable(EnableCap.CullFace);
 			}
-			if (currentDevice.GLDevice.ScissorTestEnable.GetCurrent())
+			if (currentDevice.GLDevice.scissorTestEnable)
 			{
 				GL.Disable(EnableCap.ScissorTest);
 			}
@@ -319,7 +319,7 @@ namespace Microsoft.Xna.Framework.Media
 		private void GL_popState()
 		{
 			// Flush the viewport, reset.
-			Rectangle oldViewport = currentDevice.GLDevice.GLViewport.Flush();
+			Rectangle oldViewport = currentDevice.Viewport.Bounds;
 			GL.Viewport(
 				oldViewport.X,
 				oldViewport.Y,
@@ -348,19 +348,19 @@ namespace Microsoft.Xna.Framework.Media
 			OpenGLDevice.Framebuffer.BindDrawFramebuffer(oldFramebuffer);
 
 			// Flush various GL states, if applicable
-			if (currentDevice.GLDevice.ScissorTestEnable.Flush())
+			if (currentDevice.GLDevice.scissorTestEnable)
 			{
 				GL.Enable(EnableCap.ScissorTest);
 			}
-			if (currentDevice.GLDevice.CullFrontFace.GetCurrent() != CullMode.None)
+			if (currentDevice.GLDevice.cullFrontFace != CullMode.None)
 			{
 				GL.Enable(EnableCap.CullFace);
 			}
-			if (currentDevice.GLDevice.ZEnable.Flush())
+			if (currentDevice.GLDevice.zEnable)
 			{
 				GL.Enable(EnableCap.DepthTest);
 			}
-			if (currentDevice.GLDevice.AlphaBlendEnable.Flush())
+			if (currentDevice.GLDevice.alphaBlendEnable)
 			{
 				GL.Enable(EnableCap.Blend);
 			}

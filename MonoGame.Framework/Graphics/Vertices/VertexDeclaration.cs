@@ -103,7 +103,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			foreach (Element element in attrInfo)
 			{
 				GraphicsDevice.GLDevice.AttributeEnabled[element.AttributeLocation] = true;
-				GraphicsDevice.GLDevice.Attributes[element.AttributeLocation].Divisor.Set(divisor);
+				GraphicsDevice.GLDevice.Attributes[element.AttributeLocation].Divisor = divisor;
 				GraphicsDevice.GLDevice.VertexAttribPointer(
 					element.AttributeLocation,
 					element.NumberOfElements,

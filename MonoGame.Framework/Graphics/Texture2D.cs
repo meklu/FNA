@@ -88,8 +88,8 @@ namespace Microsoft.Xna.Framework.Graphics
 				);
 				if (((Width & (Width - 1)) != 0) || ((Height & (Height - 1)) != 0))
 				{
-					texture.WrapS.Set(TextureAddressMode.Clamp);
-					texture.WrapT.Set(TextureAddressMode.Clamp);
+					texture.WrapS = TextureAddressMode.Clamp;
+					texture.WrapT = TextureAddressMode.Clamp;
 				}
 				GraphicsDevice.GLDevice.BindTexture(texture);
 
@@ -122,7 +122,7 @@ namespace Microsoft.Xna.Framework.Graphics
 						IntPtr.Zero
 					);
 				}
-				texture.Flush(true);
+				texture.InitState();
 			});
 		}
 

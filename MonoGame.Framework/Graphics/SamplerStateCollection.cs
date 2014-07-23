@@ -22,6 +22,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			set
 			{
 				samplers[index] = value;
+				graphicsDevice.GLDevice.VerifySampler(
+					index,
+					graphicsDevice.Textures[index],
+					value
+				);
 			}
 		}
 
@@ -29,24 +34,17 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Private Variables
 
-		private SamplerState[] samplers;
+		private readonly SamplerState[] samplers;
+		private readonly GraphicsDevice graphicsDevice;
 
 		#endregion
 
 		#region Internal Constructor
 
-		internal SamplerStateCollection(int maxSamplers)
+		internal SamplerStateCollection(GraphicsDevice parentDevice)
 		{
-			samplers = new SamplerState[maxSamplers];
-			Clear();
-		}
-
-		#endregion
-
-		#region Internal Array Clear Method
-
-		internal void Clear()
-		{
+			samplers = new SamplerState[parentDevice.GLDevice.MaxTextureSlots];
+			graphicsDevice = parentDevice;
 			for (int i = 0; i < samplers.Length; i += 1)
 			{
 				samplers[i] = SamplerState.LinearWrap;

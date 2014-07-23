@@ -87,7 +87,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				glType,
 				IntPtr.Zero
 			);
-			texture.Flush(true);
+			texture.InitState();
 		}
 
 		#endregion

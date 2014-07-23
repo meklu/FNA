@@ -22,6 +22,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			set
 			{
 				textures[index] = value;
+				graphicsDevice.GLDevice.VerifySampler(
+					index,
+					textures[index],
+					graphicsDevice.SamplerStates[index]
+				);
 			}
 		}
 
@@ -30,22 +35,16 @@ namespace Microsoft.Xna.Framework.Graphics
 		#region Private Variables
 
 		private readonly Texture[] textures;
+		private GraphicsDevice graphicsDevice;
 
 		#endregion
 
 		#region Internal Constructor
 
-		internal TextureCollection(int maxTextures)
+		internal TextureCollection(GraphicsDevice parentDevice)
 		{
-			textures = new Texture[maxTextures];
-		}
-
-		#endregion
-
-		#region Internal Array Clear Method
-
-		internal void Clear()
-		{
+			textures = new Texture[parentDevice.GLDevice.MaxTextureSlots];
+			graphicsDevice = parentDevice;
 			for (int i = 0; i < textures.Length; i += 1)
 			{
 				textures[i] = null;
