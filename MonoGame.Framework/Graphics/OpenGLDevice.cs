@@ -282,12 +282,9 @@ namespace Microsoft.Xna.Framework.Graphics
 			public int CurrentStride;
 			public IntPtr CurrentPointer;
 
-			internal int curDivisor;
-
 			public OpenGLVertexAttribute()
 			{
 				Divisor = 0;
-				curDivisor = 0;
 				CurrentBuffer = 0;
 				CurrentSize = 4;
 				CurrentType = VertexAttribPointerType.Float;
@@ -398,6 +395,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		}
 
 		private bool[] previousAttributeEnabled;
+		private int[] previousAttributeDivisor;
 
 		#endregion
 
@@ -566,11 +564,13 @@ namespace Microsoft.Xna.Framework.Graphics
 			Attributes = new OpenGLVertexAttribute[numAttributes];
 			AttributeEnabled = new bool[numAttributes];
 			previousAttributeEnabled = new bool[numAttributes];
+			previousAttributeDivisor = new int[numAttributes];
 			for (int i = 0; i < numAttributes; i += 1)
 			{
 				Attributes[i] = new OpenGLVertexAttribute();
 				AttributeEnabled[i] = false;
 				previousAttributeEnabled[i] = false;
+				previousAttributeDivisor[i] = 0;
 			}
 			MaxVertexAttributes = numAttributes;
 
@@ -1057,10 +1057,10 @@ namespace Microsoft.Xna.Framework.Graphics
 					previousAttributeEnabled[i] = false;
 				}
 
-				if (Attributes[i].Divisor != Attributes[i].curDivisor)
+				if (Attributes[i].Divisor != previousAttributeDivisor[i])
 				{
-					Attributes[i].curDivisor = Attributes[i].Divisor;
 					GL.VertexAttribDivisor(i, Attributes[i].Divisor);
+					previousAttributeDivisor[i] = Attributes[i].Divisor;
 				}
 			}
 		}
