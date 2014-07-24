@@ -1467,9 +1467,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				GL.DepthMask(true);
 			}
-			if (stencilWriteMask != Int32.MaxValue)
+			if (stencilWriteMask != -1)
 			{
-				GL.StencilMask(Int32.MaxValue);
+				// AKA 0xFFFFFFFF, ugh -flibit
+				GL.StencilMask(-1);
 			}
 
 			// Get the clear mask, set the clear properties if needed
@@ -1519,7 +1520,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				GL.DepthMask(false);
 			}
-			if (stencilWriteMask != Int32.MaxValue)
+			if (stencilWriteMask != -1) // AKA 0xFFFFFFFF, ugh -flibit
 			{
 				GL.StencilMask(stencilWriteMask);
 			}
