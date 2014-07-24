@@ -431,7 +431,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			vertexShaderDirty = true;
 			pixelShaderDirty = true;
 
-			// Set the default scissor rect.
+			// Set the default viewport and scissor rect.
+			Viewport = new Viewport(PresentationParameters.Bounds);
 			ScissorRectangle = Viewport.Bounds;
 
 			// Free all the cached shader programs.
