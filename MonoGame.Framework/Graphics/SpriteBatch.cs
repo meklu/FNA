@@ -732,6 +732,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			Matrix.Multiply(ref _matrix, ref projection, out projection);
 
 			_matrixTransform.SetValue(projection);
+
+			if (_effect == null)
+			{
+				_spritePass.Apply();
+			}
 		}
 
 		void CheckValid(Texture2D texture)

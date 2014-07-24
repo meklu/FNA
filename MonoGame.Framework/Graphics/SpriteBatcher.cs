@@ -273,7 +273,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 			else
 			{
-				prePass.Apply();
 				_device.DrawUserIndexedPrimitives(
 					PrimitiveType.TriangleList,
 					_vertexArray,
