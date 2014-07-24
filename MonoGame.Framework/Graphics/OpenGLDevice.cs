@@ -369,7 +369,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			0
 		);
 		private float depthRangeMin = 0.0f;
-		private float depthRangeMax = 0.0f;
+		private float depthRangeMax = 1.0f;
 
 		#endregion
 
