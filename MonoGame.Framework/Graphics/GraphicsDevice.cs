@@ -467,6 +467,9 @@ namespace Microsoft.Xna.Framework.Graphics
 
 					// Free all the cached shader programs.
 					programCache.Dispose();
+
+					// Dispose of the GL Device/Context
+					GLDevice.Dispose();
 				}
 
 				IsDisposed = true;
