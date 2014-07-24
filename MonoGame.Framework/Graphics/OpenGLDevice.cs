@@ -663,7 +663,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					blendColor = blendState.BlendFactor;
 					GL.BlendColor(
 						blendColor.R / 255.0f,
-						blendColor.G/ 255.0f,
+						blendColor.G / 255.0f,
 						blendColor.B / 255.0f,
 						blendColor.A / 255.0f
 					);
@@ -897,9 +897,12 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (texture == null)
 			{
-				if (Samplers[index].Texture != null)
+				if (Samplers[index].Texture != OpenGLTexture.NullTexture)
 				{
-					GL.ActiveTexture(TextureUnit.Texture0 + index);
+					if (index != 0)
+					{
+						GL.ActiveTexture(TextureUnit.Texture0 + index);
+					}
 					GL.BindTexture(Samplers[index].Target, 0);
 					if (index != 0)
 					{
@@ -925,7 +928,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			// Set the active texture slot
-			GL.ActiveTexture(TextureUnit.Texture0 + index);
+			if (index != 0)
+			{
+				GL.ActiveTexture(TextureUnit.Texture0 + index);
+			}
 
 			// Bind the correct texture
 			if (texture.texture != Samplers[index].Texture)
