@@ -351,17 +351,22 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Viewport State Variables
 
+		/* These two aren't actually empty rects by default in OpenGL,
+		 * but we don't _really_ know the starting window size, so
+		 * force apply this when the GraphicsDevice is initialized.
+		 * -flibit
+		 */
 		private Rectangle scissorRectangle =  new Rectangle(
 			0,
 			0,
-			GraphicsDeviceManager.DefaultBackBufferWidth,
-			GraphicsDeviceManager.DefaultBackBufferHeight
+			0,
+			0
 		);
 		private Rectangle viewport = new Rectangle(
 			0,
 			0,
-			GraphicsDeviceManager.DefaultBackBufferWidth,
-			GraphicsDeviceManager.DefaultBackBufferHeight
+			0,
+			0
 		);
 		private float depthRangeMin = 0.0f;
 		private float depthRangeMax = 0.0f;
@@ -624,6 +629,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			if (vp.MinDepth != depthRangeMin || vp.MaxDepth != depthRangeMax)
 			{
+				depthRangeMin = vp.MinDepth;
+				depthRangeMax = vp.MaxDepth;
 				GL.DepthRange((double) depthRangeMin, (double) depthRangeMax);
 			}
 		}
