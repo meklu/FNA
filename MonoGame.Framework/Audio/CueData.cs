@@ -518,8 +518,8 @@ namespace Microsoft.Xna.Framework.Audio
 					if ((varFlags & 0x20) != 0x20)
 					{
 						// Throw out the volume variation.
-						minVolume = 0.0;
-						maxVolume = 0.0;
+						minVolume = clipVolume;
+						maxVolume = clipVolume;
 					}
 					if ((varFlags & 0x10) != 0x10)
 					{
