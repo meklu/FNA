@@ -424,7 +424,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					hasCurrentGlyph = true;
 				}
 
-				float proposedWidth = offset.X + currentGlyph.WidthIncludingBearings + Spacing;
+				float proposedWidth = offset.X + currentGlyph.WidthIncludingBearings; // FIXME: flibit + Spacing;
 				if (proposedWidth > width)
 				{
 					width = proposedWidth;
