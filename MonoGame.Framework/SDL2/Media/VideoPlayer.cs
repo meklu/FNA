@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 #if VIDEOPLAYER_OPENGL
+using System.Runtime.InteropServices;
+
 using OpenTK.Graphics.OpenGL;
 #endif
 
@@ -71,8 +73,24 @@ namespace Microsoft.Xna.Framework.Media
 		private int[] yuvTextures;
 		private int rgbaFramebuffer;
 
-		private float[] vert_pos;
-		private float[] vert_tex;
+		private static float[] vert_pos = new float[]
+		{
+			-1.0f,  1.0f,
+			 1.0f,  1.0f,
+			-1.0f, -1.0f,
+			 1.0f, -1.0f
+		};
+		private static float[] vert_tex = new float[]
+		{
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			0.0f, 0.0f,
+			1.0f, 0.0f
+		};
+		private static GCHandle vertPosArry = GCHandle.Alloc(vert_pos, GCHandleType.Pinned);
+		private static GCHandle vertTexArry = GCHandle.Alloc(vert_tex, GCHandleType.Pinned);
+		private static IntPtr vertPosPtr = vertPosArry.AddrOfPinnedObject();
+		private static IntPtr vertTexPtr = vertTexArry.AddrOfPinnedObject();
 
 		// Used to restore our previous GL state.
 		private int[] oldTextures;
@@ -96,22 +114,6 @@ namespace Microsoft.Xna.Framework.Media
 			// Create our pile of vertices.
 			vert_pos = new float[2 * 4]; // 2 dimensions * 4 vertices
 			vert_tex = new float[2 * 4];
-				vert_pos[0] = -1.0f;
-				vert_pos[1] =  1.0f;
-				vert_tex[0] =  0.0f;
-				vert_tex[1] =  1.0f;
-				vert_pos[2] =  1.0f;
-				vert_pos[3] =  1.0f;
-				vert_tex[2] =  1.0f;
-				vert_tex[3] =  1.0f;
-				vert_pos[4] = -1.0f;
-				vert_pos[5] = -1.0f;
-				vert_tex[4] =  0.0f;
-				vert_tex[5] =  0.0f;
-				vert_pos[6] =  1.0f;
-				vert_pos[7] = -1.0f;
-				vert_tex[6] =  1.0f;
-				vert_tex[7] =  0.0f;
 
 			// Create the vertex/fragment shaders.
 			int vshader_id = GL.CreateShader(ShaderType.VertexShader);
@@ -672,27 +674,33 @@ namespace Microsoft.Xna.Framework.Media
 			// Bind our shader program.
 			GL.UseProgram(shaderProgram);
 
+			// We're using client-side arrays like CAVEMEN
+			currentDevice.GLDevice.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
+
 			// Set up the vertex pointers/arrays.
-			currentDevice.GLDevice.Attributes[0].CurrentBuffer = int.MaxValue;
-			currentDevice.GLDevice.Attributes[1].CurrentBuffer = int.MaxValue;
-			GL.VertexAttribPointer(
+			currentDevice.GLDevice.AttributeEnabled[0] = true;
+			currentDevice.GLDevice.AttributeEnabled[1] = true;
+			for (int i = 2; i < currentDevice.GLDevice.MaxVertexAttributes; i += 1)
+			{
+				currentDevice.GLDevice.AttributeEnabled[i] = false;
+			}
+			currentDevice.GLDevice.FlushGLVertexAttributes();
+			currentDevice.GLDevice.VertexAttribPointer(
 				0,
 				2,
 				VertexAttribPointerType.Float,
 				false,
 				2 * sizeof(float),
-				vert_pos
+				vertPosPtr
 			);
-			GL.VertexAttribPointer(
+			currentDevice.GLDevice.VertexAttribPointer(
 				1,
 				2,
 				VertexAttribPointerType.Float,
 				false,
 				2 * sizeof(float),
-				vert_tex
+				vertTexPtr
 			);
-			GL.EnableVertexAttribArray(0);
-			GL.EnableVertexAttribArray(1);
 
 			// Bind our target framebuffer.
 			OpenGLDevice.Framebuffer.BindDrawFramebuffer(rgbaFramebuffer);
