@@ -38,6 +38,22 @@ namespace Microsoft.Xna.Framework.Graphics
 		Vector2 _texCoordTL = new Vector2(0, 0);
 		Vector2 _texCoordBR = new Vector2(0, 0);
 
+		// Used to quickly flip text for DrawString
+		private static readonly Vector2[] axisDirection = new Vector2[]
+		{
+			new Vector2(-1, -1),
+			new Vector2( 1, -1),
+			new Vector2(-1,  1),
+			new Vector2( 1,  1)
+		};
+		private static readonly Vector2[] axisIsMirrored = new Vector2[]
+		{
+			new Vector2(0, 0),
+			new Vector2(1, 0),
+			new Vector2(0, 1),
+			new Vector2(1, 1)
+		};
+
 		#endregion
 
 		#region Public Constructors
@@ -205,28 +221,6 @@ namespace Microsoft.Xna.Framework.Graphics
 				rectangle,
 				null,
 				color
-			);
-		}
-
-		public void DrawString(
-			SpriteFont spriteFont,
-			string text,
-			Vector2 position,
-			Color color
-		) {
-			CheckValid(spriteFont, text);
-
-			SpriteFont.CharacterSource source = new SpriteFont.CharacterSource(text);
-			spriteFont.DrawInto(
-				this,
-				ref source,
-				position,
-				color,
-				0,
-				Vector2.Zero,
-				Vector2.One,
-				SpriteEffects.None,
-				0f
 			);
 		}
 
@@ -478,80 +472,30 @@ namespace Microsoft.Xna.Framework.Graphics
 			);
 		}
 
+		#endregion
+
+		#region Public DrawString Methods
+
 		public void DrawString(
 			SpriteFont spriteFont,
 			StringBuilder text,
 			Vector2 position,
 			Color color
 		) {
-			CheckValid(spriteFont, text);
-
-			SpriteFont.CharacterSource source = new SpriteFont.CharacterSource(text);
-			spriteFont.DrawInto(
-				this,
-				ref source,
+			if (text == null)
+			{
+				throw new ArgumentNullException("text");
+			}
+			DrawString(
+				spriteFont,
+				text.ToString(),
 				position,
 				color,
-				0,
+				0.0f,
 				Vector2.Zero,
-				Vector2.One,
+				new Vector2(1.0f),
 				SpriteEffects.None,
-				0f
-			);
-		}
-
-		public void DrawString(
-			SpriteFont spriteFont,
-			string text,
-			Vector2 position,
-			Color color,
-			float rotation,
-			Vector2 origin,
-			float scale,
-			SpriteEffects effects,
-			float depth
-		) {
-			CheckValid(spriteFont, text);
-
-			Vector2 scaleVec = new Vector2(scale, scale);
-			SpriteFont.CharacterSource source = new SpriteFont.CharacterSource(text);
-			spriteFont.DrawInto(
-				this,
-				ref source,
-				position,
-				color,
-				rotation,
-				origin,
-				scaleVec,
-				effects,
-				depth
-			);
-		}
-
-		public void DrawString(
-			SpriteFont spriteFont,
-			string text,
-			Vector2 position,
-			Color color,
-			float rotation,
-			Vector2 origin,
-			Vector2 scale,
-			SpriteEffects effect,
-			float depth
-		) {
-			CheckValid(spriteFont, text);
-
-			SpriteFont.CharacterSource source = new SpriteFont.CharacterSource(text);
-			spriteFont.DrawInto(
-				this,
-				ref source,
-				position,
-				color,
-				rotation,
-				origin,
-				scale,
-				effect,
-				depth
+				0.0f
 			);
 		}
 
@@ -564,22 +508,22 @@ namespace Microsoft.Xna.Framework.Graphics
 			Vector2 origin,
 			float scale,
 			SpriteEffects effects,
-			float depth
+			float layerDepth
 		) {
-			CheckValid(spriteFont, text);
-
-			Vector2 scaleVec = new Vector2(scale, scale);
-			SpriteFont.CharacterSource source = new SpriteFont.CharacterSource(text);
-			spriteFont.DrawInto(
-				this,
-				ref source,
+			if (text == null)
+			{
+				throw new ArgumentNullException("text");
+			}
+			DrawString(
+				spriteFont,
+				text.ToString(),
 				position,
 				color,
 				rotation,
 				origin,
-				scaleVec,
+				new Vector2(scale),
 				effects,
-				depth
+				layerDepth
 			);
 		}
 
@@ -591,23 +535,184 @@ namespace Microsoft.Xna.Framework.Graphics
 			float rotation,
 			Vector2 origin,
 			Vector2 scale,
-			SpriteEffects effect,
-			float depth
+			SpriteEffects effects,
+			float layerDepth
 		) {
-			CheckValid(spriteFont, text);
-
-			SpriteFont.CharacterSource source = new SpriteFont.CharacterSource(text);
-			spriteFont.DrawInto(
-				this,
-				ref source,
+			if (text == null)
+			{
+				throw new ArgumentNullException("text");
+			}
+			DrawString(
+				spriteFont,
+				text.ToString(),
 				position,
 				color,
 				rotation,
 				origin,
 				scale,
-				effect,
-				depth
+				effects,
+				layerDepth
 			);
+		}
+
+		public void DrawString(
+			SpriteFont spriteFont,
+			string text,
+			Vector2 position,
+			Color color
+		) {
+			DrawString(
+				spriteFont,
+				text,
+				position,
+				color,
+				0.0f,
+				Vector2.Zero,
+				new Vector2(1.0f),
+				SpriteEffects.None,
+				0.0f
+			);
+		}
+
+		public void DrawString(
+			SpriteFont spriteFont,
+			string text,
+			Vector2 position,
+			Color color,
+			float rotation,
+			Vector2 origin,
+			float scale,
+			SpriteEffects effects,
+			float layerDepth
+		) {
+			DrawString(
+				spriteFont,
+				text,
+				position,
+				color,
+				rotation,
+				origin,
+				new Vector2(scale),
+				effects,
+				layerDepth
+			);
+		}
+
+		public void DrawString(
+			SpriteFont spriteFont,
+			string text,
+			Vector2 position,
+			Color color,
+			float rotation,
+			Vector2 origin,
+			Vector2 scale,
+			SpriteEffects effects,
+			float layerDepth
+		) {
+			CheckBegin("DrawString");
+			if (text == null)
+			{
+				throw new ArgumentNullException("text");
+			}
+			if (text.Length == 0)
+			{
+				return;
+			}
+
+			// FIXME: This needs an accuracy check! -flibit
+
+			// Calculate offset, using the string size for flipped text
+			Vector2 baseOffset = origin;
+			if (effects != SpriteEffects.None)
+			{
+				baseOffset -= spriteFont.MeasureString(text) * axisIsMirrored[(int) effects];
+			}
+
+			Vector2 curOffset = Vector2.Zero;
+			bool firstInLine = true;
+			foreach (char c in text)
+			{
+				// Special characters
+				if (c == '\r')
+				{
+					continue;
+				}
+				if (c == '\n')
+				{
+					curOffset.X = 0.0f;
+					curOffset.Y += spriteFont.LineSpacing;
+					firstInLine = true;
+					continue;
+				}
+
+				/* Get the List index from the character map, defaulting to the
+				 * DefaultCharacter if it's set.
+				 */
+				int index = spriteFont.characterMap.IndexOf(c);
+				if (index == -1)
+				{
+					if (!spriteFont.DefaultCharacter.HasValue)
+					{
+						throw new ArgumentException(
+							"Text contains characters that cannot be" +
+							" resolved by this SpriteFont.",
+							"text"
+						);
+					}
+					index = spriteFont.characterMap.IndexOf(
+						spriteFont.DefaultCharacter.Value
+					);
+				}
+
+				/* For the first character in a line, always push the width
+				 * rightward, even if the kerning pushes the character to the
+				 * left.
+				 */
+				if (firstInLine)
+				{
+					curOffset.X += Math.Abs(spriteFont.kerning[index].X);
+					firstInLine = false;
+				}
+				else
+				{
+					curOffset.X += spriteFont.Spacing + spriteFont.kerning[index].X;
+				}
+
+				// Calculate the character origin
+				Vector2 offset = baseOffset;
+				offset.X += curOffset.X * axisDirection[(int) effects].X;
+				offset.Y += (curOffset.Y + spriteFont.croppingData[index].Top) * axisDirection[(int) effects].Y;
+				if (effects != SpriteEffects.None)
+				{
+					offset += new Vector2(
+						spriteFont.glyphData[index].Width,
+						spriteFont.glyphData[index].Height
+					) * axisIsMirrored[(int) effects];
+				}
+
+				// Draw!
+				DrawInternal(
+					spriteFont.textureValue,
+					new Vector4(
+						position.X,
+						position.Y,
+						spriteFont.glyphData[index].Width * scale.X,
+						spriteFont.glyphData[index].Height * scale.Y
+					),
+					spriteFont.glyphData[index],
+					color,
+					rotation,
+					offset,
+					effects,
+					layerDepth,
+					false
+				);
+
+				/* Add the character width and right-side bearing to the line
+				 * width.
+				 */
+				curOffset.X += spriteFont.kerning[index].Y + spriteFont.kerning[index].Z;
+			}
 		}
 
 		#endregion
@@ -753,41 +858,16 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
-		void CheckValid(SpriteFont spriteFont, string text)
+		private void CheckBegin(string method)
 		{
-			if (spriteFont == null)
-			{
-				throw new ArgumentNullException("spriteFont");
-			}
-
-			if (text == null)
-			{
-				throw new ArgumentNullException("text");
-			}
-
 			if (!_beginCalled)
 			{
-				throw new InvalidOperationException("DrawString was called, but Begin has not yet been called. " +
-					"Begin must be called successfully before you can call DrawString.");
-			}
-		}
-
-		void CheckValid(SpriteFont spriteFont, StringBuilder text)
-		{
-			if (spriteFont == null)
-			{
-				throw new ArgumentNullException("spriteFont");
-			}
-
-			if (text == null)
-			{
-				throw new ArgumentNullException("text");
-			}
-
-			if (!_beginCalled)
-			{
-				throw new InvalidOperationException("DrawString was called, but Begin has not yet been called. " +
-					"Begin must be called successfully before you can call DrawString.");
+				throw new InvalidOperationException(
+					method + " was called, but Begin has" +
+					" not yet been called. Begin must be" +
+					" called successfully before you can" +
+					" call " + method + "."
+				);
 			}
 		}
 

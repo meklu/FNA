@@ -18,9 +18,6 @@ project license. See unxwb.LICENSE for details.
 MG-SDL2 uses code from the Mono.Xna project, released under the MIT license.
 See monoxna.LICENSE for details.
 
-MG-SDL2 uses code from the SilverSprite project, released under the MIT license.
-See silversprite.LICENSE for details.
-
 Roadmap
 -------
 To see the current roadmap for MonoGame-SDL2, see the Github issues page:

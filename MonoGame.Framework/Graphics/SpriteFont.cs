@@ -5,8 +5,6 @@
  * Released under the Microsoft Public License.
  * See LICENSE for details.
  */
-
-// Original code from SilverSprite Project
 #endregion
 
 #region Using Statements
@@ -18,85 +16,48 @@ using System.Text;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
-	// TODO: Rewrite from scratch. Just. No. -flibit
+	// http://msdn.microsoft.com/en-us/library/microsoft.xna.framework.graphics.spritefont.aspx
 	public sealed class SpriteFont
 	{
 		#region Public Properties
 
-		/// <summary>
-		/// Gets a collection of the characters in the font.
-		/// </summary>
 		public ReadOnlyCollection<char> Characters
 		{
 			get;
 			private set;
 		}
 
-		/// <summary>
-		/// Gets or sets the character that will be substituted when a
-		/// given character is not included in the font.
-		/// </summary>
 		public char? DefaultCharacter
 		{
 			get;
 			set;
 		}
 
-		/// <summary>
-		/// Gets or sets the line spacing (the distance from baseline
-		/// to baseline) of the font.
-		/// </summary>
 		public int LineSpacing
 		{
 			get;
 			set;
 		}
 
-		/// <summary>
-		/// Gets or sets the spacing (tracking) between characters in
-		/// the font.
-		/// </summary>
 		public float Spacing
 		{
 			get;
 			set;
 		}
 
-		/// <summary>
-		/// Gets the texture that this SpriteFont draws from.
-		/// THIS IS A MONOGAME EXTENSION!
-		/// </summary>
-		/// <remarks>Can be used to implement custom rendering of a SpriteFont</remarks>
-		public Texture2D Texture
-		{
-			get
-			{
-				return _texture;
-			}
-		}
-
 		#endregion
 
-		#region Internal Readonly Variables
+		#region Internal Variables
 
-		private readonly Texture2D _texture;
-
-		#endregion
-
-		#region Private Readonly Variables
-
-		private readonly Dictionary<char, Glyph> _glyphs;
-#pragma warning disable 0414
-		/* These are needed for Reflection purposes.
-		 * Don't worry, SpriteFont's going to get rewritten like everything else
-		 * in this damned library.
+		/* I've had a bunch of games use reflection on SpriteFont to get
+		 * this data. Keep these names as they are for XNA4 accuracy!
 		 * -flibit
 		 */
-		private readonly List<Rectangle> _glyphBounds;
-		private readonly List<Rectangle> _cropping;
-		private readonly List<Vector3> _kerning;
-		private readonly List<char> _characterMap;
-#pragma warning restore 0414
+		internal Texture2D textureValue;
+		internal List<Rectangle> glyphData;
+		internal List<Rectangle> croppingData;
+		internal List<Vector3> kerning;
+		internal List<char> characterMap;
 
 		#endregion
 
@@ -109,451 +70,119 @@ namespace Microsoft.Xna.Framework.Graphics
 			List<char> characters,
 			int lineSpacing,
 			float spacing,
-			List<Vector3> kerning,
+			List<Vector3> kerningData,
 			char? defaultCharacter
 		) {
 			Characters = new ReadOnlyCollection<char>(characters.ToArray());
-			_texture = texture;
-			_glyphBounds = glyphBounds;
-			_cropping = cropping;
-			_kerning = kerning;
-			_characterMap = characters;
+			DefaultCharacter = defaultCharacter;
 			LineSpacing = lineSpacing;
 			Spacing = spacing;
-			DefaultCharacter = defaultCharacter;
 
-			_glyphs = new Dictionary<char, Glyph>(characters.Count, CharComparer.Default);
-
-			for (int i = 0; i < characters.Count; i += 1)
-			{
-				Glyph glyph = new Glyph
-				{
-					BoundsInTexture = glyphBounds[i],
-					Cropping = cropping[i],
-					Character = characters[i],
-
-					LeftSideBearing = kerning[i].X,
-					Width = kerning[i].Y,
-					RightSideBearing = kerning[i].Z,
-
-					WidthIncludingBearings = kerning[i].X + kerning[i].Y + kerning[i].Z
-				};
-				_glyphs.Add(glyph.Character, glyph);
-			}
+			textureValue = texture;
+			glyphData = glyphBounds;
+			croppingData = cropping;
+			kerning = kerningData;
+			characterMap = characters;
 		}
 
 		#endregion
 
-		#region Public Methods
+		#region Public MeasureString Methods
 
-		/// <summary>
-		/// Returns the size of a string when rendered in this font.
-		/// </summary>
-		/// <param name="text">The text to measure.</param>
-		/// <returns>The size, in pixels, of 'text' when rendered in
-		/// this font.</returns>
 		public Vector2 MeasureString(string text)
 		{
-			CharacterSource source = new CharacterSource(text);
-			Vector2 size;
-			MeasureString(ref source, out size);
-			return size;
-		}
-
-		/// <summary>
-		/// Returns the size of the contents of a StringBuilder when
-		/// rendered in this font.
-		/// </summary>
-		/// <param name="text">The text to measure.</param>
-		/// <returns>The size, in pixels, of 'text' when rendered in
-		/// this font.</returns>
-		public Vector2 MeasureString(StringBuilder text)
-		{
-			CharacterSource source = new CharacterSource(text);
-			Vector2 size;
-			MeasureString(ref source, out size);
-			return size;
-		}
-
-		/// <summary>
-		/// Returns a copy of the dictionary containing the glyphs in this SpriteFont.
-		/// THIS IS A MONOGAME EXTENSION!
-		/// </summary>
-		/// <returns>A new Dictionary containing all of the glyphs inthis SpriteFont</returns>
-		/// <remarks>Can be used to calculate character bounds when implementing custom SpriteFont rendering.</remarks>
-		public Dictionary<char, Glyph> GetGlyphs()
-		{
-			return new Dictionary<char, Glyph>(_glyphs, _glyphs.Comparer);
-		}
-
-		#endregion
-
-		#region Internal Methods
-
-		internal void DrawInto(
-			SpriteBatch spriteBatch,
-			ref CharacterSource text,
-			Vector2 position,
-			Color color,
-			float rotation,
-			Vector2 origin,
-			Vector2 scale,
-			SpriteEffects effect,
-			float depth
-		) {
-			Vector2 flipAdjustment = Vector2.Zero;
-
-			bool flippedVert = (effect & SpriteEffects.FlipVertically) == SpriteEffects.FlipVertically;
-			bool flippedHorz = (effect & SpriteEffects.FlipHorizontally) == SpriteEffects.FlipHorizontally;
-
-			if (flippedVert || flippedHorz)
+			if (text == null)
 			{
-				Vector2 size;
-				MeasureString(ref text, out size);
-
-				if (flippedHorz)
-				{
-					origin.X *= -1;
-					flipAdjustment.X = -size.X;
-				}
-
-				if (flippedVert)
-				{
-					origin.Y *= -1;
-					flipAdjustment.Y = LineSpacing - size.Y;
-				}
+				throw new ArgumentNullException("text");
+			}
+			if (text.Length == 0)
+			{
+				return Vector2.Zero;
 			}
 
-			/* TODO: This looks excessive... i suspect we could do most
-			 * of this with simple vector math and avoid this much matrix work.
-			 */
+			// FIXME: This needs an accuracy check! -flibit
 
-			Matrix transformation, temp;
-			Matrix.CreateTranslation(-origin.X, -origin.Y, 0f, out transformation);
-			Matrix.CreateScale((flippedHorz ? -scale.X : scale.X), (flippedVert ? -scale.Y : scale.Y), 1f, out temp);
-			Matrix.Multiply(ref transformation, ref temp, out transformation);
-			Matrix.CreateTranslation(flipAdjustment.X, flipAdjustment.Y, 0, out temp);
-			Matrix.Multiply(ref temp, ref transformation, out transformation);
-			Matrix.CreateRotationZ(rotation, out temp);
-			Matrix.Multiply(ref transformation, ref temp, out transformation);
-			Matrix.CreateTranslation(position.X, position.Y, 0f, out temp);
-			Matrix.Multiply(ref transformation, ref temp, out transformation);
+			Vector2 result = Vector2.Zero;
+			float curLineWidth = 0.0f;
+			float finalLineHeight = LineSpacing;
+			bool firstInLine = true;
 
-			// Get the default glyph here once.
-			Glyph? defaultGlyph = null;
-			if (DefaultCharacter.HasValue)
+			foreach (char c in text)
 			{
-				defaultGlyph = _glyphs[DefaultCharacter.Value];
-			}
-
-			Glyph currentGlyph = Glyph.Empty;
-			Vector2 offset = Vector2.Zero;
-			bool hasCurrentGlyph = false;
-			bool firstGlyphOfLine = true;
-
-			for (int i = 0; i < text.Length; i += 1)
-			{
-				char c = text[i];
+				// Special characters
 				if (c == '\r')
 				{
-					hasCurrentGlyph = false;
 					continue;
 				}
-
 				if (c == '\n')
 				{
-					offset.X = 0;
-					offset.Y += LineSpacing;
-					hasCurrentGlyph = false;
-					firstGlyphOfLine = true;
+					result.X = Math.Max(result.X, curLineWidth);
+					result.Y += LineSpacing;
+					curLineWidth = 0.0f;
+					finalLineHeight = LineSpacing;
+					firstInLine = true;
 					continue;
 				}
 
-				if (hasCurrentGlyph)
-				{
-					offset.X += Spacing + currentGlyph.Width + currentGlyph.RightSideBearing;
-				}
-
-				if (!_glyphs.TryGetValue(c, out currentGlyph))
-				{
-					if (!defaultGlyph.HasValue)
-					{
-						throw new ArgumentException(Errors.TextContainsUnresolvableCharacters, "text");
-					}
-
-					currentGlyph = defaultGlyph.Value;
-				}
-				hasCurrentGlyph = true;
-
-				/* The first character on a line might have a negative left
-				 * side bearing. In this scenario, SpriteBatch/SpriteFont
-				 * normally offset the text to the right, so that text does
-				 * not hang off the left side of its rectangle.
+				/* Get the List index from the character map, defaulting to the
+				 * DefaultCharacter if it's set.
 				 */
-				if (firstGlyphOfLine)
+				int index = characterMap.IndexOf(c);
+				if (index == -1)
 				{
-					offset.X = Math.Max(currentGlyph.LeftSideBearing, 0);
-					firstGlyphOfLine = false;
+					if (!DefaultCharacter.HasValue)
+					{
+						throw new ArgumentException(
+							"Text contains characters that cannot be" +
+							" resolved by this SpriteFont.",
+							"text"
+						);
+					}
+					index = characterMap.IndexOf(DefaultCharacter.Value);
+				}
+
+				/* For the first character in a line, always push the width
+				 * rightward, even if the kerning pushes the character to the
+				 * left.
+				 */
+				if (firstInLine)
+				{
+					curLineWidth += Math.Abs(kerning[index].X);
+					firstInLine = false;
 				}
 				else
 				{
-					offset.X += currentGlyph.LeftSideBearing;
+					curLineWidth += Spacing + kerning[index].X;
 				}
 
-				Vector2 p = offset;
+				/* Add the character width and right-side bearing to the line
+				 * width.
+				 */
+				curLineWidth += kerning[index].Y + kerning[index].Z;
 
-				if (flippedHorz)
+				/* If a character is taller than the default line height,
+				 * increase the height to that of the line's tallest character.
+				 */
+				if (croppingData[index].Height > finalLineHeight)
 				{
-					p.X += currentGlyph.BoundsInTexture.Width;
+					finalLineHeight = croppingData[index].Height;
 				}
-
-				p.X += currentGlyph.Cropping.X;
-
-				if (flippedVert)
-				{
-					p.Y += currentGlyph.BoundsInTexture.Height - LineSpacing;
-				}
-
-				p.Y += currentGlyph.Cropping.Y;
-
-				Vector2.Transform(ref p, ref transformation, out p);
-
-				Vector4 destRect = new Vector4(
-					p.X,
-					p.Y,
-					currentGlyph.BoundsInTexture.Width * scale.X,
-					currentGlyph.BoundsInTexture.Height * scale.Y
-				);
-
-				spriteBatch.DrawInternal(
-					_texture,
-					destRect,
-					currentGlyph.BoundsInTexture,
-					color,
-					rotation,
-					Vector2.Zero,
-					effect,
-					depth,
-					false
-				);
 			}
 
-			// We need to flush if we're using Immediate sort mode.
-			spriteBatch.FlushIfNeeded();
+			// Calculate the final width/height of the text box
+			result.X = Math.Max(result.X, curLineWidth);
+			result.Y += finalLineHeight;
+
+			return result;
 		}
 
-		#endregion
-
-		#region Private Methods
-
-		private void MeasureString(ref CharacterSource text, out Vector2 size)
+		public Vector2 MeasureString(StringBuilder text)
 		{
-			if (text.Length == 0)
+			if (text == null)
 			{
-				size = Vector2.Zero;
-				return;
+				throw new ArgumentNullException("text");
 			}
-
-			// Get the default glyph here once.
-			Glyph? defaultGlyph = null;
-			if (DefaultCharacter.HasValue)
-			{
-				defaultGlyph = _glyphs[DefaultCharacter.Value];
-			}
-
-			float width = 0.0f;
-			float finalLineHeight = (float)LineSpacing;
-			int fullLineCount = 0;
-			Glyph currentGlyph = Glyph.Empty;
-			Vector2 offset = Vector2.Zero;
-			bool hasCurrentGlyph = false;
-			bool firstGlyphOfLine = true;
-
-			for (int i = 0; i < text.Length; i += 1)
-			{
-				char c = text[i];
-				if (c == '\r')
-				{
-					hasCurrentGlyph = false;
-					continue;
-				}
-
-				if (c == '\n')
-				{
-					fullLineCount += 1;
-					finalLineHeight = LineSpacing;
-
-					offset.X = 0;
-					offset.Y = LineSpacing * fullLineCount;
-					hasCurrentGlyph = false;
-					firstGlyphOfLine = true;
-					continue;
-				}
-
-				if (hasCurrentGlyph)
-				{
-					offset.X += Spacing;
-
-					/* The first character on a line might have a negative left
-					 * side bearing. In this scenario, SpriteBatch/SpriteFont
-					 * normally offset the text to the right, so that text does
-					 * not hang off the left side of its rectangle.
-					 */
-					if (firstGlyphOfLine)
-					{
-						offset.X = Math.Max(offset.X + Math.Abs(currentGlyph.LeftSideBearing), 0);
-						firstGlyphOfLine = false;
-					}
-					else
-					{
-						offset.X += currentGlyph.LeftSideBearing;
-					}
-
-					offset.X += currentGlyph.Width + currentGlyph.RightSideBearing;
-				}
-
-				hasCurrentGlyph = _glyphs.TryGetValue(c, out currentGlyph);
-				if (!hasCurrentGlyph)
-				{
-					if (!defaultGlyph.HasValue)
-					{
-						throw new ArgumentException(Errors.TextContainsUnresolvableCharacters, "text");
-					}
-
-					currentGlyph = defaultGlyph.Value;
-					hasCurrentGlyph = true;
-				}
-
-				float proposedWidth = offset.X + currentGlyph.WidthIncludingBearings; // FIXME: flibit + Spacing;
-				if (proposedWidth > width)
-				{
-					width = proposedWidth;
-				}
-
-				if (currentGlyph.Cropping.Height > finalLineHeight)
-				{
-					finalLineHeight = currentGlyph.Cropping.Height;
-				}
-			}
-
-			size.X = width;
-			size.Y = fullLineCount * LineSpacing + finalLineHeight;
-		}
-
-		#endregion
-
-		#region Internal CharacterSource struct
-
-		internal struct CharacterSource
-		{
-			private readonly string _string;
-			private readonly StringBuilder _builder;
-
-			public CharacterSource(string s)
-			{
-				_string = s;
-				_builder = null;
-				Length = s.Length;
-			}
-
-			public CharacterSource(StringBuilder builder)
-			{
-				_builder = builder;
-				_string = null;
-				Length = _builder.Length;
-			}
-
-			public readonly int Length;
-			public char this[int index]
-			{
-				get
-				{
-					if (_string != null)
-					{
-						return _string[index];
-					}
-					return _builder[index];
-				}
-			}
-		}
-
-		#endregion
-
-		#region Private Glyph struct
-
-		/// <summary>
-		/// Struct that defines the spacing, Kerning, and bounds of a character.
-		/// THIS IS A MONOGAME EXTENSION!
-		/// </summary>
-		/// <remarks>Provides the data necessary to implement custom SpriteFont rendering.</remarks>
-		public struct Glyph
-		{
-			/// <summary>
-			/// The char associated with this glyph.
-			/// </summary>
-			public char Character;
-			/// <summary>
-			/// Rectangle in the font texture where this letter exists.
-			/// </summary>
- 			public Rectangle BoundsInTexture;
-			/// <summary>
-			/// Cropping applied to the BoundsInTexture to calculate the bounds of the actual character.
-			/// </summary>
-			public Rectangle Cropping;
-			/// <summary>
-			/// The amount of space between the left side of the character and its first pixel in the X dimension.
-			/// </summary>
-			public float LeftSideBearing;
-			/// <summary>
-			/// The amount of space between the right side of the character and its last pixel in the X dimension.
-			/// </summary>
-			public float RightSideBearing;
-			/// <summary>
-			/// Width of the character before kerning is applied. 
-			/// </summary>
-			public float Width;
-			/// <summary>
-			/// Width of the character before kerning is applied. 
-			/// </summary>
-			public float WidthIncludingBearings;
-
-			public static readonly Glyph Empty = new Glyph();
-
-			public override string ToString()
-			{
-				return string.Format(
-					"CharacterIndex={0}, Glyph={1}, Cropping={2}, Kerning={3},{4},{5}",
-					Character, BoundsInTexture, Cropping, LeftSideBearing, Width, RightSideBearing);
-			}
-		}
-
-		#endregion
-
-		#region Character Comparison Class
-
-		class CharComparer: IEqualityComparer<char>
-		{
-			public bool Equals(char x, char y)
-			{
-				return x == y;
-			}
-
-			public int GetHashCode(char b)
-			{
-				return (b | (b << 16));
-			}
-
-			static public readonly CharComparer Default = new CharComparer();
-		}
-
-		#endregion
-
-		#region Private Static Errors Class
-
-		static class Errors
-		{
-			public const string TextContainsUnresolvableCharacters =
-				"Text contains characters that cannot be resolved by this SpriteFont.";
+			return MeasureString(text.ToString());
 		}
 
 		#endregion
