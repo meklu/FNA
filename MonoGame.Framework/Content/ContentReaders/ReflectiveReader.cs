@@ -5,8 +5,6 @@
  * Released under the Microsoft Public License.
  * See LICENSE for details.
  */
-
-/* Original source from SilverSprite project at http://silversprite.codeplex.com */
 #endregion
 
 #region Using Statements
