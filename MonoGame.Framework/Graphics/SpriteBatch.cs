@@ -9,34 +9,26 @@
 
 #region Using Statements
 using System;
+using System.Collections.Generic;
 using System.Text;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics
 {
-	// TODO: Rewrite from scratch using DynamicVertexBuffer/DynamicIndexBuffer. -flibit
+	/* MSDN Docs:
+	 * http://msdn.microsoft.com/en-us/library/microsoft.xna.framework.graphics.spritebatch.aspx
+	 * Other References:
+	 * http://directxtk.codeplex.com/SourceControl/changeset/view/17079#Src/SpriteBatch.cpp
+	 * http://gamedev.stackexchange.com/questions/21220/how-exactly-does-xnas-spritebatch-work
+	 */
 	public class SpriteBatch : GraphicsResource
 	{
-		#region Private Variables
+		#region Private Constant Values
 
-		readonly SpriteBatcher _batcher;
-
-		SpriteSortMode _sortMode;
-		BlendState _blendState;
-		SamplerState _samplerState;
-		DepthStencilState _depthStencilState;
-		RasterizerState _rasterizerState;
-		Effect _effect;
-		bool _beginCalled;
-
-		Effect _spriteEffect;
-		readonly EffectParameter _matrixTransform;
-		readonly EffectPass _spritePass;
-
-		Matrix _matrix;
-		Rectangle _tempRect = new Rectangle(0, 0, 0, 0);
-		Vector2 _texCoordTL = new Vector2(0, 0);
-		Vector2 _texCoordBR = new Vector2(0, 0);
+		// As defined by the HiDef profile spec
+		private const int MAX_SPRITES = 2048;
+		private const int MAX_VERTICES = MAX_SPRITES * 4;
+		private const int MAX_INDICES = MAX_SPRITES * 6;
 
 		// Used to quickly flip text for DrawString
 		private static readonly Vector2[] axisDirection = new Vector2[]
@@ -56,30 +48,105 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region Public Constructors
+		#region Private Variables
+
+		// Buffer objects used for actual drawing
+		private DynamicVertexBuffer vertexBuffer;
+		private DynamicIndexBuffer indexBuffer;
+
+		// Local data stored before buffering to GPU
+		private VertexPositionColorTexture[] vertexInfo;
+		private SpriteInfo[] spriteData;
+
+		// Default SpriteBatch Effect
+		private Effect spriteEffect;
+		private EffectParameter spriteMatrixTransform;
+		private EffectPass spriteEffectPass;
+
+		// Tracks Begin/End calls
+		private bool beginCalled;
+
+		// Current sort mode
+		private SpriteSortMode sortMode;
+
+		// Keep render state for non-Immediate modes.
+		private BlendState blendState;
+		private SamplerState samplerState;
+		private DepthStencilState depthStencilState;
+		private RasterizerState rasterizerState;
+
+		// How many sprites are in the current batch?
+		private int numSprites;
+
+		// Matrix to be used when creating the projection matrix
+		private Matrix transformMatrix;
+
+		// User-provided Effect, if applicable
+		private Effect customEffect;
+
+		#endregion
+
+		#region Private Static Variables
+
+		private static readonly short[] indexData = GenerateIndexArray();
+		private static readonly TextureComparer TextureCompare = new TextureComparer();
+		private static readonly BackToFrontComparer BackToFrontCompare = new BackToFrontComparer();
+		private static readonly FrontToBackComparer FrontToBackCompare = new FrontToBackComparer();
+
+		#endregion
+
+		#region Public Constructor
 
 		public SpriteBatch(GraphicsDevice graphicsDevice)
 		{
 			if (graphicsDevice == null)
 			{
-				throw new ArgumentException("graphicsDevice");
+				throw new ArgumentNullException("graphicsDevice");
 			}
-
 			GraphicsDevice = graphicsDevice;
 
-			// Use a custom SpriteEffect so we can control the transformation matrix
-			_spriteEffect = new Effect(graphicsDevice, SpriteEffect.Bytecode);
-			_matrixTransform = _spriteEffect.Parameters["MatrixTransform"];
-			_spritePass = _spriteEffect.CurrentTechnique.Passes[0];
+			vertexInfo = new VertexPositionColorTexture[MAX_VERTICES];
+			spriteData = new SpriteInfo[MAX_SPRITES];
+			vertexBuffer = new DynamicVertexBuffer(
+				graphicsDevice,
+				typeof(VertexPositionColorTexture),
+				MAX_VERTICES,
+				BufferUsage.WriteOnly
+			);
+			indexBuffer = new DynamicIndexBuffer(
+				graphicsDevice,
+				IndexElementSize.SixteenBits,
+				MAX_INDICES,
+				BufferUsage.WriteOnly
+			);
+			indexBuffer.SetData(indexData);
 
-			_batcher = new SpriteBatcher(graphicsDevice);
+			spriteEffect = new Effect(graphicsDevice, SpriteEffect.Bytecode);
+			spriteMatrixTransform = spriteEffect.Parameters["MatrixTransform"];
+			spriteEffectPass = spriteEffect.CurrentTechnique.Passes[0];
 
-			_beginCalled = false;
+			beginCalled = false;
+			numSprites = 0;
 		}
 
 		#endregion
 
-		#region Public Methods
+		#region Public Dispose Method
+
+		protected override void Dispose(bool disposing)
+		{
+			if (!IsDisposed && disposing)
+			{
+				spriteEffect.Dispose();
+				indexBuffer.Dispose();
+				vertexBuffer.Dispose();
+			}
+			base.Dispose(disposing);
+		}
+
+		#endregion
+
+		#region Public Begin Methods
 
 		public void Begin()
 		{
@@ -153,45 +220,56 @@ namespace Microsoft.Xna.Framework.Graphics
 			DepthStencilState depthStencilState,
 			RasterizerState rasterizerState,
 			Effect effect,
-			Matrix transformMatrix
+			Matrix transformationMatrix
 		) {
-			if (_beginCalled)
+			if (beginCalled)
 			{
 				throw new InvalidOperationException(
-					"Begin cannot be called again until End has been successfully called."
+					"Begin has been called before calling End" +
+					" after the last call to Begin." +
+					" Begin cannot be called again until" +
+					" End has been successfully called."
 				);
 			}
+			beginCalled = true;
 
-			// Defaults
-			_sortMode = sortMode;
-			_blendState = blendState ?? BlendState.AlphaBlend;
-			_samplerState = samplerState ?? SamplerState.LinearClamp;
-			_depthStencilState = depthStencilState ?? DepthStencilState.None;
-			_rasterizerState = rasterizerState ?? RasterizerState.CullCounterClockwise;
+			this.sortMode = sortMode;
 
-			_effect = effect;
+			this.blendState = blendState ?? BlendState.AlphaBlend;
+			this.samplerState = samplerState ?? SamplerState.LinearClamp;
+			this.depthStencilState = depthStencilState ?? DepthStencilState.None;
+			this.rasterizerState = rasterizerState ?? RasterizerState.CullCounterClockwise;
 
-			_matrix = transformMatrix;
+			customEffect = effect;
+			transformMatrix = transformationMatrix;
 
-			// Setup things now so a user can change them.
 			if (sortMode == SpriteSortMode.Immediate)
 			{
-				Setup();
+				PrepRenderState();
 			}
-
-			_beginCalled = true;
 		}
+
+		#endregion
+
+		#region Public End Method
 
 		public void End()
 		{
-			_beginCalled = false;
-
-			if (_sortMode != SpriteSortMode.Immediate)
+			if (!beginCalled)
 			{
-				Setup();
+				throw new InvalidOperationException(
+					"End was called, but Begin has not yet" +
+					" been called. You must call Begin " +
+					" successfully before you can call End."
+				);
 			}
+			beginCalled = false;
 
-			_batcher.DrawBatch(_sortMode, _spritePass, _effect);
+			if (sortMode != SpriteSortMode.Immediate)
+			{
+				FlushBatch();
+			}
+			customEffect = null;
 		}
 
 		#endregion
@@ -203,24 +281,21 @@ namespace Microsoft.Xna.Framework.Graphics
 			Vector2 position,
 			Color color
 		) {
-			Draw(
+			CheckBegin("Draw");
+			PushSprite(
 				texture,
-				position,
 				null,
-				color
-			);
-		}
-
-		public void Draw(
-			Texture2D texture,
-			Rectangle rectangle,
-			Color color
-		) {
-			Draw(
-				texture,
-				rectangle,
-				null,
-				color
+				new Vector4(
+					position.X,
+					position.Y,
+					1.0f,
+					1.0f
+				),
+				color,
+				Vector2.Zero,
+				0.0f,
+				0.0f,
+				0
 			);
 		}
 
@@ -230,138 +305,22 @@ namespace Microsoft.Xna.Framework.Graphics
 			Rectangle? sourceRectangle,
 			Color color
 		) {
-			Draw(
+			CheckBegin("Draw");
+			PushSprite(
 				texture,
-				position,
 				sourceRectangle,
+				new Vector4(
+					position.X,
+					position.Y,
+					1.0f,
+					1.0f
+				),
 				color,
-				0f,
 				Vector2.Zero,
-				1f,
-				SpriteEffects.None,
-				0f
+				0.0f,
+				0.0f,
+				0
 			);
-		}
-
-		public void Draw(
-			Texture2D texture,
-			Rectangle destinationRectangle,
-			Rectangle? sourceRectangle,
-			Color color
-		) {
-			Draw(
-				texture,
-				destinationRectangle,
-				sourceRectangle,
-				color,
-				0,
-				Vector2.Zero,
-				SpriteEffects.None,
-				0f
-			);
-		}
-
-		/// <summary>
-		/// This is a MonoGame Extension method for calling Draw() using named parameters.
-		/// It is not available in the standard XNA Framework.
-		/// </summary>
-		/// <param name='texture'>
-		/// The Texture2D to draw. Required.
-		/// </param>
-		/// <param name='position'>
-		/// The position to draw at. If left empty, the method will draw at drawRectangle
-		/// instead.
-		/// </param>
-		/// <param name='drawRectangle'>
-		/// The rectangle to draw at. If left empty, the method will draw at position instead.
-		/// </param>
-		/// <param name='sourceRectangle'>
-		/// The source rectangle of the texture. Default is null
-		/// </param>
-		/// <param name='origin'>
-		/// Origin of the texture. Default is Vector2.Zero
-		/// </param>
-		/// <param name='rotation'>
-		/// Rotation of the texture. Default is 0f
-		/// </param>
-		/// <param name='scale'>
-		/// The scale of the texture as a Vector2. Default is Vector2.One
-		/// </param>
-		/// <param name='color'>
-		/// Color of the texture. Default is Color.White
-		/// </param>
-		/// <param name='effect'>
-		/// SpriteEffect to draw with. Default is SpriteEffects.None
-		/// </param>
-		/// <param name='depth'>
-		/// Draw depth. Default is 0f.
-		/// </param>
-		public void Draw(
-			Texture2D texture,
-			Vector2? position = null,
-			Rectangle? drawRectangle = null,
-			Rectangle? sourceRectangle = null,
-			Vector2? origin = null,
-			float rotation = 0f,
-			Vector2? scale = null,
-			Color? color = null,
-			SpriteEffects effect = SpriteEffects.None,
-			float depth = 0f
-		) {
-			// Assign default values to null parameters here, as they are not compile-time constants
-			if (!color.HasValue)
-			{
-				color = Color.White;
-			}
-
-			if (!origin.HasValue)
-			{
-				origin = Vector2.Zero;
-			}
-
-			if (!scale.HasValue)
-			{
-				scale = Vector2.One;
-			}
-
-			/* If both drawRectangle and position are null, or if both have been
-			 * assigned a value, raise an error
-			 */
-			if ((drawRectangle.HasValue) == (position.HasValue))
-			{
-				throw new InvalidOperationException(
-					"Expected drawRectangle or position, but received neither or both."
-				);
-			}
-			else if (position != null)
-			{
-				// Call Draw() using position
-				Draw(
-					texture,
-					(Vector2) position,
-					sourceRectangle,
-					(Color) color,
-					rotation,
-					(Vector2) origin,
-					(Vector2) scale,
-					effect,
-					depth
-				);
-			}
-			else
-			{
-				// Call Draw() using drawRectangle
-				Draw(
-					texture,
-					(Rectangle) drawRectangle,
-					sourceRectangle,
-					(Color) color,
-					rotation,
-					(Vector2) origin,
-					effect,
-					depth
-				);
-			}
 		}
 
 		public void Draw(
@@ -372,29 +331,24 @@ namespace Microsoft.Xna.Framework.Graphics
 			float rotation,
 			Vector2 origin,
 			float scale,
-			SpriteEffects effect,
-			float depth
+			SpriteEffects effects,
+			float layerDepth
 		) {
-			CheckValid(texture);
-
-			float w = texture.Width * scale;
-			float h = texture.Height * scale;
-			if (sourceRectangle.HasValue)
-			{
-				w = sourceRectangle.Value.Width * scale;
-				h = sourceRectangle.Value.Height * scale;
-			}
-
-			DrawInternal(
+			CheckBegin("Draw");
+			PushSprite(
 				texture,
-				new Vector4(position.X, position.Y, w, h),
 				sourceRectangle,
+				new Vector4(
+					position.X,
+					position.Y,
+					scale,
+					scale
+				),
 				color,
+				origin,
 				rotation,
-				origin * scale,
-				effect,
-				depth,
-				true
+				layerDepth,
+				(byte) effects
 			);
 		}
 
@@ -406,29 +360,71 @@ namespace Microsoft.Xna.Framework.Graphics
 			float rotation,
 			Vector2 origin,
 			Vector2 scale,
-			SpriteEffects effect,
-			float depth
+			SpriteEffects effects,
+			float layerDepth
 		) {
-			CheckValid(texture);
-
-			float w = texture.Width * scale.X;
-			float h = texture.Height * scale.Y;
-			if (sourceRectangle.HasValue)
-			{
-				w = sourceRectangle.Value.Width * scale.X;
-				h = sourceRectangle.Value.Height * scale.Y;
-			}
-
-			DrawInternal(
+			CheckBegin("Draw");
+			PushSprite(
 				texture,
-				new Vector4(position.X, position.Y, w, h),
 				sourceRectangle,
+				new Vector4(
+					position.X,
+					position.Y,
+					scale.X,
+					scale.Y
+				),
 				color,
+				origin,
 				rotation,
-				origin * scale,
-				effect,
-				depth,
-				true
+				layerDepth,
+				(byte) effects
+			);
+		}
+
+		public void Draw(
+			Texture2D texture,
+			Rectangle destinationRectangle,
+			Color color
+		) {
+			CheckBegin("Draw");
+			PushSprite(
+				texture,
+				null,
+				new Vector4(
+					destinationRectangle.X,
+					destinationRectangle.Y,
+					destinationRectangle.Width,
+					destinationRectangle.Height
+				),
+				color,
+				Vector2.Zero,
+				0.0f,
+				0.0f,
+				SpriteInfo.DestSizeInPixels
+			);
+		}
+
+		public void Draw(
+			Texture2D texture,
+			Rectangle destinationRectangle,
+			Rectangle? sourceRectangle,
+			Color color
+		) {
+			CheckBegin("Draw");
+			PushSprite(
+				texture,
+				sourceRectangle,
+				new Vector4(
+					destinationRectangle.X,
+					destinationRectangle.Y,
+					destinationRectangle.Width,
+					destinationRectangle.Height
+				),
+				color,
+				Vector2.Zero,
+				0.0f,
+				0.0f,
+				SpriteInfo.DestSizeInPixels
 			);
 		}
 
@@ -439,36 +435,24 @@ namespace Microsoft.Xna.Framework.Graphics
 			Color color,
 			float rotation,
 			Vector2 origin,
-			SpriteEffects effect,
-			float depth
+			SpriteEffects effects,
+			float layerDepth
 		) {
-			CheckValid(texture);
-
-			DrawInternal(
+			CheckBegin("Draw");
+			PushSprite(
 				texture,
+				sourceRectangle,
 				new Vector4(
 					destinationRectangle.X,
 					destinationRectangle.Y,
 					destinationRectangle.Width,
 					destinationRectangle.Height
 				),
-				sourceRectangle,
 				color,
+				origin,
 				rotation,
-				new Vector2(
-					origin.X
-						* ((float) destinationRectangle.Width
-							/ (float) ((sourceRectangle.HasValue && sourceRectangle.Value.Width != 0)
-								? sourceRectangle.Value.Width : texture.Width)
-						),
-					origin.Y
-						* ((float) destinationRectangle.Height)
-							/ (float) ((sourceRectangle.HasValue && sourceRectangle.Value.Height != 0)
-								? sourceRectangle.Value.Height : texture.Height)
-				),
-				effect,
-				depth,
-				true
+				layerDepth,
+				(byte) ((int) effects | SpriteInfo.DestSizeInPixels)
 			);
 		}
 
@@ -691,21 +675,20 @@ namespace Microsoft.Xna.Framework.Graphics
 				}
 
 				// Draw!
-				DrawInternal(
+				PushSprite(
 					spriteFont.textureValue,
+					spriteFont.glyphData[index],
 					new Vector4(
 						position.X,
 						position.Y,
-						spriteFont.glyphData[index].Width * scale.X,
-						spriteFont.glyphData[index].Height * scale.Y
+						scale.X,
+						scale.Y
 					),
-					spriteFont.glyphData[index],
 					color,
-					rotation,
 					offset,
-					effects,
+					rotation,
 					layerDepth,
-					false
+					(byte) effects
 				);
 
 				/* Add the character width and right-side bearing to the line
@@ -717,150 +700,301 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region Internal Methods
+		#region Private Methods
 
-		internal void DrawInternal(
+		private void PushSprite(
 			Texture2D texture,
-			Vector4 destinationRectangle,
 			Rectangle? sourceRectangle,
+			Vector4 destination,
 			Color color,
-			float rotation,
 			Vector2 origin,
-			SpriteEffects effect,
+			float rotation,
 			float depth,
-			bool autoFlush
+			byte effects
 		) {
-			SpriteBatchItem item = _batcher.CreateBatchItem();
+			if (numSprites >= MAX_SPRITES)
+			{
+				// Oh crap, we're out of space, flush!
+				FlushBatch();
+			}
 
-			item.Depth = depth;
-			item.Texture = texture;
-
+			// Calculate source/destination
+			spriteData[numSprites].destination = destination;
 			if (sourceRectangle.HasValue)
 			{
-				_tempRect = sourceRectangle.Value;
+				spriteData[numSprites].source = sourceRectangle.Value;
+				if ((effects & SpriteInfo.DestSizeInPixels) != SpriteInfo.DestSizeInPixels)
+				{
+					spriteData[numSprites].destination.Z *= sourceRectangle.Value.Width;
+					spriteData[numSprites].destination.W *= sourceRectangle.Value.Height;
+				}
+				effects |= SpriteInfo.SourceInTexels | SpriteInfo.DestSizeInPixels;
 			}
 			else
 			{
-				_tempRect.X = 0;
-				_tempRect.Y = 0;
-				_tempRect.Width = texture.Width;
-				_tempRect.Height = texture.Height;
+				spriteData[numSprites].source.X = 0;
+				spriteData[numSprites].source.Y = 0;
+				spriteData[numSprites].source.Width = 1;
+				spriteData[numSprites].source.Height = 1;
 			}
 
-			_texCoordTL.X = _tempRect.X / (float) texture.Width;
-			_texCoordTL.Y = _tempRect.Y / (float) texture.Height;
-			_texCoordBR.X = (_tempRect.X + _tempRect.Width) / (float) texture.Width;
-			_texCoordBR.Y = (_tempRect.Y + _tempRect.Height) / (float) texture.Height;
+			// Everything else passed is just copied
+			spriteData[numSprites].texture = texture;
+			spriteData[numSprites].color = color;
+			spriteData[numSprites].origin = origin;
+			spriteData[numSprites].rotation = rotation;
+			spriteData[numSprites].depth = depth;
+			spriteData[numSprites].effects = effects;
 
-			if ((effect & SpriteEffects.FlipVertically) != 0)
+			if (sortMode == SpriteSortMode.Immediate)
 			{
-				float temp = _texCoordBR.Y;
-				_texCoordBR.Y = _texCoordTL.Y;
-				_texCoordTL.Y = temp;
+				RenderBatch(0, 1);
 			}
-			if ((effect & SpriteEffects.FlipHorizontally) != 0)
+			else
 			{
-				float temp = _texCoordBR.X;
-				_texCoordBR.X = _texCoordTL.X;
-				_texCoordTL.X = temp;
-			}
-
-			item.Set(
-				destinationRectangle.X,
-				destinationRectangle.Y,
-				-origin.X,
-				-origin.Y,
-				destinationRectangle.Z,
-				destinationRectangle.W,
-				(float) Math.Sin(rotation),
-				(float) Math.Cos(rotation),
-				color,
-				_texCoordTL,
-				_texCoordBR
-			);
-
-			if (autoFlush)
-			{
-				FlushIfNeeded();
+				numSprites += 1;
 			}
 		}
 
-		// Mark the end of a draw operation for Immediate SpriteSortMode.
-		internal void FlushIfNeeded()
+		private void RenderBatch(int offset, int batchSize)
 		{
-			if (_sortMode == SpriteSortMode.Immediate)
+			GraphicsDevice.Textures[0] = spriteData[offset].texture;
+			for (int i = 0; i < batchSize; i += 1)
 			{
-				_batcher.DrawBatch(_sortMode, _spritePass, _effect);
-			}
-		}
+				/* FIXME: OPTIMIZATION POINT: This method
+				 * allocates like fuck right now! In general,
+				 * it's by far the slowest block of code in the
+				 * whole file, and needs fixing.
+				 * -flibit
+				 */
 
-		#endregion
+				// Current sprite being calculated
+				SpriteInfo info = spriteData[i + offset];
 
-		#region Protected Dispose Method
+				// Calculate initial sprite information
+				Vector2 source = new Vector2(
+					info.source.X,
+					info.source.Y
+				);
+				Vector2 destination = new Vector2(
+					info.destination.X,
+					info.destination.Y
+				);
+				Vector2 sourceSize = new Vector2(
+					Math.Max(
+						info.source.Width,
+						MathHelper.MachineEpsilonFloat
+					),
+					Math.Max(
+						info.source.Height,
+						MathHelper.MachineEpsilonFloat
+					)
+				);
+				Vector2 destinationSize = new Vector2(
+					info.destination.Z,
+					info.destination.W
+				);
+				Vector2 origin = info.origin / sourceSize;
 
-		protected override void Dispose(bool disposing)
-		{
-			if (!IsDisposed)
-			{
-				if (disposing)
+				// Calculations performed with inverse texture size
+				Vector2 inverseTexSize = new Vector2(
+					(1.0f / (float) spriteData[offset].texture.Width),
+					(1.0f / (float) spriteData[offset].texture.Height)
+				);
+				if ((info.effects & SpriteInfo.SourceInTexels) == SpriteInfo.SourceInTexels)
 				{
-					if (_spriteEffect != null)
-					{
-						_spriteEffect.Dispose();
-						_spriteEffect = null;
-					}
+					source *= inverseTexSize;
+					sourceSize *= inverseTexSize;
+				}
+				else
+				{
+					origin *= inverseTexSize;
+				}
+
+				// Calculations done with texture size
+				if ((info.effects & SpriteInfo.DestSizeInPixels) != SpriteInfo.DestSizeInPixels)
+				{
+					destinationSize.X *= spriteData[offset].texture.Width;
+					destinationSize.Y *= spriteData[offset].texture.Height;
+				}
+
+				// Calculations performed with rotation
+				Vector2 rotationMatrix1;
+				Vector2 rotationMatrix2;
+				if (!MathHelper.WithinEpsilon(info.rotation, 0.0f))
+				{
+					float sin = (float) Math.Sin(info.rotation);
+					float cos = (float) Math.Cos(info.rotation);
+					rotationMatrix1.X = cos;
+					rotationMatrix1.Y = sin;
+					rotationMatrix2.X = -sin;
+					rotationMatrix2.Y = cos;
+				}
+				else
+				{
+					rotationMatrix1.X = 1.0f;
+					rotationMatrix1.Y = 0.0f;
+					rotationMatrix2.X = 0.0f;
+					rotationMatrix2.Y = 1.0f;
+				}
+
+				// Calculate vertices, finally.
+				for (int j = 0; j < 4; j += 1)
+				{
+					Vector2 cornerOffset = (
+						SpriteInfo.CornerOffsets[j] - origin
+					) * destinationSize;
+
+					Vector2 position = Vector2.Add(
+						Vector2.Multiply(
+							rotationMatrix2,
+							cornerOffset.Y
+						),
+						Vector2.Add(
+							Vector2.Multiply(
+								rotationMatrix1,
+								cornerOffset.X
+							),
+							destination
+						)
+					);
+					vertexInfo[(i * 4) + j].Position.X = position.X;
+					vertexInfo[(i * 4) + j].Position.Y = position.Y;
+					vertexInfo[(i * 4) + j].Position.Z = info.depth;
+					vertexInfo[(i * 4) + j].Color = info.color;
+					vertexInfo[(i * 4) + j].TextureCoordinate = Vector2.Add(
+						Vector2.Multiply(
+							SpriteInfo.CornerOffsets[j ^ (info.effects & 0x3)],
+							sourceSize
+						),
+						source
+					);
 				}
 			}
-			base.Dispose(disposing);
+			vertexBuffer.SetData(vertexInfo, 0, batchSize * 4, SetDataOptions.None);
+
+			if (customEffect != null)
+			{
+				foreach (EffectPass pass in customEffect.CurrentTechnique.Passes)
+				{
+					pass.Apply();
+					GraphicsDevice.DrawIndexedPrimitives(
+						PrimitiveType.TriangleList,
+						0,
+						0,
+						batchSize * 4,
+						0,
+						batchSize * 2
+					);
+				}
+			}
+			else
+			{
+				GraphicsDevice.DrawIndexedPrimitives(
+					PrimitiveType.TriangleList,
+					0,
+					0,
+					batchSize * 4,
+					0,
+					batchSize * 2
+				);
+			}
 		}
 
-		#endregion
-
-		#region Private Methods
-
-		void Setup()
+		private void FlushBatch()
 		{
-			GraphicsDevice gd = GraphicsDevice;
-			gd.BlendState = _blendState;
-			gd.DepthStencilState = _depthStencilState;
-			gd.RasterizerState = _rasterizerState;
-			gd.SamplerStates[0] = _samplerState;
+			int offset = 0;
+			Texture2D curTexture = null;
 
-			// Setup the default sprite effect.
-			Viewport vp = gd.Viewport;
+			// FIXME: OPTIMIZATION POINT: Speed up sprite sorting! -flibit
+			if (sortMode == SpriteSortMode.Texture)
+			{
+				Array.Sort(
+					spriteData,
+					0,
+					numSprites,
+					TextureCompare
+				);
+			}
+			else if (sortMode == SpriteSortMode.BackToFront)
+			{
+				Array.Sort(
+					spriteData,
+					0,
+					numSprites,
+					BackToFrontCompare
+				);
+			}
+			else if (sortMode == SpriteSortMode.FrontToBack)
+			{
+				Array.Sort(
+					spriteData,
+					0,
+					numSprites,
+					FrontToBackCompare
+				);
+			}
 
+			PrepRenderState();
+
+			for (int i = 0; i < numSprites; i += 1)
+			{
+				if (spriteData[i].texture != curTexture)
+				{
+					if (i > offset)
+					{
+						RenderBatch(offset, i - offset);
+					}
+					curTexture = spriteData[i].texture;
+					offset = i;
+				}
+			}
+			RenderBatch(offset, numSprites - offset);
+
+			numSprites = 0;
+		}
+
+		private void PrepRenderState()
+		{
+			GraphicsDevice.BlendState = blendState;
+			GraphicsDevice.SamplerStates[0] = samplerState;
+			GraphicsDevice.DepthStencilState = depthStencilState;
+			GraphicsDevice.RasterizerState = rasterizerState;
+
+			GraphicsDevice.SetVertexBuffer(vertexBuffer);
+			GraphicsDevice.Indices = indexBuffer;
+
+			Viewport viewport = GraphicsDevice.Viewport;
 			Matrix projection;
-			// GL requires a half pixel offset to match DX.
-			Matrix.CreateOrthographicOffCenter(0, vp.Width, vp.Height, 0, 0, 1, out projection);
+			Matrix.CreateOrthographicOffCenter(
+				0,
+				viewport.Width,
+				viewport.Height,
+				0,
+				0,
+				1,
+				out projection
+			);
+			/* FIXME: Half-pixel offset for GL!
+			 * Abstract out, or remove altogether.
+			 * -flibit
+			 */
 			projection.M41 += -0.5f * projection.M11;
 			projection.M42 += -0.5f * projection.M22;
-			Matrix.Multiply(ref _matrix, ref projection, out projection);
+			Matrix.Multiply(
+				ref transformMatrix,
+				ref projection,
+				out projection
+			);
+			spriteMatrixTransform.SetValue(projection);
 
-			_matrixTransform.SetValue(projection);
-
-			if (_effect == null)
-			{
-				_spritePass.Apply();
-			}
-		}
-
-		void CheckValid(Texture2D texture)
-		{
-			if (texture == null)
-			{
-				throw new ArgumentNullException("texture");
-			}
-
-			if (!_beginCalled)
-			{
-				throw new InvalidOperationException("Draw was called, but Begin has not yet been called. " +
-					"Begin must be called successfully before you can call Draw.");
-			}
+			// FIXME: When is this actually applied? -flibit
+			spriteEffectPass.Apply();
 		}
 
 		private void CheckBegin(string method)
 		{
-			if (!_beginCalled)
+			if (!beginCalled)
 			{
 				throw new InvalidOperationException(
 					method + " was called, but Begin has" +
@@ -868,6 +1002,79 @@ namespace Microsoft.Xna.Framework.Graphics
 					" called successfully before you can" +
 					" call " + method + "."
 				);
+			}
+		}
+
+		#endregion
+
+		#region Private Static Methods
+
+		private static short[] GenerateIndexArray()
+		{
+			short[] result = new short[MAX_INDICES];
+			for (int i = 0, j = 0; i < MAX_INDICES; i += 6, j += 4)
+			{
+				result[i] = (short) (j);
+				result[i + 1] = (short) (j + 1);
+				result[i + 2] = (short) (j + 2);
+				result[i + 3] = (short) (j + 3);
+				result[i + 4] = (short) (j + 2);
+				result[i + 5] = (short) (j + 1);
+			}
+			return result;
+		}
+
+		#endregion
+
+		#region Private Sprite Data Container Class
+
+		private struct SpriteInfo
+		{
+			public Rectangle source;
+			public Vector4 destination;
+			public Color color;
+			public Vector2 origin;
+			public float rotation;
+			public float depth;
+			public Texture2D texture;
+			public byte effects;
+
+			public const int SourceInTexels = 0x4;
+			public const int DestSizeInPixels = 0x8;
+			public static readonly Vector2[] CornerOffsets = new Vector2[]
+			{
+				new Vector2(0.0f, 0.0f),
+				new Vector2(1.0f, 0.0f),
+				new Vector2(0.0f, 1.0f),
+				new Vector2(1.0f, 1.0f)
+			};
+		}
+
+		#endregion
+
+		#region Private Sprite Comparison Classes
+
+		private class TextureComparer : IComparer<SpriteInfo>
+		{
+			public int Compare(SpriteInfo x, SpriteInfo y)
+			{
+				return x.texture.GetHashCode().CompareTo(y.texture.GetHashCode());
+			}
+		}
+
+		private class BackToFrontComparer : IComparer<SpriteInfo>
+		{
+			public int Compare(SpriteInfo x, SpriteInfo y)
+			{
+				return y.depth.CompareTo(x.depth);
+			}
+		}
+
+		private class FrontToBackComparer : IComparer<SpriteInfo>
+		{
+			public int Compare(SpriteInfo x, SpriteInfo y)
+			{
+				return x.depth.CompareTo(y.depth);
 			}
 		}
 
