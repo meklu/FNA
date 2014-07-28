@@ -291,33 +291,8 @@ namespace Microsoft.Xna.Framework
 			Platform.Deactivated += OnDeactivated;
 			_services.AddService(typeof(GamePlatform), Platform);
 
-			// Set the window title.
-			string windowTitle = string.Empty;
-
-			// When running unit tests this can return null.
-			Assembly assembly = Assembly.GetEntryAssembly();
-			if (assembly != null)
-			{
-				// Use the Title attribute of the Assembly if possible.
-				AssemblyTitleAttribute assemblyTitleAtt = (AssemblyTitleAttribute)
-					AssemblyTitleAttribute.GetCustomAttribute(
-						assembly,
-						typeof(AssemblyTitleAttribute)
-					);
-
-				if (assemblyTitleAtt != null)
-				{
-					windowTitle = assemblyTitleAtt.Title;
-				}
-
-				// Otherwise, fallback to the Name of the assembly.
-				if (string.IsNullOrEmpty(windowTitle))
-				{
-					windowTitle = assembly.GetName().Name;
-				}
-			}
-
-			Window.Title = windowTitle;
+			// FIXME: Does XNA4 set this here? We can do this at GameWindow creation...
+			Window.Title = MonoGame.Utilities.AssemblyHelper.GetDefaultWindowTitle();
 		}
 
 		#endregion
