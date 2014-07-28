@@ -290,9 +290,6 @@ namespace Microsoft.Xna.Framework
 			Platform.Activated += OnActivated;
 			Platform.Deactivated += OnDeactivated;
 			_services.AddService(typeof(GamePlatform), Platform);
-
-			// FIXME: Does XNA4 set this here? We can do this at GameWindow creation...
-			Window.Title = MonoGame.Utilities.AssemblyHelper.GetDefaultWindowTitle();
 		}
 
 		#endregion
