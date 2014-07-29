@@ -51,7 +51,7 @@ namespace Microsoft.Xna.Framework.Content
 		) {
 			return arr.FirstOrDefault(
 				s => extensions.Any(
-					ext => s.ToLower() == (search.ToLower() + ext)
+					ext => s.ToLowerInvariant() == (search.ToLowerInvariant() + ext)
 				)
 			);
 		}
