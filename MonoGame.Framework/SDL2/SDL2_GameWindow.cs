@@ -43,19 +43,15 @@ namespace Microsoft.Xna.Framework
 			 */
 			get
 			{
-				return (INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE) != 0;
+#if RESIZABLE_WINDOW
+				return true;
+#else
+				return false;
+#endif
 			}
 			set
 			{
-				// Note: This can only be used BEFORE window creation!
-				if (value)
-				{
-					INTERNAL_sdlWindowFlags_Next |= SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
-				}
-				else
-				{
-					INTERNAL_sdlWindowFlags_Next &= ~SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
-				}
+				// No-op. :(
 			}
 		}
 
@@ -95,18 +91,14 @@ namespace Microsoft.Xna.Framework
 		{
 			get
 			{
-				return (INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS) != 0;
+				return (SDL.SDL_GetWindowFlags(INTERNAL_sdlWindow) & (uint) SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS) != 0;
 			}
 			set
 			{
-				if (value)
-				{
-					INTERNAL_sdlWindowFlags_Next |= SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
-				}
-				else
-				{
-					INTERNAL_sdlWindowFlags_Next &= ~SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
-				}
+				SDL.SDL_SetWindowBordered(
+					INTERNAL_sdlWindow,
+					value ? SDL.SDL_bool.SDL_FALSE : SDL.SDL_bool.SDL_TRUE
+				);
 			}
 		}
 
@@ -124,8 +116,8 @@ namespace Microsoft.Xna.Framework
 
 		private IntPtr INTERNAL_sdlWindow;
 
-		private SDL.SDL_WindowFlags INTERNAL_sdlWindowFlags_Current;
-		private SDL.SDL_WindowFlags INTERNAL_sdlWindowFlags_Next;
+		private bool INTERNAL_isFullscreen;
+		private bool INTERNAL_wantsFullscreen;
 
 		private string INTERNAL_deviceName;
 
@@ -137,17 +129,18 @@ namespace Microsoft.Xna.Framework
 
 		internal SDL2_GameWindow()
 		{
-			INTERNAL_sdlWindowFlags_Next = (
+			SDL.SDL_WindowFlags initFlags = (
 				SDL.SDL_WindowFlags.SDL_WINDOW_OPENGL |
 				SDL.SDL_WindowFlags.SDL_WINDOW_HIDDEN |
 				SDL.SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS |
 				SDL.SDL_WindowFlags.SDL_WINDOW_MOUSE_FOCUS
 			);
-#if RESIZABLE_WINDOW
-			AllowUserResizing = true;
-#else
-			AllowUserResizing = false;
-#endif
+
+			// FIXME: Once we have SDL_SetWindowResizable, remove this. -flibit
+			if (AllowUserResizing)
+			{
+				initFlags |= SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+			}
 
 			SDL.SDL_GL_SetAttribute(SDL.SDL_GLattr.SDL_GL_RED_SIZE, 8);
 			SDL.SDL_GL_SetAttribute(SDL.SDL_GLattr.SDL_GL_GREEN_SIZE, 8);
@@ -170,11 +163,12 @@ namespace Microsoft.Xna.Framework
 				SDL.SDL_WINDOWPOS_CENTERED,
 				GraphicsDeviceManager.DefaultBackBufferWidth,
 				GraphicsDeviceManager.DefaultBackBufferHeight,
-				INTERNAL_sdlWindowFlags_Next
+				initFlags
 			);
 			INTERNAL_SetIcon(title);
 
-			INTERNAL_sdlWindowFlags_Current = INTERNAL_sdlWindowFlags_Next;
+			INTERNAL_isFullscreen = false;
+			INTERNAL_wantsFullscreen = false;
 		}
 
 		#endregion
@@ -183,15 +177,7 @@ namespace Microsoft.Xna.Framework
 
 		public override void BeginScreenDeviceChange(bool willBeFullScreen)
 		{
-			// Fullscreen windowflag
-			if (willBeFullScreen)
-			{
-				INTERNAL_sdlWindowFlags_Next |= SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
-			}
-			else
-			{
-				INTERNAL_sdlWindowFlags_Next &= ~SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
-			}
+			INTERNAL_wantsFullscreen = willBeFullScreen;
 		}
 
 		public override void EndScreenDeviceChange(
@@ -202,21 +188,22 @@ namespace Microsoft.Xna.Framework
 			// Set screen device name, not that we use it...
 			INTERNAL_deviceName = screenDeviceName;
 
-			// Fullscreen (Note: this only reads the fullscreen flag)
-			SDL.SDL_SetWindowFullscreen(INTERNAL_sdlWindow, (uint) INTERNAL_sdlWindowFlags_Next);
-
-			// Bordered
-			SDL.SDL_SetWindowBordered(
+			// Fullscreen
+			SDL.SDL_SetWindowFullscreen(
 				INTERNAL_sdlWindow,
-				IsBorderlessEXT ? SDL.SDL_bool.SDL_FALSE : SDL.SDL_bool.SDL_TRUE
+				INTERNAL_wantsFullscreen ?
+					(uint) SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP :
+					0
 			);
 
-			/* Because Mac windows resizes from the bottom, we have to get the position before changing
-			 * the size so we can keep the window centered when resizing in windowed mode.
+			/* Because Mac windows resize from the bottom, we have to get the
+			 * position before changing the size so we can keep the window
+			 * centered when resizing in windowed mode.
+			 * -Nick
 			 */
 			int prevX = 0;
 			int prevY = 0;
-			if ((INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == 0)
+			if (!INTERNAL_wantsFullscreen)
 			{
 				SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out prevX, out prevY);
 			}
@@ -225,8 +212,7 @@ namespace Microsoft.Xna.Framework
 			SDL.SDL_SetWindowSize(INTERNAL_sdlWindow, clientWidth, clientHeight);
 
 			// Window position
-			if (	(INTERNAL_sdlWindowFlags_Current & SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP &&
-				(INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == 0	)
+			if (INTERNAL_isFullscreen && !INTERNAL_wantsFullscreen)
 			{
 				// If exiting fullscreen, just center the window on the desktop.
 				SDL.SDL_SetWindowPosition(
@@ -235,7 +221,7 @@ namespace Microsoft.Xna.Framework
 					SDL.SDL_WINDOWPOS_CENTERED
 				);
 			}
-			else if ((INTERNAL_sdlWindowFlags_Next & SDL.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == 0)
+			else if (!INTERNAL_wantsFullscreen)
 			{
 				Rectangle curBounds = ClientBounds;
 				SDL.SDL_SetWindowPosition(
@@ -245,8 +231,8 @@ namespace Microsoft.Xna.Framework
 				);
 			}
 
-			// Current flags have just been updated.
-			INTERNAL_sdlWindowFlags_Current = INTERNAL_sdlWindowFlags_Next;
+			// Current window state has just been updated.
+			INTERNAL_isFullscreen = INTERNAL_wantsFullscreen;
 		}
 
 		#endregion
