@@ -70,7 +70,7 @@ namespace Microsoft.Xna.Framework
 		/// <exception cref="System.NotImplementedException">
 		/// Thrown when trying to use this property on an unsupported platform.
 		/// </exception>
-		public virtual bool IsBorderless
+		public virtual bool IsBorderlessEXT
 		{
 			get
 			{

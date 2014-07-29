@@ -91,7 +91,7 @@ namespace Microsoft.Xna.Framework
 			}
 		}
 
-		public override bool IsBorderless
+		public override bool IsBorderlessEXT
 		{
 			get
 			{
@@ -208,7 +208,7 @@ namespace Microsoft.Xna.Framework
 			// Bordered
 			SDL.SDL_SetWindowBordered(
 				INTERNAL_sdlWindow,
-				IsBorderless ? SDL.SDL_bool.SDL_FALSE : SDL.SDL_bool.SDL_TRUE
+				IsBorderlessEXT ? SDL.SDL_bool.SDL_FALSE : SDL.SDL_bool.SDL_TRUE
 			);
 
 			/* Because Mac windows resizes from the bottom, we have to get the position before changing
