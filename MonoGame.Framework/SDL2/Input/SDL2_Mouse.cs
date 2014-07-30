@@ -110,4 +110,3 @@ namespace Microsoft.Xna.Framework.Input
 		#endregion
 	}
 }
-
