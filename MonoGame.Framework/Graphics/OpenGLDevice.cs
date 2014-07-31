@@ -2280,7 +2280,7 @@ namespace Microsoft.Xna.Framework.Graphics
 						depthAttachmentType
 					);
 
-					if (Game.Instance.GraphicsDevice.RenderTargetCount > 0)
+					if (graphicsDevice.RenderTargetCount > 0)
 					{
 						Framebuffer.BindFramebuffer(
 							graphicsDevice.GLDevice.targetFramebuffer
