@@ -329,14 +329,13 @@ namespace Microsoft.Xna.Framework
 							Mouse.INTERNAL_WindowWidth = evt.window.data1;
 							Mouse.INTERNAL_WindowHeight = evt.window.data2;
 
-							((SDL2_GameWindow) Window).INTERNAL_ClientSizeChanged(true);
+							// Should be called on user resize only, NOT ApplyChanges!
+							((SDL2_GameWindow) Window).INTERNAL_ClientSizeChanged();
 						}
 						else if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED)
 						{
 							Mouse.INTERNAL_WindowWidth = evt.window.data1;
 							Mouse.INTERNAL_WindowHeight = evt.window.data2;
-
-							((SDL2_GameWindow) Window).INTERNAL_ClientSizeChanged(false);
 
 							// Need to reset the graphics device any time the window size changes
 							if (Game.graphicsDeviceManager.IsFullScreen)
@@ -354,6 +353,15 @@ namespace Microsoft.Xna.Framework
 									evt.window.data2
 								);
 							}
+						}
+
+						// Window Move
+						else if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_MOVED)
+						{
+							((SDL2_GameWindow) Window).INTERNAL_ClientMoved(
+								evt.window.data1,
+								evt.window.data2
+							);
 						}
 
 						// Mouse Focus

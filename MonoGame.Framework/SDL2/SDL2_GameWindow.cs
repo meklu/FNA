@@ -59,13 +59,6 @@ namespace Microsoft.Xna.Framework
 		{
 			get
 			{
-				// If we have no client bounds yet, retrieve them
-				if (INTERNAL_clientBounds.IsEmpty)
-				{
-					SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out INTERNAL_clientBounds.X, out INTERNAL_clientBounds.Y);
-					SDL.SDL_GetWindowSize(INTERNAL_sdlWindow, out INTERNAL_clientBounds.Width, out INTERNAL_clientBounds.Height);
-				}
-
 				return INTERNAL_clientBounds;
 			}
 		}
@@ -167,6 +160,18 @@ namespace Microsoft.Xna.Framework
 			);
 			INTERNAL_SetIcon(title);
 
+			// Initialize the internal client bounds rectangle
+			SDL.SDL_GetWindowPosition(
+				INTERNAL_sdlWindow,
+				out INTERNAL_clientBounds.X,
+				out INTERNAL_clientBounds.Y
+			);
+			SDL.SDL_GetWindowSize(
+				INTERNAL_sdlWindow,
+				out INTERNAL_clientBounds.Width,
+				out INTERNAL_clientBounds.Height
+			);
+
 			INTERNAL_isFullscreen = false;
 			INTERNAL_wantsFullscreen = false;
 		}
@@ -231,6 +236,18 @@ namespace Microsoft.Xna.Framework
 				);
 			}
 
+			// Update the internal client bounds rectangle
+			SDL.SDL_GetWindowPosition(
+				INTERNAL_sdlWindow,
+				out INTERNAL_clientBounds.X,
+				out INTERNAL_clientBounds.Y
+			);
+			SDL.SDL_GetWindowSize(
+				INTERNAL_sdlWindow,
+				out INTERNAL_clientBounds.Width,
+				out INTERNAL_clientBounds.Height
+			);
+
 			// Current window state has just been updated.
 			INTERNAL_isFullscreen = INTERNAL_wantsFullscreen;
 		}
@@ -239,17 +256,27 @@ namespace Microsoft.Xna.Framework
 
 		#region Internal Methods
 
-		internal void INTERNAL_ClientSizeChanged(bool userResize)
+		internal void INTERNAL_ClientSizeChanged()
 		{
 			// Update our client bounds rectangle before invoking the event
-			SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out INTERNAL_clientBounds.X, out INTERNAL_clientBounds.Y);
-			SDL.SDL_GetWindowSize(INTERNAL_sdlWindow, out INTERNAL_clientBounds.Width, out INTERNAL_clientBounds.Height);
+			SDL.SDL_GetWindowPosition(
+				INTERNAL_sdlWindow,
+				out INTERNAL_clientBounds.X,
+				out INTERNAL_clientBounds.Y
+			);
+			SDL.SDL_GetWindowSize(
+				INTERNAL_sdlWindow,
+				out INTERNAL_clientBounds.Width,
+				out INTERNAL_clientBounds.Height
+			);
 
-			if (userResize)
-			{
-				// Should be called on user resize only, NOT ApplyChanges!
-				OnClientSizeChanged();
-			}
+			OnClientSizeChanged();
+		}
+
+		internal void INTERNAL_ClientMoved(int x, int y)
+		{
+			INTERNAL_clientBounds.X = x;
+			INTERNAL_clientBounds.Y = y;
 		}
 
 		#endregion
