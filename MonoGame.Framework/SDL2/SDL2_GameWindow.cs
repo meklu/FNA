@@ -239,13 +239,17 @@ namespace Microsoft.Xna.Framework
 
 		#region Internal Methods
 
-		internal void INTERNAL_ClientSizeChanged()
+		internal void INTERNAL_ClientSizeChanged(bool userResize)
 		{
 			// Update our client bounds rectangle before invoking the event
 			SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out INTERNAL_clientBounds.X, out INTERNAL_clientBounds.Y);
 			SDL.SDL_GetWindowSize(INTERNAL_sdlWindow, out INTERNAL_clientBounds.Width, out INTERNAL_clientBounds.Height);
 
-			OnClientSizeChanged();
+			if (userResize)
+			{
+				// Should be called on user resize only, NOT ApplyChanges!
+				OnClientSizeChanged();
+			}
 		}
 
 		#endregion
