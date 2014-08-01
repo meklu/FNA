@@ -756,12 +756,12 @@ namespace Microsoft.Xna.Framework
 			AssertNotDisposed();
 			if (Platform.BeforeUpdate(gameTime))
 			{
+				Update(gameTime);
+
 				/* The TouchPanel needs to know the time for when
 				 * touches arrive.
 				 */
-				TouchPanelState.Update(gameTime);
-
-				Update(gameTime);
+				TouchPanelState.CurrentTimestamp = gameTime.TotalGameTime;
 			}
 		}
 

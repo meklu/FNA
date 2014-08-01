@@ -107,6 +107,19 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 		#endregion
 
+		#region Internal Static Timestamp Property
+
+		/// <summary>
+		/// The current timestamp that we use for setting the timestamp of new TouchLocations.
+		/// </summary>
+		internal static TimeSpan CurrentTimestamp
+		{
+			get;
+			set;
+		}
+
+		#endregion
+
 		#region Internal Variables
 
 		/// <summary>
@@ -195,15 +208,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 		#endregion
 
-		#region Private Static Timestamp Variables
-
-		/// <summary>
-		/// The current timestamp that we use for setting the timestamp of new TouchLocations.
-		/// </summary>
-		private static TimeSpan currentTimestamp;
-
-		#endregion
-
 		#region Internal Constructor
 
 		internal TouchPanelState(GameWindow window)
@@ -227,6 +231,26 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 		public TouchCollection GetState()
 		{
+			/* Clear out touches from previous frames that were
+			 * released on the same frame they were touched that
+			 * haven't been seen.
+			 */
+			for (int i = touchState.Count - 1; i >= 0; i -= 1)
+			{
+				TouchLocation touch = touchState[i];
+
+				/* If a touch was pressed and released in a
+				 * previous frame and the user didn't ask about
+				 * it then trash it.
+				 */
+				if (	touch.SameFrameReleased &&
+					touch.Timestamp < CurrentTimestamp &&
+					touch.State == TouchLocationState.Pressed	)
+				{
+					touchState.RemoveAt(i);
+				}
+			}
+
 			TouchCollection result = new TouchCollection(touchState.ToArray());
 			AgeTouches(touchState);
 			return result;
@@ -297,7 +321,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 					touchId,
 					state,
 					position * touchScale,
-					currentTimestamp
+					CurrentTimestamp
 				);
 
 				if (!isMouse || EnableMouseTouchPoint)
@@ -680,7 +704,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 				return;
 			}
 
-			TimeSpan elapsed = currentTimestamp - touch.PressTimestamp;
+			TimeSpan elapsed = CurrentTimestamp - touch.PressTimestamp;
 			if (elapsed < TimeRequiredForHold)
 			{
 				return;
@@ -763,7 +787,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			/* If we pressed and held too long then don't
 			 * generate a tap event for it.
 			 */
-			TimeSpan elapsed = currentTimestamp - touch.PressTimestamp;
+			TimeSpan elapsed = CurrentTimestamp - touch.PressTimestamp;
 			if (elapsed > TimeRequiredForHold)
 			{
 				return;
@@ -928,15 +952,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			pinchGestureStarted = true;
 			tapDisabled = true;
 			holdDisabled = true;
-		}
-
-		#endregion
-
-		#region Internal Static Methods
-
-		internal static void Update(GameTime gameTime)
-		{
-			currentTimestamp = gameTime.TotalGameTime;
 		}
 
 		#endregion

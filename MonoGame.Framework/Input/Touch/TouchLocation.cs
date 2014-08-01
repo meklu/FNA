@@ -97,6 +97,17 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 		#endregion
 
+		#region Internal Variables
+
+		/// <summary>
+		/// True if this touch was pressed and released on the same frame.
+		/// In this case we will keep it around for the user to get by GetState that frame.
+		/// However if they do not call GetState that frame, this touch will be forgotten.
+		/// </summary>
+		internal bool SameFrameReleased;
+
+		#endregion
+
 		#region Private Variables
 
 		/// <summary>
@@ -204,6 +215,8 @@ namespace Microsoft.Xna.Framework.Input.Touch
 				pressPosition = Vector2.Zero;
 				pressTimestamp = TimeSpan.Zero;
 			}
+
+			SameFrameReleased = false;
 		}
 
 		#endregion
@@ -225,6 +238,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 				aPreviousLocation.pressPosition = Vector2.Zero;
 				aPreviousLocation.pressTimestamp = TimeSpan.Zero;
 				aPreviousLocation.velocity = Vector2.Zero;
+				aPreviousLocation.SameFrameReleased = false;
 				return false;
 			}
 
@@ -239,6 +253,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			aPreviousLocation.pressPosition = pressPosition;
 			aPreviousLocation.pressTimestamp = pressTimestamp;
 			aPreviousLocation.velocity = velocity;
+			aPreviousLocation.SameFrameReleased = SameFrameReleased;
 			return true;
 		}
 
@@ -368,6 +383,16 @@ namespace Microsoft.Xna.Framework.Input.Touch
 				velocity += (vel - velocity) * 0.45f;
 			}
 
+			// Going straight from pressed to released on the same frame
+			if (	previousState == TouchLocationState.Pressed &&
+				state == TouchLocationState.Released &&
+				elapsed == TimeSpan.Zero	)
+			{
+				// Lie that we are pressed for now
+				SameFrameReleased = true;
+				state = TouchLocationState.Pressed;
+			}
+
 			// Set the new timestamp.
 			timestamp = touchEvent.Timestamp;
 
@@ -381,7 +406,14 @@ namespace Microsoft.Xna.Framework.Input.Touch
 				state == TouchLocationState.Pressed,
 				"Can only age the state of touches that are in the Pressed State"
 			);
-			state = TouchLocationState.Moved;
+			if (SameFrameReleased)
+			{
+				state = TouchLocationState.Released;
+			}
+			else
+			{
+				state = TouchLocationState.Moved;
+			}
 		}
 
 		#endregion
