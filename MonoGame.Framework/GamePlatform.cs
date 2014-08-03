@@ -301,6 +301,8 @@ namespace Microsoft.Xna.Framework
 
 		internal abstract void SetPresentationInterval(PresentInterval interval);
 
+		internal abstract bool HasTouch();
+
 		#endregion
 
 		#region Protected Methods

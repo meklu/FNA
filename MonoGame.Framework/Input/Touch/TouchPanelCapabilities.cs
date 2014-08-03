@@ -16,14 +16,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 	{
 		#region Public Properties
 
-		public bool HasPressure
-		{
-			get
-			{
-				return hasPressure;
-			}
-		}
-
 		/// <summary>
 		/// Returns true if a device is available for use.
 		/// </summary>
@@ -50,7 +42,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 		#region Private Variables
 
-		private bool hasPressure;
 		private bool isConnected;
 		private int maximumTouchCount;
 		private bool initialized;
@@ -64,15 +55,8 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			if (!initialized)
 			{
 				initialized = true;
-
-				/* There does not appear to be a way of finding out if a touch
-				 * device supports pressure.  XNA does not expose a pressure value,
-				 * so let's assume it doesn't support it.
-				 */
-				hasPressure = false;
-
-				isConnected = true;
-				maximumTouchCount = 8;
+				isConnected = Game.Instance.Platform.HasTouch();
+				maximumTouchCount = 8; // FIXME: Assumption!
 			}
 		}
 

@@ -269,13 +269,20 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 		#region Internal Methods
 
-		internal void AddEvent(int id, TouchLocationState state, Vector2 position)
-		{
+		internal void AddEvent(
+			int id,
+			TouchLocationState state,
+			Vector2 position
+		) {
 			AddEvent(id, state, position, false);
 		}
 
-		internal void AddEvent(int id, TouchLocationState state, Vector2 position, bool isMouse)
-		{
+		internal void AddEvent(
+			int id,
+			TouchLocationState state,
+			Vector2 position,
+			bool isMouse
+		) {
 			/* Different platforms return different touch identifiers
 			 * based on the specifics of their implementation and the
 			 * system drivers.

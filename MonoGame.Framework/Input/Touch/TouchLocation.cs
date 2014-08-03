@@ -34,14 +34,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			}
 		}
 
-		public float Pressure
-		{
-			get
-			{
-				return pressure;
-			}
-		}
-
 		public TouchLocationState State
 		{
 			get
@@ -119,10 +111,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		private TouchLocationState state;
 		private TouchLocationState previousState;
 
-		// Only used in Android, for now
-		private float pressure;
-		private float previousPressure;
-
 		// Used for gesture recognition.
 		private Vector2 velocity;
 		private Vector2 pressPosition;
@@ -193,11 +181,9 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			this.id = id;
 			this.state = state;
 			this.position = position;
-			pressure = 0.0f;
 
 			this.previousState = previousState;
 			this.previousPosition = previousPosition;
-			previousPressure = 0.0f;
 
 			this.timestamp = timestamp;
 			velocity = Vector2.Zero;
@@ -232,8 +218,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 				aPreviousLocation.position = Vector2.Zero;
 				aPreviousLocation.previousState = TouchLocationState.Invalid;
 				aPreviousLocation.previousPosition = Vector2.Zero;
-				aPreviousLocation.pressure = 0.0f;
-				aPreviousLocation.previousPressure = 0.0f;
 				aPreviousLocation.timestamp = TimeSpan.Zero;
 				aPreviousLocation.pressPosition = Vector2.Zero;
 				aPreviousLocation.pressTimestamp = TimeSpan.Zero;
@@ -247,8 +231,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			aPreviousLocation.position = previousPosition;
 			aPreviousLocation.previousState = TouchLocationState.Invalid;
 			aPreviousLocation.previousPosition = Vector2.Zero;
-			aPreviousLocation.pressure = previousPressure;
-			aPreviousLocation.previousPressure = 0.0f;
 			aPreviousLocation.timestamp = timestamp;
 			aPreviousLocation.pressPosition = pressPosition;
 			aPreviousLocation.pressTimestamp = pressTimestamp;
@@ -272,10 +254,8 @@ namespace Microsoft.Xna.Framework.Input.Touch
 				"Touch id:" + id.ToString() +
 				" state:" + state.ToString() +
 				" position:" + position.ToString() +
-				" pressure:" + pressure.ToString() +
 				" prevState:" + previousState.ToString() +
-				" prevPosition:" + previousPosition.ToString() +
-				" previousPressure:" + previousPressure.ToString()
+				" prevPosition:" + previousPosition.ToString()
 			);
 		}
 
@@ -329,7 +309,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			// Store the current state as the previous.
 			touch.previousState = touch.state;
 			touch.previousPosition = touch.position;
-			touch.previousPressure = touch.pressure;
 
 			// Set the new state.
 			touch.state = TouchLocationState.Moved;
@@ -363,7 +342,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			// Store the current state as the previous one.
 			previousPosition = position;
 			previousState = state;
-			previousPressure = pressure;
 
 			// Set the new state.
 			position = touchEvent.position;
@@ -371,7 +349,6 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			{
 				state = touchEvent.state;
 			}
-			pressure = touchEvent.pressure;
 
 			// If time has elapsed then update the velocity.
 			Vector2 delta = position - previousPosition;

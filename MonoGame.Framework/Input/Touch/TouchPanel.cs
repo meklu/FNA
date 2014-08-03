@@ -172,8 +172,11 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 		#region Internal Static Methods
 
-		internal static void AddEvent(int id, TouchLocationState state, Vector2 position)
-		{
+		internal static void AddEvent(
+			int id,
+			TouchLocationState state,
+			Vector2 position
+		) {
 			AddEvent(id, state, position, false);
 		}
 
@@ -183,7 +186,12 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			Vector2 position,
 			bool isMouse
 		) {
-			PrimaryWindow.TouchPanelState.AddEvent(id, state, position, isMouse);
+			PrimaryWindow.TouchPanelState.AddEvent(
+				id,
+				state,
+				position,
+				isMouse
+			);
 		}
 
 		#endregion

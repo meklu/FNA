@@ -47,6 +47,7 @@ using SDL2;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Input.Touch;
 #endregion
 
 namespace Microsoft.Xna.Framework
@@ -282,10 +283,50 @@ namespace Microsoft.Xna.Framework
 						}
 					}
 
-					// Mouse Motion Event
+					// Mouse Input
 					else if (evt.type == SDL.SDL_EventType.SDL_MOUSEMOTION)
 					{
 						Mouse.INTERNAL_IsWarped = false;
+					}
+					else if (evt.type == SDL.SDL_EventType.SDL_MOUSEWHEEL)
+					{
+						// 120 units per notch. Because reasons.
+						Mouse.INTERNAL_MouseWheel += evt.wheel.y * 120;
+					}
+
+					// Touch Input
+					else if (evt.type == SDL.SDL_EventType.SDL_FINGERDOWN)
+					{
+						TouchPanel.AddEvent(
+							(int) evt.tfinger.touchId,
+							TouchLocationState.Pressed,
+							new Vector2(
+								evt.tfinger.x,
+								evt.tfinger.y
+							)
+						);
+					}
+					else if (evt.type == SDL.SDL_EventType.SDL_FINGERUP)
+					{
+						TouchPanel.AddEvent(
+							(int) evt.tfinger.touchId,
+							TouchLocationState.Released,
+							new Vector2(
+								evt.tfinger.x,
+								evt.tfinger.y
+							)
+						);
+					}
+					else if (evt.type == SDL.SDL_EventType.SDL_FINGERMOTION)
+					{
+						TouchPanel.AddEvent(
+							(int) evt.tfinger.touchId,
+							TouchLocationState.Moved,
+							new Vector2(
+								evt.tfinger.x,
+								evt.tfinger.y
+							)
+						);
 					}
 
 					// Various Window Events...
@@ -373,13 +414,6 @@ namespace Microsoft.Xna.Framework
 						{
 							SDL.SDL_EnableScreenSaver();
 						}
-					}
-
-					// Mouse Wheel
-					else if (evt.type == SDL.SDL_EventType.SDL_MOUSEWHEEL)
-					{
-						// 120 units per notch. Because reasons.
-						Mouse.INTERNAL_MouseWheel += evt.wheel.y * 120;
 					}
 
 					// Controller device management
@@ -553,7 +587,7 @@ namespace Microsoft.Xna.Framework
 
 		#endregion
 
-		#region Internal GameWindow Methods
+		#region Internal GamePlatform Methods
 
 		internal override DisplayMode GetCurrentDisplayMode()
 		{
@@ -639,9 +673,14 @@ namespace Microsoft.Xna.Framework
 			}
 		}
 
+		internal override bool HasTouch()
+		{
+			return SDL.SDL_GetNumTouchDevices() > 0;
+		}
+
 		#endregion
 
-		#region Protected GameWindow Methods
+		#region Protected GamePlatform Methods
 
 		protected override void OnIsMouseVisibleChanged()
 		{
