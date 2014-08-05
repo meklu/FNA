@@ -180,6 +180,10 @@
       <Link>MonoGame.Framework\IPackedVector.cs</Link>
     </Compile>
     <Compile Include="CommandLineParser.cs" />
+    <Compile Include="..\..\MonoGame.Framework\Utilities\Hash.cs">
+      <Link>MonoGame.Framework\Utilities\Hash.cs</Link>
+    </Compile>
+    <Compile Include="MonoGame.Framework\GraphicsDevice.cs" />
     <Compile Include="CompilerInclude.cs" />
     <Compile Include="ConstantBufferData.cs" />
     <Compile Include="ConstantBufferData.mojo.cs" />
@@ -190,7 +194,6 @@
     <Compile Include="EffectObject.pssl.cs" />
     <Compile Include="EffectObject.writer.cs" />
     <Compile Include="MarshalHelper.cs" />
-    <Compile Include="MonoGame.Framework\GraphicsDevice.cs" />
     <Compile Include="ShaderCompilerException.cs" />
     <Compile Include="ShaderData.cs" />
     <Compile Include="ShaderData.mojo.cs" />

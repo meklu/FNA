@@ -134,6 +134,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
+		public bool UseReferenceDevice
+		{
+			get;
+			set;
+		}
+
 		public int VendorId
 		{
 			get

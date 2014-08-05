@@ -13,10 +13,16 @@ using System;
 
 namespace Microsoft.Xna.Framework
 {
+	/// <summary>
+	/// The arguments to the <see cref="GraphicsDeviceManager.PreparingDeviceSettings"/> event.
+	/// </summary>
 	public class PreparingDeviceSettingsEventArgs : EventArgs
 	{
 		#region Public Properties
 
+		/// <summary>
+		/// The default settings that will be used in device creation.
+		/// </summary>
 		public GraphicsDeviceInformation GraphicsDeviceInformation
 		{
 			get;
@@ -27,6 +33,10 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Constructor
 
+		/// <summary>
+		/// Create a new instance of the event.
+		/// </summary>
+		/// <param name="graphicsDeviceInformation">The default settings to be used in device creation.</param>
 		public PreparingDeviceSettingsEventArgs(GraphicsDeviceInformation graphicsDeviceInformation)
 		{
 			GraphicsDeviceInformation = graphicsDeviceInformation;

@@ -49,6 +49,9 @@ namespace Microsoft.Xna.Framework
 	{
 		#region Public Static Properties
 
+		/// <summary>
+		/// Returns a <see>Vector2</see> with components 0, 0.
+		/// </summary>
 		public static Vector2 Zero
 		{
 			get
@@ -57,6 +60,9 @@ namespace Microsoft.Xna.Framework
 			}
 		}
 
+		/// <summary>
+		/// Returns a <see>Vector2</see> with components 1, 1.
+		/// </summary>
 		public static Vector2 One
 		{
 			get
@@ -65,6 +71,9 @@ namespace Microsoft.Xna.Framework
 			}
 		}
 
+		/// <summary>
+		/// Returns a <see>Vector2</see> with components 1, 0.
+		/// </summary>
 		public static Vector2 UnitX
 		{
 			get
@@ -73,6 +82,9 @@ namespace Microsoft.Xna.Framework
 			}
 		}
 
+		/// <summary>
+		/// Returns a <see>Vector2</see> with components 0, 1.
+		/// </summary>
 		public static Vector2 UnitY
 		{
 			get
@@ -175,6 +187,12 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Static Methods
 
+		/// <summary>
+		/// Performs vector addition on <paramref name="value1"/> and <paramref name="value2"/>.
+		/// </summary>
+		/// <param name="value1">The first vector to add.</param>
+		/// <param name="value2">The second vector to add.</param>
+		/// <returns>The result of the vector addition.</returns>
 		public static Vector2 Add(Vector2 value1, Vector2 value2)
 		{
 			value1.X += value2.X;
@@ -182,6 +200,14 @@ namespace Microsoft.Xna.Framework
 			return value1;
 		}
 
+		/// <summary>
+		/// Performs vector addition on <paramref name="value1"/> and
+		/// <paramref name="value2"/>, storing the result of the
+		/// addition in <paramref name="result"/>.
+		/// </summary>
+		/// <param name="value1">The first vector to add.</param>
+		/// <param name="value2">The second vector to add.</param>
+		/// <param name="result">The result of the vector addition.</param>
 		public static void Add(ref Vector2 value1, ref Vector2 value2, out Vector2 result)
 		{
 			result.X = value1.X + value2.X;
@@ -433,6 +459,12 @@ namespace Microsoft.Xna.Framework
 			result.Y = value1.Y * value2.Y;
 		}
 
+		/// <summary>
+		/// Returns a <see>Vector2</see> pointing in the opposite
+		/// direction of <paramref name="value"/>.
+		/// </summary>
+		/// <param name="value">The vector to negate.</param>
+		/// <returns>The vector negation of <paramref name="value"/>.</returns>
 		public static Vector2 Negate(Vector2 value)
 		{
 			value.X = -value.X;
@@ -440,6 +472,12 @@ namespace Microsoft.Xna.Framework
 			return value;
 		}
 
+		/// <summary>
+		/// Stores a <see>Vector2</see> pointing in the opposite
+		/// direction of <paramref name="value"/> in <paramref name="result"/>.
+		/// </summary>
+		/// <param name="value">The vector to negate.</param>
+		/// <param name="result">The vector that the negation of <paramref name="value"/> will be stored in.</param>
 		public static void Negate(ref Vector2 value, out Vector2 result)
 		{
 			result.X = -value.X;
@@ -479,6 +517,12 @@ namespace Microsoft.Xna.Framework
 			result.Y = MathHelper.SmoothStep(value1.Y, value2.Y, amount);
 		}
 
+		/// <summary>
+		/// Performs vector subtraction on <paramref name="value1"/> and <paramref name="value2"/>.
+		/// </summary>
+		/// <param name="value1">The vector to be subtracted from.</param>
+		/// <param name="value2">The vector to be subtracted from <paramref name="value1"/>.</param>
+		/// <returns>The result of the vector subtraction.</returns>
 		public static Vector2 Subtract(Vector2 value1, Vector2 value2)
 		{
 			value1.X -= value2.X;
@@ -486,6 +530,12 @@ namespace Microsoft.Xna.Framework
 			return value1;
 		}
 
+		/// <summary>
+		/// Performs vector subtraction on <paramref name="value1"/> and <paramref name="value2"/>.
+		/// </summary>
+		/// <param name="value1">The vector to be subtracted from.</param>
+		/// <param name="value2">The vector to be subtracted from <paramref name="value1"/>.</param>
+		/// <param name="result">The result of the vector subtraction.</param>
 		public static void Subtract(ref Vector2 value1, ref Vector2 value2, out Vector2 result)
 		{
 			result.X = value1.X - value2.X;
