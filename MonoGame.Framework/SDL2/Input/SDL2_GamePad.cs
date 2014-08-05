@@ -95,6 +95,12 @@ namespace Microsoft.Xna.Framework.Input
 		private static IntPtr[] INTERNAL_haptics = new IntPtr[4];
 		private static HapticType[] INTERNAL_hapticTypes = new HapticType[4];
 
+		// Light bar information
+		private static string[] INTERNAL_lightBars = new string[]
+		{
+			String.Empty, String.Empty, String.Empty, String.Empty
+		};
+
 		// Cached GamePadStates
 		private static GamePadState[] INTERNAL_states = new GamePadState[4];
 
@@ -204,6 +210,37 @@ namespace Microsoft.Xna.Framework.Input
 					// We can't even play simple rumble, this haptic device is useless to us.
 					SDL.SDL_HapticClose(INTERNAL_haptics[which]);
 					INTERNAL_haptics[which] = IntPtr.Zero;
+				}
+			}
+
+			// Initialize light bar
+			if (	Game.Instance.Platform.OSVersion.Equals("Linux") &&
+				GetGUIDEXT((PlayerIndex) which).Equals("4c05c405")	)
+			{
+				// Get all of the individual PS4 LED instances
+				List<string> ledList = new List<string>();
+				string[] dirs = Directory.GetDirectories("/sys/class/leds/");
+				foreach (string dir in dirs)
+				{
+					if (	dir.Contains("0003:054C:05C4") &&
+						dir.EndsWith("blue")	)
+					{
+						ledList.Add(dir.Substring(0, dir.LastIndexOf(':') + 1));
+					}
+				}
+				// Find how many of these are already in use
+				int numLights = 0;
+				for (int i = 0; i < INTERNAL_lightBars.Length; i += 1)
+				{
+					if (!String.IsNullOrEmpty(INTERNAL_lightBars[i]))
+					{
+						numLights += 1;
+					}
+				}
+				// If all are not already in use, use the first unused light
+				if (numLights < ledList.Count)
+				{
+					INTERNAL_lightBars[which] = ledList[numLights];
 				}
 			}
 
@@ -1001,6 +1038,27 @@ namespace Microsoft.Xna.Framework.Input
 				}
 			});
 			return result.ToString();
+		}
+
+		public static void SetLightBarEXT(PlayerIndex playerIndex, Color color)
+		{
+			if (String.IsNullOrEmpty(INTERNAL_lightBars[(int) playerIndex]))
+			{
+				return;
+			}
+
+			string baseDir = INTERNAL_lightBars[(int) playerIndex];
+			try
+			{
+				File.WriteAllText(baseDir + "red/brightness", color.R.ToString());
+				File.WriteAllText(baseDir + "green/brightness", color.G.ToString());
+				File.WriteAllText(baseDir + "blue/brightness", color.B.ToString());
+			}
+			catch
+			{
+				// If something went wrong, assume the worst and just remove it.
+				INTERNAL_lightBars[(int) playerIndex] = String.Empty;
+			}
 		}
 
 		#endregion
