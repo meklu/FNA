@@ -121,15 +121,27 @@ namespace Microsoft.Xna.Framework.Graphics
             header.Signature = BitConverter.ToInt32(effectCode, i); i += 4;
             header.Version = (int)effectCode[i++];
             header.Profile = (int)effectCode[i++];
-            header.EffectKey = BitConverter.ToInt32(effectCode, i); i += 4;
+            if (header.Version == MGFXHeader.MGFXVersion)
+            {
+                header.EffectKey = BitConverter.ToInt32(effectCode, i);
+                i += 4;
+            }
+            else if (header.Version == 5) // Last release before pre-computed hash
+            {
+                header.EffectKey = MonoGame.Utilities.Hash.ComputeHash(effectCode);
+            }
+            else if (header.Version > MGFXHeader.MGFXVersion)
+            {
+                throw new Exception("This MGFX effect seems to be for a newer release of MonoGame.");
+            }
+            else
+            {
+                throw new Exception("This MGFX effect is for an older release of MonoGame and needs to be rebuilt.");
+            }
             header.HeaderSize = i;
 
             if (header.Signature != MGFXHeader.MGFXSignature)
                 throw new Exception("This does not appear to be a MonoGame MGFX file!");
-            if (header.Version < MGFXHeader.MGFXVersion)
-                throw new Exception("This MGFX effect is for an older release of MonoGame and needs to be rebuilt.");
-            if (header.Version > MGFXHeader.MGFXVersion)
-                throw new Exception("This MGFX effect seems to be for a newer release of MonoGame.");
 
 #if DIRECTX
             if (header.Profile != 1)
