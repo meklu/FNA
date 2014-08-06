@@ -222,7 +222,7 @@ namespace Microsoft.Xna.Framework.Input
 				string[] dirs = Directory.GetDirectories("/sys/class/leds/");
 				foreach (string dir in dirs)
 				{
-					if (	dir.Contains("0003:054C:05C4") &&
+					if (	dir.Contains("054C:05C4") &&
 						dir.EndsWith("blue")	)
 					{
 						ledList.Add(dir.Substring(0, dir.LastIndexOf(':') + 1));
