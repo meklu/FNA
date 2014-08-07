@@ -154,13 +154,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			set
 			{
 				INTERNAL_scissorRectangle = value;
-
-				if (RenderTargetCount == 0)
-				{
-					value.Y = Viewport.Height - ScissorRectangle.Y - ScissorRectangle.Height;
-				}
-
-				GLDevice.SetScissorRect(value);
+				GLDevice.SetScissorRect(
+					value,
+					RenderTargetCount > 0
+				);
 			}
 		}
 
@@ -178,13 +175,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			set
 			{
 				INTERNAL_viewport = value;
-
-				if (RenderTargetCount == 0)
-				{
-					value.Y = PresentationParameters.BackBufferHeight - value.Y - value.Height;
-				}
-
-				GLDevice.SetViewport(value);
+				GLDevice.SetViewport(
+					value,
+					RenderTargetCount > 0
+				);
 
 				/* In OpenGL we have to re-apply the special "posFixup"
 				 * vertex shader uniform if the viewport changes.

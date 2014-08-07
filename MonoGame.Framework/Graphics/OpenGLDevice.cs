@@ -614,8 +614,14 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region State Management Methods
 
-		public void SetViewport(Viewport vp)
+		public void SetViewport(Viewport vp, bool renderTargetBound)
 		{
+			// Flip viewport when target is not bound
+			if (!renderTargetBound)
+			{
+				vp.Y = Backbuffer.Height - vp.Y - vp.Height;
+			}
+
 			if (vp.Bounds != viewport)
 			{
 				viewport = vp.Bounds;
@@ -635,11 +641,19 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
-		public void SetScissorRect(Rectangle sr)
-		{
-			if (sr != scissorRectangle)
+		public void SetScissorRect(
+			Rectangle scissorRect,
+			bool renderTargetBound
+		) {
+			// Flip rectangle when target is not bound
+			if (!renderTargetBound)
 			{
-				scissorRectangle = sr;
+				scissorRect.Y = viewport.Height - scissorRect.Y - scissorRect.Height;
+			}
+
+			if (scissorRect != scissorRectangle)
+			{
+				scissorRectangle = scissorRect;
 				GL.Scissor(
 					scissorRectangle.X,
 					scissorRectangle.Y,

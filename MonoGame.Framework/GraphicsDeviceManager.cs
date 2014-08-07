@@ -348,6 +348,17 @@ namespace Microsoft.Xna.Framework
 
 		private void EndDeviceReset()
 		{
+			/* Reset the backbuffer first, before doing anything else.
+			 * The GLDevice needs to know what we're up to right away.
+			 * -flibit
+			 */
+			GraphicsDevice.GLDevice.Backbuffer.ResetFramebuffer(
+				GraphicsDevice,
+				GraphicsDevice.PresentationParameters.BackBufferWidth,
+				GraphicsDevice.PresentationParameters.BackBufferHeight,
+				GraphicsDevice.PresentationParameters.DepthStencilFormat
+			);
+
 			// Now, update the viewport
 			GraphicsDevice.Viewport = new Viewport(
 				0,
@@ -362,13 +373,6 @@ namespace Microsoft.Xna.Framework
 				0,
 				GraphicsDevice.PresentationParameters.BackBufferWidth,
 				GraphicsDevice.PresentationParameters.BackBufferHeight
-			);
-
-			GraphicsDevice.GLDevice.Backbuffer.ResetFramebuffer(
-				GraphicsDevice,
-				GraphicsDevice.PresentationParameters.BackBufferWidth,
-				GraphicsDevice.PresentationParameters.BackBufferHeight,
-				GraphicsDevice.PresentationParameters.DepthStencilFormat
 			);
 
 			// Notify DeviceReset EventHandlers.
