@@ -664,8 +664,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
 				// Calculate the character origin
 				Vector2 offset = baseOffset;
-				offset.X += curOffset.X * axisDirection[(int) effects].X;
-				offset.Y += (curOffset.Y + spriteFont.croppingData[index].Top) * axisDirection[(int) effects].Y;
+				offset.X += (curOffset.X + spriteFont.croppingData[index].X) * axisDirection[(int) effects].X;
+				offset.Y += (curOffset.Y + spriteFont.croppingData[index].Y) * axisDirection[(int) effects].Y;
 				if (effects != SpriteEffects.None)
 				{
 					offset += new Vector2(
