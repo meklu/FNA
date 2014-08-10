@@ -80,6 +80,14 @@ namespace Microsoft.Xna.Framework.Input.Touch
 
 		#endregion
 
+		#region Internal Static Variables
+
+		internal static readonly TouchCollection Empty = new TouchCollection(
+			new TouchLocation[] {}
+		);
+
+		#endregion
+
 		#region Private Variables
 
 		private TouchLocation[] collection;
