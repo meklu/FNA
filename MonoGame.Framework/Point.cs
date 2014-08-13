@@ -144,7 +144,7 @@ namespace Microsoft.Xna.Framework
 		/// <returns>Sum of the points.</returns>
 		public static Point operator +(Point value1, Point value2)
 		{
-			return new Point(a.X + b.X, a.Y + b.Y);
+			return new Point(value1.X + value2.X, value1.Y + value2.Y);
 		}
 
 		/// <summary>
@@ -155,7 +155,7 @@ namespace Microsoft.Xna.Framework
 		/// <returns>Result of the subtraction.</returns>
 		public static Point operator -(Point value1, Point value2)
 		{
-			return new Point(a.X - b.X, a.Y - b.Y);
+			return new Point(value1.X - value2.X, value1.Y - value2.Y);
 		}
 
 		/// <summary>
@@ -166,7 +166,7 @@ namespace Microsoft.Xna.Framework
 		/// <returns>Result of the multiplication.</returns>
 		public static Point operator *(Point value1, Point value2)
 		{
-			return new Point(a.X * b.X, a.Y * b.Y);
+			return new Point(value1.X * value2.X, value1.Y * value2.Y);
 		}
 
 		/// <summary>
@@ -177,7 +177,7 @@ namespace Microsoft.Xna.Framework
 		/// <returns>The result of dividing the points.</returns>
 		public static Point operator /(Point value1, Point value2)
 		{
-			return new Point(a.X / b.X, a.Y / b.Y);
+			return new Point(value1.X / value2.X, value1.Y / value2.Y);
 		}
 
 		/// <summary>
