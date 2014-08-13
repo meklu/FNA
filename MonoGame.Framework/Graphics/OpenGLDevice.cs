@@ -152,24 +152,9 @@ namespace Microsoft.Xna.Framework.Graphics
 			private OpenGLTexture()
 			{
 				Handle = 0;
+				Target = TextureTarget.Texture2D; // FIXME: Assumption! -flibit
 			}
 			public static readonly OpenGLTexture NullTexture = new OpenGLTexture();
-		}
-
-		#endregion
-
-		#region OpenGL Sampler State Container Class
-
-		public class OpenGLSampler
-		{
-			public OpenGLTexture Texture;
-			public TextureTarget Target;
-
-			public OpenGLSampler()
-			{
-				Texture = OpenGLTexture.NullTexture;
-				Target = TextureTarget.Texture2D;
-			}
 		}
 
 		#endregion
@@ -370,9 +355,10 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region Sampler State Variables
+		#region Texture Collection Variables
 
-		public OpenGLSampler[] Samplers
+		// FIXME: This doesn't need to be public. Blame VideoPlayer. -flibit
+		public OpenGLTexture[] Textures
 		{
 			get;
 			private set;
@@ -548,13 +534,13 @@ namespace Microsoft.Xna.Framework.Graphics
 				DepthFormat.Depth16
 			);
 
-			// Initialize sampler state array
+			// Initialize texture collection array
 			int numSamplers;
 			GL.GetInteger(GetPName.MaxTextureImageUnits, out numSamplers);
-			Samplers = new OpenGLSampler[numSamplers];
+			Textures = new OpenGLTexture[numSamplers];
 			for (int i = 0; i < numSamplers; i += 1)
 			{
-				Samplers[i] = new OpenGLSampler();
+				Textures[i] = OpenGLTexture.NullTexture;
 			}
 			MaxTextureSlots = numSamplers;
 
@@ -918,24 +904,24 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (texture == null)
 			{
-				if (Samplers[index].Texture != OpenGLTexture.NullTexture)
+				if (Textures[index] != OpenGLTexture.NullTexture)
 				{
 					if (index != 0)
 					{
 						GL.ActiveTexture(TextureUnit.Texture0 + index);
 					}
-					GL.BindTexture(Samplers[index].Target, 0);
+					GL.BindTexture(Textures[index].Target, 0);
 					if (index != 0)
 					{
 						// Keep this state sane. -flibit
 						GL.ActiveTexture(TextureUnit.Texture0);
 					}
-					Samplers[index].Texture = OpenGLTexture.NullTexture;
+					Textures[index] = OpenGLTexture.NullTexture;
 				}
 				return;
 			}
 
-			if (	texture.texture == Samplers[index].Texture &&
+			if (	texture.texture == Textures[index] &&
 				sampler.AddressU == texture.texture.WrapS &&
 				sampler.AddressV == texture.texture.WrapT &&
 				sampler.AddressW == texture.texture.WrapR &&
@@ -955,16 +941,15 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			// Bind the correct texture
-			if (texture.texture != Samplers[index].Texture)
+			if (texture.texture != Textures[index])
 			{
-				if (texture.texture.Target != Samplers[index].Target)
+				if (texture.texture.Target != Textures[index].Target)
 				{
 					// If we're changing targets, unbind the old texture first!
-					GL.BindTexture(Samplers[index].Target, 0);
-					Samplers[index].Target = texture.texture.Target;
+					GL.BindTexture(Textures[index].Target, 0);
 				}
 				GL.BindTexture(texture.texture.Target, texture.texture.Handle);
-				Samplers[index].Texture = texture.texture;
+				Textures[index] = texture.texture;
 			}
 
 			// Apply the sampler states to the GL texture
@@ -1332,19 +1317,18 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public void BindTexture(OpenGLTexture texture)
 		{
-			if (texture.Target != Samplers[0].Target)
+			if (texture.Target != Textures[0].Target)
 			{
-				GL.BindTexture(Samplers[0].Target, 0);
+				GL.BindTexture(Textures[0].Target, 0);
 			}
-			if (texture != Samplers[0].Texture)
+			if (texture != Textures[0])
 			{
 				GL.BindTexture(
 					texture.Target,
 					texture.Handle
 				);
 			}
-			Samplers[0].Texture = texture;
-			Samplers[0].Target = texture.Target;
+			Textures[0] = texture;
 		}
 
 		#endregion
@@ -2306,7 +2290,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 				GL.BindTexture(
 					TextureTarget.Texture2D,
-					graphicsDevice.GLDevice.Samplers[0].Texture.Handle
+					graphicsDevice.GLDevice.Textures[0].Handle
 				);
 
 				Width = width;

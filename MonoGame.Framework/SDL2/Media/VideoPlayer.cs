@@ -93,16 +93,14 @@ namespace Microsoft.Xna.Framework.Media
 		private static IntPtr vertTexPtr = vertTexArry.AddrOfPinnedObject();
 
 		// Used to restore our previous GL state.
-		private int[] oldTextures;
-		private TextureTarget[] oldTargets;
+		private OpenGLDevice.OpenGLTexture[] oldTextures;
 		private int oldShader;
 		private int oldFramebuffer;
 
 		private void GL_initialize()
 		{
 			// Initialize the sampler storage arrays.
-			oldTextures = new int[3];
-			oldTargets = new TextureTarget[3];
+			oldTextures = new OpenGLDevice.OpenGLTexture[3];
 
 			// Create the YUV textures.
 			yuvTextures = new int[3];
@@ -223,8 +221,7 @@ namespace Microsoft.Xna.Framework.Media
 		private void GL_setupTargets(int width, int height)
 		{
 			// We're going to mess with sampler 0's texture.
-			TextureTarget prevTarget = currentDevice.GLDevice.Samplers[0].Target;
-			int prevTexture = currentDevice.GLDevice.Samplers[0].Texture.Handle;
+			OpenGLDevice.OpenGLTexture prevTexture = currentDevice.GLDevice.Textures[0];
 
 			// Attach the Texture2D to the framebuffer.
 			int prevReadFramebuffer = OpenGLDevice.Framebuffer.CurrentReadFramebuffer;
@@ -235,9 +232,9 @@ namespace Microsoft.Xna.Framework.Media
 			OpenGLDevice.Framebuffer.BindDrawFramebuffer(prevDrawFramebuffer);
 
 			// Be careful about non-2D textures currently bound...
-			if (prevTarget != TextureTarget.Texture2D)
+			if (prevTexture.Target != TextureTarget.Texture2D)
 			{
-				GL.BindTexture(prevTarget, 0);
+				GL.BindTexture(prevTexture.Target, 0);
 			}
 
 			// Allocate YUV GL textures
@@ -267,11 +264,11 @@ namespace Microsoft.Xna.Framework.Media
 			);
 
 			// Aaand we should be set now.
-			if (prevTarget != TextureTarget.Texture2D)
+			if (prevTexture.Target != TextureTarget.Texture2D)
 			{
 				GL.BindTexture(TextureTarget.Texture2D, 0);
 			}
-			GL.BindTexture(prevTarget, prevTexture);
+			GL.BindTexture(prevTexture.Target, prevTexture.Handle);
 		}
 
 		private void GL_pushState()
@@ -287,12 +284,11 @@ namespace Microsoft.Xna.Framework.Media
 			// Prep our samplers
 			for (int i = 0; i < 3; i += 1)
 			{
-				oldTargets[i] = currentDevice.GLDevice.Samplers[i].Target;
-				oldTextures[i] = currentDevice.GLDevice.Samplers[i].Texture.Handle;
-				if (oldTargets[i] != TextureTarget.Texture2D)
+				oldTextures[i] = currentDevice.GLDevice.Textures[i];
+				if (oldTextures[i].Target != TextureTarget.Texture2D)
 				{
 					GL.ActiveTexture(TextureUnit.Texture0 + i);
-					GL.BindTexture(oldTargets[i], 0);
+					GL.BindTexture(oldTextures[i].Target, 0);
 				}
 			}
 
@@ -336,11 +332,11 @@ namespace Microsoft.Xna.Framework.Media
 			for (int i = 0; i < 3; i += 1)
 			{
 				GL.ActiveTexture(TextureUnit.Texture0 + i);
-				if (oldTargets[i] != TextureTarget.Texture2D)
+				if (oldTextures[i].Target != TextureTarget.Texture2D)
 				{
 					GL.BindTexture(TextureTarget.Texture2D, 0);
 				}
-				GL.BindTexture(oldTargets[i], oldTextures[i]);
+				GL.BindTexture(oldTextures[i].Target, oldTextures[i].Handle);
 			}
 
 			// Keep this state sane.
