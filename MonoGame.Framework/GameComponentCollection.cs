@@ -18,14 +18,26 @@ namespace Microsoft.Xna.Framework
 	{
 		#region Events
 
+		/// <summary>
+		/// Event that is triggered when a <see cref="GameComponent"/> is added
+		/// to this <see cref="GameComponentCollection"/>.
+		/// </summary>
 		public event EventHandler<GameComponentCollectionEventArgs> ComponentAdded;
 
+		/// <summary>
+		/// Event that is triggered when a <see cref="GameComponent"/> is removed
+		/// from this <see cref="GameComponentCollection"/>.
+		/// </summary>
 		public event EventHandler<GameComponentCollectionEventArgs> ComponentRemoved;
 
 		#endregion
 
 		#region Protected Methods
 
+		/// <summary>
+		/// Removes every <see cref="GameComponent"/> from this <see cref="GameComponentCollection"/>.
+		/// Triggers <see cref="OnComponentRemoved"/> once for each <see cref="GameComponent"/> removed.
+		/// </summary>
 		protected override void ClearItems()
 		{
 			for (int i = 0; i < base.Count; i += 1)

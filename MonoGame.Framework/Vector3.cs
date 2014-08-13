@@ -25,6 +25,7 @@ namespace Microsoft.Xna.Framework
 {
 	[DataContract]
 	[TypeConverter(typeof(Vector3TypeConverter))]
+	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct Vector3 : IEquatable<Vector3>
 	{
 		#region Public Static Properties
@@ -129,6 +130,22 @@ namespace Microsoft.Xna.Framework
 			get
 			{
 				return backward;
+			}
+		}
+
+		#endregion
+
+		#region Internal Properties
+
+		internal string DebugDisplayString
+		{
+			get
+			{
+				return string.Concat(
+					X.ToString(), " ",
+					Y.ToString(), " ",
+					Z.ToString()
+				);
 			}
 		}
 

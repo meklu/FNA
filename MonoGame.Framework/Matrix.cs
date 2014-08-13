@@ -13,12 +13,14 @@
 
 #region Using Statements
 using System;
+using System.Diagnostics;
 using System.Runtime.Serialization;
 #endregion
 
 namespace Microsoft.Xna.Framework
 {
 	[DataContract]
+	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct Matrix : IEquatable<Matrix>
 	{
 		#region Public Properties
@@ -192,6 +194,35 @@ namespace Microsoft.Xna.Framework
 				M21 = value.X;
 				M22 = value.Y;
 				M23 = value.Z;
+			}
+		}
+
+		#endregion
+
+		#region Internal Properties
+
+		internal string DebugDisplayString
+		{
+			get
+			{
+				return string.Concat(
+					"( ", M11.ToString(), " ",
+					M12.ToString(), " ",
+					M13.ToString(), " ",
+					M14.ToString(), " ) \r\n",
+					"( ", M21.ToString(), " ",
+					M22.ToString(), " ",
+					M23.ToString(), " ",
+					M24.ToString(), " ) \r\n",
+					"( ", M31.ToString(), " ",
+					M32.ToString(), " ",
+					M33.ToString(), " ",
+					M34.ToString(), " ) \r\n",
+					"( ", M41.ToString(), " ",
+					M42.ToString(), " ",
+					M43.ToString(), " ",
+					M44.ToString(), " )"
+				);
 			}
 		}
 

@@ -13,14 +13,31 @@
 
 #region Using Statements
 using System;
+using System.Diagnostics;
 using System.Runtime.Serialization;
 #endregion
 
 namespace Microsoft.Xna.Framework
 {
 	[DataContract]
+	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct Ray : IEquatable<Ray>
 	{
+		#region Internal Properties
+
+		internal string DebugDisplayString
+		{
+			get
+			{
+				return string.Concat(
+					"Pos( ", Position.DebugDisplayString, " ) \r\n",
+					"Dir( ", Direction.DebugDisplayString, " )"
+				);
+			}
+		}
+
+		#endregion
+
 		#region Public Fields
 
 		[DataMember]

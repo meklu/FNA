@@ -13,12 +13,14 @@
 
 #region Using Statements
 using System;
+using System.Diagnostics;
 using System.Runtime.Serialization;
 #endregion
 
 namespace Microsoft.Xna.Framework
 {
 	[DataContract]
+	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct Quaternion : IEquatable<Quaternion>
 	{
 		#region Public Static Properties
@@ -46,6 +48,24 @@ namespace Microsoft.Xna.Framework
 				X = value.X;
 				Y = value.Y;
 				Z = value.Z;
+			}
+		}
+
+		internal string DebugDisplayString
+		{
+			get
+			{
+				if (this == Quaternion.Identity)
+				{
+					return "Identity";
+				}
+
+				return string.Concat(
+					X.ToString(), " ",
+					Y.ToString(), " ",
+					Z.ToString(), " ",
+					W.ToString()
+				);
 			}
 		}
 

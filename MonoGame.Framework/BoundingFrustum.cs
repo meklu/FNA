@@ -13,11 +13,13 @@
 
 #region Using Statements
 using System;
+using System.Diagnostics;
 using System.Text;
 #endregion
 
 namespace Microsoft.Xna.Framework
 {
+	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public class BoundingFrustum : IEquatable<BoundingFrustum>
 	{
 		#region Public Properties
@@ -84,6 +86,25 @@ namespace Microsoft.Xna.Framework
 			get
 			{
 				return this.planes[5];
+			}
+		}
+
+		#endregion
+
+		#region Internal Properties
+
+		internal string DebugDisplayString
+		{
+			get
+			{
+				return string.Concat(
+					"Near( ", planes[0].DebugDisplayString, " ) \r\n",
+					"Far( ", planes[1].DebugDisplayString, " ) \r\n",
+					"Left( ", planes[2].DebugDisplayString, " ) \r\n",
+					"Right( ", planes[3].DebugDisplayString, " ) \r\n",
+					"Top( ", planes[4].DebugDisplayString, " ) \r\n",
+					"Bottom( ", planes[5].DebugDisplayString, " ) "
+				);
 			}
 		}
 

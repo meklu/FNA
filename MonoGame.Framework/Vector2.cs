@@ -14,6 +14,7 @@
 #region Using Statements
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
 
@@ -24,6 +25,7 @@ namespace Microsoft.Xna.Framework
 {
 	[DataContract]
 	[TypeConverter(typeof(Vector2TypeConverter))]
+	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct Vector2 : IEquatable<Vector2>
 	{
 		#region Public Static Properties
@@ -69,6 +71,21 @@ namespace Microsoft.Xna.Framework
 			get
 			{
 				return unitYVector;
+			}
+		}
+
+		#endregion
+
+		#region Internal Properties
+
+		internal string DebugDisplayString
+		{
+			get
+			{
+				return string.Concat(
+					X.ToString(), " ",
+					Y.ToString()
+				);
 			}
 		}
 

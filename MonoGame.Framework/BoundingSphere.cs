@@ -14,16 +14,32 @@
 #region Using Statements
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
 #endregion
 
 namespace Microsoft.Xna.Framework
 {
-
 	[DataContract]
+	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct BoundingSphere : IEquatable<BoundingSphere>
 	{
+		#region Internal Properties
+
+		internal string DebugDisplayString
+		{
+			get
+			{
+				return string.Concat(
+					"Pos( ", Center.DebugDisplayString, " ) \r\n",
+					"Radius( ", Radius.ToString(), " ) "
+				);
+			}
+		}
+
+		#endregion
+
 		#region Public Fields
 
 		[DataMember]
