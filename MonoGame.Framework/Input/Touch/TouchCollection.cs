@@ -57,7 +57,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		{
 			get
 			{
-				return collection.Length;
+				return Collection.Length;
 			}
 		}
 
@@ -70,11 +70,23 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		{
 			get
 			{
-				return collection[index];
+				return Collection[index];
 			}
 			set
 			{
 				throw new NotSupportedException();
+			}
+		}
+
+		#endregion
+
+		#region Private Properties
+
+		private TouchLocation[] Collection
+		{
+			get
+			{
+				return collection ?? EmptyLocationArray;
 			}
 		}
 
@@ -91,6 +103,12 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		#region Private Variables
 
 		private TouchLocation[] collection;
+
+		#endregion
+
+		#region Private Static Variables
+
+		private static readonly TouchLocation[] EmptyLocationArray = new TouchLocation[0];
 
 		#endregion
 
@@ -124,7 +142,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <returns></returns>
 		public bool FindById(int id, out TouchLocation touchLocation)
 		{
-			foreach (TouchLocation location in collection)
+			foreach (TouchLocation location in Collection)
 			{
 				if (location.Id == id)
 				{
@@ -149,9 +167,9 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <returns></returns>
 		public int IndexOf(TouchLocation item)
 		{
-			for (int i = 0; i < collection.Length; i += 1)
+			for (int i = 0; i < Collection.Length; i += 1)
 			{
-				if (item == collection[i])
+				if (item == Collection[i])
 				{
 					return i;
 				}
@@ -204,7 +222,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <returns>Returns true if queried item is found, false otherwise.</returns>
 		public bool Contains(TouchLocation item)
 		{
-			foreach (TouchLocation location in collection)
+			foreach (TouchLocation location in Collection)
 			{
 				if (item == location)
 				{
@@ -223,7 +241,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 		/// <param name="arrayIndex">The starting index of the copy operation.</param>
 		public void CopyTo(TouchLocation[] array, int arrayIndex)
 		{
-			collection.CopyTo(array, arrayIndex);
+			Collection.CopyTo(array, arrayIndex);
 		}
 
 		/// <summary>
