@@ -249,6 +249,11 @@ namespace Microsoft.Xna.Framework
 					(value.Y < (this.Y + this.Height))	);
 		}
 
+		/// <summary>
+		/// Gets whether or not the provided <see cref="Rectangle"/> lies within the bounds of this <see cref="Rectangle"/>.
+		/// </summary>
+		/// <param name="value">The <see cref="Rectangle"/> to check for inclusion in this <see cref="Rectangle"/>.</param>
+		/// <returns>True if the provided <see cref="Rectangle"/>'s bounds lie entirely inside this <see cref="Rectangle"/>. False otherwise.</returns>
 		public bool Contains(Rectangle value)
 		{
 			return (	(this.X <= value.X) &&
@@ -288,11 +293,30 @@ namespace Microsoft.Xna.Framework
 			Height += verticalValue * 2;
 		}
 
+		/// <summary>
+		/// Checks whether or not this <see cref="Rectangle"/> is equivalent
+		/// to a provided <see cref="Rectangle"/>.
+		/// </summary>
+		/// <param name="obj">The <see cref="Rectangle"/> to test for equality.</param>
+		/// <returns>
+		/// True if this <see cref="Rectangle"/>'s x coordinate, y coordinate, width, and height
+		/// match the values for the provided <see cref="Rectangle"/>. False otherwise.
+		/// </returns>
 		public bool Equals(Rectangle other)
 		{
 			return this == other;
 		}
 
+		/// <summary>
+		/// Checks whether or not this <see cref="Rectangle"/> is equivalent
+		/// to a provided object.
+		/// </summary>
+		/// <param name="obj">The <see cref="object"/> to test for equality.</param>
+		/// <returns>
+		/// True if the provided object is a <see cref="Rectangle"/>, and this
+		/// <see cref="Rectangle"/>'s x coordinate, y coordinate, width, and height
+		/// match the values for the provided <see cref="Rectangle"/>. False otherwise.
+		/// </returns>
 		public override bool Equals(object obj)
 		{
 			return (obj is Rectangle) && this == ((Rectangle) obj);
