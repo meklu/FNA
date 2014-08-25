@@ -131,7 +131,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			position,
 			TouchLocationState.Invalid,
 			Vector2.Zero,
-			TimeSpan.FromTicks(DateTime.Now.Ticks)
+			TimeSpan.Zero
 		) {
 		}
 
@@ -147,7 +147,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 			position,
 			previousState,
 			previousPosition,
-			TimeSpan.FromTicks(DateTime.Now.Ticks)
+			TimeSpan.Zero
 		) {
 		}
 

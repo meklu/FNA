@@ -385,7 +385,8 @@ namespace Microsoft.Xna.Framework.Input.Touch
 							new TouchLocation(
 								touch.Id,
 								TouchLocationState.Released,
-								touch.Position
+								touch.Position,
+								CurrentTimestamp
 							)
 						);
 					}
@@ -402,8 +403,9 @@ namespace Microsoft.Xna.Framework.Input.Touch
 							new TouchLocation(
 								touch.Id,
 								TouchLocationState.Released,
-								touch.Position
-							)
+								touch.Position,
+								CurrentTimestamp
+							),
 						);
 					}
 				}
