@@ -344,8 +344,9 @@ namespace Microsoft.Xna.Framework.Audio
 					// Number of times to loop wave (255 is infinite)
 					byte loopCount = reader.ReadByte();
 
-					// Unknown value
-					reader.ReadUInt32();
+					// Speaker position angle/arc, unused
+					reader.ReadUInt16();
+					reader.ReadUInt16();
 
 					// Finally.
 					INTERNAL_events[i] = new PlayWaveEvent(
@@ -374,8 +375,12 @@ namespace Microsoft.Xna.Framework.Audio
 					 */
 					reader.ReadByte();
 
-					// Unknown values
-					reader.ReadBytes(5);
+					// Number of times to loop wave (255 is infinite)
+					byte loopCount = reader.ReadByte();
+
+					// Speaker position angle/arc, unused
+					reader.ReadUInt16();
+					reader.ReadUInt16();
 
 					// Number of WaveBank tracks
 					ushort numTracks = reader.ReadUInt16();
@@ -413,7 +418,7 @@ namespace Microsoft.Xna.Framework.Audio
 						0,
 						clipVolume,
 						clipVolume,
-						0,
+						loopCount,
 						variationType,
 						weights
 					);
@@ -491,7 +496,12 @@ namespace Microsoft.Xna.Framework.Audio
 					reader.ReadByte();
 
 					// Unknown values
-					reader.ReadBytes(5);
+					// Number of times to loop wave (255 is infinite)
+					byte loopCount = reader.ReadByte();
+
+					// Speaker position angle/arc, unused
+					reader.ReadUInt16();
+					reader.ReadUInt16();
 
 					// Pitch variation
 					short minPitch = reader.ReadInt16();
@@ -564,7 +574,7 @@ namespace Microsoft.Xna.Framework.Audio
 						maxPitch,
 						minVolume,
 						maxVolume,
-						0,
+						loopCount,
 						variationType,
 						weights
 					);
