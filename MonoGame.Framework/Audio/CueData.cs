@@ -495,7 +495,6 @@ namespace Microsoft.Xna.Framework.Audio
 					 */
 					reader.ReadByte();
 
-					// Unknown values
 					// Number of times to loop wave (255 is infinite)
 					byte loopCount = reader.ReadByte();
 
