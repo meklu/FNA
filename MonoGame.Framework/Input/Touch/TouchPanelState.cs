@@ -405,7 +405,7 @@ namespace Microsoft.Xna.Framework.Input.Touch
 								TouchLocationState.Released,
 								touch.Position,
 								CurrentTimestamp
-							),
+							)
 						);
 					}
 				}

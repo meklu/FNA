@@ -70,7 +70,6 @@
     <Compile Include="IUpdateable.cs" />
     <Compile Include="MathHelper.cs" />
     <Compile Include="Matrix.cs" />
-    <Compile Include="PerformanceCounter.cs" />
     <Compile Include="Plane.cs" />
     <Compile Include="PlaneIntersectionType.cs" />
     <Compile Include="PlayerIndex.cs" />
