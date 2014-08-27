@@ -236,10 +236,14 @@ namespace Microsoft.Xna.Framework.Graphics
 					else
 					{
 						// Set pixel alignment to match texel size in bytes
-						GL.PixelStore(
-							PixelStoreParameter.UnpackAlignment,
-							GetFormatSize()
-						);
+						int packSize = GetFormatSize();
+						if (packSize != 4)
+						{
+							GL.PixelStore(
+								PixelStoreParameter.UnpackAlignment,
+								packSize
+							);
+						}
 
 						if (rect.HasValue)
 						{
@@ -270,11 +274,14 @@ namespace Microsoft.Xna.Framework.Graphics
 							);
 						}
 
-						// Return to default pixel alignment
-						GL.PixelStore(
-							PixelStoreParameter.UnpackAlignment,
-							4
-						);
+						// Keep this state sane -flibit
+						if (packSize != 4)
+						{
+							GL.PixelStore(
+								PixelStoreParameter.UnpackAlignment,
+								4
+							);
+						}
 					}
 				}
 				finally
