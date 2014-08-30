@@ -188,12 +188,19 @@ namespace Microsoft.Xna.Framework.Media
 		/// </summary>
 		public static void Play(Song song)
 		{
+			Song previousSong = Queue.Count > 0 ? Queue[0] : null;
+
 			Queue.Clear();
 			numSongsInQueuePlayed = 0;
 			Queue.Add(song);
 			Queue.ActiveSongIndex = 0;
 
 			PlaySong(song);
+
+			if (previousSong != song && ActiveSongChanged != null)
+			{
+				ActiveSongChanged.Invoke(null, EventArgs.Empty);
+			}
 		}
 
 		public static void Play(SongCollection collection, int index = 0)
