@@ -69,12 +69,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			Format = format;
 			GetGLSurfaceFormat();
 
-			texture = new OpenGLDevice.OpenGLTexture(
-				TextureTarget.Texture3D,
+			texture = GraphicsDevice.GLDevice.CreateTexture(
+				typeof(Texture3D),
 				Format,
-				false
+				mipMap
 			);
-			GraphicsDevice.GLDevice.BindTexture(texture);
+
 			GL.TexImage3D(
 				TextureTarget.Texture3D,
 				0,
@@ -87,7 +87,6 @@ namespace Microsoft.Xna.Framework.Graphics
 				glType,
 				IntPtr.Zero
 			);
-			texture.InitState();
 		}
 
 		#endregion

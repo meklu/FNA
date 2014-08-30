@@ -63,7 +63,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GraphicsDevice graphicsDevice,
 			int width,
 			int height,
-			bool mipmap,
+			bool mipMap,
 			SurfaceFormat format
 		) {
 			if (graphicsDevice == null)
@@ -74,24 +74,18 @@ namespace Microsoft.Xna.Framework.Graphics
 			GraphicsDevice = graphicsDevice;
 			Width = width;
 			Height = height;
-			LevelCount = mipmap ? CalculateMipLevels(width, height) : 1;
+			LevelCount = mipMap ? CalculateMipLevels(width, height) : 1;
 
 			Format = format;
 			GetGLSurfaceFormat();
 
 			Threading.ForceToMainThread(() =>
 			{
-				texture = new OpenGLDevice.OpenGLTexture(
-					TextureTarget.Texture2D,
+				texture = GraphicsDevice.GLDevice.CreateTexture(
+					typeof(Texture2D),
 					Format,
-					LevelCount > 1
+					mipMap
 				);
-				if (((Width & (Width - 1)) != 0) || ((Height & (Height - 1)) != 0))
-				{
-					texture.WrapS = TextureAddressMode.Clamp;
-					texture.WrapT = TextureAddressMode.Clamp;
-				}
-				GraphicsDevice.GLDevice.BindTexture(texture);
 
 				if (	Format == SurfaceFormat.Dxt1 ||
 					Format == SurfaceFormat.Dxt3 ||
@@ -122,7 +116,6 @@ namespace Microsoft.Xna.Framework.Graphics
 						IntPtr.Zero
 					);
 				}
-				texture.InitState();
 			});
 		}
 

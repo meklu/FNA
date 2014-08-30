@@ -104,50 +104,6 @@ namespace Microsoft.Xna.Framework.Graphics
 				Handle = 0;
 			}
 
-			public void InitState()
-			{
-				GL.TexParameter(
-					Target,
-					TextureParameterName.TextureWrapS,
-					(int) XNAToGL.Wrap[WrapS]
-				);
-				GL.TexParameter(
-					Target,
-					TextureParameterName.TextureWrapT,
-					(int) XNAToGL.Wrap[WrapT]
-				);
-				GL.TexParameter(
-					Target,
-					TextureParameterName.TextureWrapR,
-					(int) XNAToGL.Wrap[WrapR]
-				);
-				GL.TexParameter(
-					Target,
-					TextureParameterName.TextureMagFilter,
-					(int) XNAToGL.MagFilter[Filter]
-				);
-				GL.TexParameter(
-					Target,
-					TextureParameterName.TextureMinFilter,
-					(int) (HasMipmaps ? XNAToGL.MinMipFilter[Filter] : XNAToGL.MinFilter[Filter])
-				);
-				GL.TexParameter(
-					Target,
-					(TextureParameterName) ExtTextureFilterAnisotropic.TextureMaxAnisotropyExt,
-					(Filter == TextureFilter.Anisotropic) ? Math.Max(Anistropy, 1.0f) : 1.0f
-				);
-				GL.TexParameter(
-					Target,
-					TextureParameterName.TextureBaseLevel,
-					MaxMipmapLevel
-				);
-				GL.TexParameter(
-					Target,
-					TextureParameterName.TextureLodBias,
-					LODBias
-				);
-			}
-
 			// We can't set a SamplerState Texture to null, so use this.
 			private OpenGLTexture()
 			{
@@ -1313,6 +1269,61 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
+		#region glCreateTexture Method
+
+		public OpenGLTexture CreateTexture(Type target, SurfaceFormat format, bool hasMipmaps)
+		{
+			OpenGLTexture result = new OpenGLTexture(
+				XNAToGL.TextureType[target],
+				format,
+				hasMipmaps
+			);
+			BindTexture(result);
+			GL.TexParameter(
+				result.Target,
+				TextureParameterName.TextureWrapS,
+				(int) XNAToGL.Wrap[result.WrapS]
+			);
+			GL.TexParameter(
+				result.Target,
+				TextureParameterName.TextureWrapT,
+				(int) XNAToGL.Wrap[result.WrapT]
+			);
+			GL.TexParameter(
+				result.Target,
+				TextureParameterName.TextureWrapR,
+				(int) XNAToGL.Wrap[result.WrapR]
+			);
+			GL.TexParameter(
+				result.Target,
+				TextureParameterName.TextureMagFilter,
+				(int) XNAToGL.MagFilter[result.Filter]
+			);
+			GL.TexParameter(
+				result.Target,
+				TextureParameterName.TextureMinFilter,
+				(int) (result.HasMipmaps ? XNAToGL.MinMipFilter[result.Filter] : XNAToGL.MinFilter[result.Filter])
+			);
+			GL.TexParameter(
+				result.Target,
+				(TextureParameterName) ExtTextureFilterAnisotropic.TextureMaxAnisotropyExt,
+				(result.Filter == TextureFilter.Anisotropic) ? Math.Max(result.Anistropy, 1.0f) : 1.0f
+			);
+			GL.TexParameter(
+				result.Target,
+				TextureParameterName.TextureBaseLevel,
+				result.MaxMipmapLevel
+			);
+			GL.TexParameter(
+				result.Target,
+				TextureParameterName.TextureLodBias,
+				result.LODBias
+			);
+			return result;
+		}
+
+		#endregion
+
 		#region glBindTexture Method
 
 		public void BindTexture(OpenGLTexture texture)
@@ -1624,6 +1635,13 @@ namespace Microsoft.Xna.Framework.Graphics
 			 * -flibit
 			 */
 
+			public static readonly Dictionary<Type, TextureTarget> TextureType = new Dictionary<Type, TextureTarget>()
+			{
+				{ typeof(Texture2D), TextureTarget.Texture2D },
+				{ typeof(Texture3D), TextureTarget.Texture3D },
+				{ typeof(TextureCube), TextureTarget.TextureCubeMap }
+			};
+
 			public static readonly Dictionary<Blend, BlendingFactorSrc> BlendModeSrc = new Dictionary<Blend, BlendingFactorSrc>()
 			{
 				{ Blend.DestinationAlpha,		BlendingFactorSrc.DstAlpha },
@@ -1756,6 +1774,13 @@ namespace Microsoft.Xna.Framework.Graphics
 				{ DepthFormat.Depth16,		FramebufferAttachment.DepthAttachment },
 				{ DepthFormat.Depth24,		FramebufferAttachment.DepthAttachment },
 				{ DepthFormat.Depth24Stencil8,	FramebufferAttachment.DepthStencilAttachment }
+			};
+
+			public static readonly Dictionary<DepthFormat, RenderbufferStorage> DepthStorage = new Dictionary<DepthFormat, RenderbufferStorage>()
+			{
+				{ DepthFormat.Depth16,		RenderbufferStorage.DepthComponent16 },
+				{ DepthFormat.Depth24,		RenderbufferStorage.DepthComponent24 },
+				{ DepthFormat.Depth24Stencil8,	RenderbufferStorage.Depth24Stencil8 }
 			};
 		}
 
@@ -1920,34 +1945,13 @@ namespace Microsoft.Xna.Framework.Graphics
 			public static uint GenRenderbuffer(int width, int height, DepthFormat format)
 			{
 				uint handle;
-
-				// DepthFormat->RenderbufferStorage
-				RenderbufferStorage glFormat;
-				if (format == DepthFormat.Depth16)
-				{
-					glFormat = RenderbufferStorage.DepthComponent16;
-				}
-				else if (format == DepthFormat.Depth24)
-				{
-					glFormat = RenderbufferStorage.DepthComponent24;
-				}
-				else if (format == DepthFormat.Depth24Stencil8)
-				{
-					glFormat = RenderbufferStorage.Depth24Stencil8;
-				}
-				else
-				{
-					throw new Exception("Unhandled DepthFormat: " + format.ToString());
-				}
-
-				// Actual GL calls!
 				if (hasARB)
 				{
 					GL.GenRenderbuffers(1, out handle);
 					GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, handle);
 					GL.RenderbufferStorage(
 						RenderbufferTarget.Renderbuffer,
-						glFormat,
+						XNAToGL.DepthStorage[format],
 						width,
 						height
 					);
@@ -1959,7 +1963,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					GL.Ext.BindRenderbuffer(RenderbufferTarget.RenderbufferExt, handle);
 					GL.Ext.RenderbufferStorage(
 						RenderbufferTarget.RenderbufferExt,
-						glFormat,
+						XNAToGL.DepthStorage[format],
 						width,
 						height
 					);

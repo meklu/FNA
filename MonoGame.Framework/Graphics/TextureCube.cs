@@ -53,15 +53,12 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			Threading.ForceToMainThread(() =>
 			{
-				texture = new OpenGLDevice.OpenGLTexture(
-					TextureTarget.TextureCubeMap,
+				texture = GraphicsDevice.GLDevice.CreateTexture(
+					typeof(TextureCube),
 					Format,
 					LevelCount > 1
 				);
-				texture.WrapS = TextureAddressMode.Clamp;
-				texture.WrapT = TextureAddressMode.Clamp;
 
-				GraphicsDevice.GLDevice.BindTexture(texture);
 				for (int i = 0; i < 6; i += 1)
 				{
 					if (glFormat == (PixelFormat) All.CompressedTextureFormats)
@@ -83,7 +80,6 @@ namespace Microsoft.Xna.Framework.Graphics
 						);
 					}
 				}
-				texture.InitState();
 			});
 		}
 
@@ -215,16 +211,17 @@ namespace Microsoft.Xna.Framework.Graphics
 			CubeMapFace cubeMapFace,
 			T[] data
 		) where T : struct {
+			// FIXME: This isn't right, need to account for varying formats!
+
 			// 4 bytes per pixel
 			if (data.Length < Size * Size * 4)
 			{
 				throw new ArgumentException("data");
 			}
 
-			TextureTarget target = GetGLCubeFace(cubeMapFace);
 			GraphicsDevice.GLDevice.BindTexture(texture);
 			GL.GetTexImage<T>(
-				target,
+				GetGLCubeFace(cubeMapFace),
 				0,
 				PixelFormat.Bgra,
 				PixelType.UnsignedByte,
