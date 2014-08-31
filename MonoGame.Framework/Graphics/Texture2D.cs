@@ -91,30 +91,38 @@ namespace Microsoft.Xna.Framework.Graphics
 					Format == SurfaceFormat.Dxt3 ||
 					Format == SurfaceFormat.Dxt5	)
 				{
-					GL.CompressedTexImage2D(
-						TextureTarget.Texture2D,
-						0,
-						glInternalFormat,
-						Width,
-						Height,
-						0,
-						((Width + 3) / 4) * ((Height + 3) / 4) * GetFormatSize(),
-						IntPtr.Zero
-					);
+					for (int i = 0; i < LevelCount; i += 1)
+					{
+						int levelWidth = Math.Max(Width >> i, 1);
+						int levelHeight = Math.Max(Height >> i, 1);
+						GL.CompressedTexImage2D(
+							TextureTarget.Texture2D,
+							i,
+							glInternalFormat,
+							levelWidth,
+							levelHeight,
+							0,
+							((levelWidth + 3) / 4) * ((levelHeight + 3) / 4) * GetFormatSize(),
+							IntPtr.Zero
+						);
+					}
 				}
 				else
 				{
-					GL.TexImage2D(
-						TextureTarget.Texture2D,
-						0,
-						glInternalFormat,
-						Width,
-						Height,
-						0,
-						glFormat,
-						glType,
-						IntPtr.Zero
-					);
+					for (int i = 0; i < LevelCount; i += 1)
+					{
+						GL.TexImage2D(
+							TextureTarget.Texture2D,
+							i,
+							glInternalFormat,
+							Math.Max(Width >> i, 1),
+							Math.Max(Height >> i, 1),
+							0,
+							glFormat,
+							glType,
+							IntPtr.Zero
+						);
+					}
 				}
 			});
 		}
@@ -179,13 +187,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			Threading.ForceToMainThread(() =>
 			{
 				GCHandle dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
+				int elementSizeInBytes = Marshal.SizeOf(typeof(T));
+				int startByte = startIndex * elementSizeInBytes;
+				IntPtr dataPtr = (IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startByte);
 
 				try
 				{
-					int elementSizeInBytes = Marshal.SizeOf(typeof(T));
-					int startByte = startIndex * elementSizeInBytes;
-					IntPtr dataPtr = (IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startByte);
-
 					GraphicsDevice.GLDevice.BindTexture(texture);
 					if (glFormat == (PixelFormat) All.CompressedTextureFormats)
 					{
@@ -198,33 +205,24 @@ namespace Microsoft.Xna.Framework.Graphics
 						{
 							dataLength = data.Length - startByte;
 						}
-						if (rect.HasValue)
-						{
-							GL.CompressedTexSubImage2D(
-								TextureTarget.Texture2D,
-								level,
-								x,
-								y,
-								w,
-								h,
-								glFormat,
-								dataLength,
-								dataPtr
-							);
-						}
-						else
-						{
-							GL.CompressedTexImage2D(
-								TextureTarget.Texture2D,
-								level,
-								glInternalFormat,
-								w,
-								h,
-								0,
-								dataLength,
-								dataPtr
-							);
-						}
+
+						/* Note that we're using glInternalFormat, not glFormat.
+						 * In this case, they should actually be the same thing,
+						 * but we use glFormat somewhat differently for
+						 * compressed textures.
+						 * -flibit
+						 */
+						GL.CompressedTexSubImage2D(
+							TextureTarget.Texture2D,
+							level,
+							x,
+							y,
+							w,
+							h,
+							(PixelFormat) glInternalFormat,
+							dataLength,
+							dataPtr
+						);
 					}
 					else
 					{
@@ -238,34 +236,17 @@ namespace Microsoft.Xna.Framework.Graphics
 							);
 						}
 
-						if (rect.HasValue)
-						{
-							GL.TexSubImage2D(
-								TextureTarget.Texture2D,
-								level,
-								x,
-								y,
-								w,
-								h,
-								glFormat,
-								glType,
-								dataPtr
-							);
-						}
-						else
-						{
-							GL.TexImage2D(
-								TextureTarget.Texture2D,
-								level,
-								glInternalFormat,
-								w,
-								h,
-								0,
-								glFormat,
-								glType,
-								dataPtr
-							);
-						}
+						GL.TexSubImage2D(
+							TextureTarget.Texture2D,
+							level,
+							x,
+							y,
+							w,
+							h,
+							glFormat,
+							glType,
+							dataPtr
+						);
 
 						// Keep this state sane -flibit
 						if (packSize != 4)

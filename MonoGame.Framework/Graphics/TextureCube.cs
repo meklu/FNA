@@ -56,28 +56,47 @@ namespace Microsoft.Xna.Framework.Graphics
 				texture = GraphicsDevice.GLDevice.CreateTexture(
 					typeof(TextureCube),
 					Format,
-					LevelCount > 1
+					mipMap
 				);
 
-				for (int i = 0; i < 6; i += 1)
+				if (glFormat == (PixelFormat) All.CompressedTextureFormats)
 				{
-					if (glFormat == (PixelFormat) All.CompressedTextureFormats)
+					for (int i = 0; i < 6; i += 1)
 					{
-						throw new NotImplementedException();
+						for (int l = 0; l < LevelCount; l += 1)
+						{
+							int levelSize = Math.Max(size >> l, 1);
+							GL.CompressedTexImage2D(
+								GetGLCubeFace((CubeMapFace) i),
+								l,
+								glInternalFormat,
+								levelSize,
+								levelSize,
+								0,
+								((levelSize + 3) / 4) * ((levelSize + 3) / 4) * GetFormatSize(),
+								IntPtr.Zero
+							);
+						}
 					}
-					else
+				}
+				else
+				{
+					for (int i = 0; i < 6; i += 1)
 					{
-						GL.TexImage2D(
-							GetGLCubeFace((CubeMapFace) i),
-							0,
-							glInternalFormat,
-							size,
-							size,
-							0,
-							glFormat,
-							glType,
-							IntPtr.Zero
-						);
+						for (int l = 0; l < LevelCount; l += 1)
+						{
+							GL.TexImage2D(
+								GetGLCubeFace((CubeMapFace) i),
+								l,
+								glInternalFormat,
+								size,
+								size,
+								0,
+								glFormat,
+								glType,
+								IntPtr.Zero
+							);
+						}
 					}
 				}
 			});
@@ -149,45 +168,56 @@ namespace Microsoft.Xna.Framework.Graphics
 			Threading.ForceToMainThread(() =>
 			{
 				GCHandle dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
-				IntPtr dataPtr = (IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startIndex * Marshal.SizeOf(typeof(T)));
+				int elementSizeInBytes = Marshal.SizeOf(typeof(T));
+				int startByte = startIndex * elementSizeInBytes;
+				IntPtr dataPtr = (IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startByte);
 
 				try
 				{
 					GraphicsDevice.GLDevice.BindTexture(texture);
 					if (glFormat == (PixelFormat) All.CompressedTextureFormats)
 					{
-						throw new NotImplementedException();
-					}
-					else
-					{
-						if (rect.HasValue)
+						int dataLength;
+						if (elementCount > 0)
 						{
-							GL.TexSubImage2D(
-								GetGLCubeFace(face),
-								level,
-								xOffset,
-								yOffset,
-								width,
-								height,
-								glFormat,
-								glType,
-								dataPtr
-							);
+							dataLength = elementCount * elementSizeInBytes;
 						}
 						else
 						{
-							GL.TexImage2D(
-								GetGLCubeFace(face),
-								level,
-								glInternalFormat,
-								width,
-								height,
-								0,
-								glFormat,
-								glType,
-								dataPtr
-							);
+							dataLength = data.Length - startByte;
 						}
+
+						/* Note that we're using glInternalFormat, not glFormat.
+						 * In this case, they should actually be the same thing,
+						 * but we use glFormat somewhat differently for
+						 * compressed textures.
+						 * -flibit
+						 */
+						GL.CompressedTexSubImage2D(
+							GetGLCubeFace(face),
+							level,
+							xOffset,
+							yOffset,
+							width,
+							height,
+							(PixelFormat) glInternalFormat,
+							dataLength,
+							dataPtr
+						);
+					}
+					else
+					{
+						GL.TexSubImage2D(
+							GetGLCubeFace(face),
+							level,
+							xOffset,
+							yOffset,
+							width,
+							height,
+							glFormat,
+							glType,
+							dataPtr
+						);
 					}
 				}
 				finally
@@ -201,32 +231,107 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Public GetData Method
 
-		/// <summary>
-		/// Gets a copy of cube texture data specifying a cubemap face.
-		/// </summary>
-		/// <typeparam name="T">Generic type for data array element.</typeparam>
-		/// <param name="cubeMapFace">The cube map face.</param>
-		/// <param name="data">The data.</param>
 		public void GetData<T>(
 			CubeMapFace cubeMapFace,
 			T[] data
 		) where T : struct {
-			// FIXME: This isn't right, need to account for varying formats!
+			GetData(
+				cubeMapFace,
+				0,
+				null,
+				data,
+				0,
+				data.Length
+			);
+		}
 
-			// 4 bytes per pixel
-			if (data.Length < Size * Size * 4)
+		public void GetData<T>(
+			CubeMapFace cubeMapFace,
+			T[] data,
+			int startIndex,
+			int elementCount
+		) where T : struct {
+			GetData(
+				cubeMapFace,
+				0,
+				null,
+				data,
+				startIndex,
+				elementCount
+			);
+		}
+
+		public void GetData<T>(
+			CubeMapFace cubeMapFace,
+			int level,
+			Rectangle? rect,
+			T[] data,
+			int startIndex,
+			int elementCount
+		) where T : struct {
+			if (data == null || data.Length == 0)
 			{
-				throw new ArgumentException("data");
+				throw new ArgumentException("data cannot be null");
+			}
+			if (data.Length < startIndex + elementCount)
+			{
+				throw new ArgumentException(
+					"The data passed has a length of " + data.Length.ToString() +
+					" but " + elementCount.ToString() + " pixels have been requested."
+				);
 			}
 
 			GraphicsDevice.GLDevice.BindTexture(texture);
-			GL.GetTexImage<T>(
-				GetGLCubeFace(cubeMapFace),
-				0,
-				PixelFormat.Bgra,
-				PixelType.UnsignedByte,
-				data
-			);
+
+			if (glFormat == (PixelFormat) All.CompressedTextureFormats)
+			{
+				throw new NotImplementedException("GetData, CompressedTexture");
+			}
+			else if (rect == null)
+			{
+				// Just throw the whole texture into the user array.
+				GL.GetTexImage(
+					GetGLCubeFace(cubeMapFace),
+					0,
+					glFormat,
+					glType,
+					data
+				);
+			}
+			else
+			{
+				// Get the whole texture...
+				T[] texData = new T[Size * Size];
+				GL.GetTexImage(
+					GetGLCubeFace(cubeMapFace),
+					0,
+					glFormat,
+					glType,
+					texData
+				);
+
+				// Now, blit the rect region into the user array.
+				Rectangle region = rect.Value;
+				int curPixel = -1;
+				for (int row = region.Y; row < region.Y + region.Height; row += 1)
+				{
+					for (int col = region.X; col < region.X + region.Width; col += 1)
+					{
+						curPixel += 1;
+						if (curPixel < startIndex)
+						{
+							// If we're not at the start yet, just keep going...
+							continue;
+						}
+						if (curPixel > elementCount)
+						{
+							// If we're past the end, we're done!
+							return;
+						}
+						data[curPixel - startIndex] = texData[(row * Size) + col];
+					}
+				}
+			}
 		}
 
 		#endregion
