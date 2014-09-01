@@ -23,8 +23,9 @@ namespace Microsoft.Xna.Framework.Content
 	{
 		#region Private Supported File Extensions Variable
 
-		static string[] supportedExtensions = new string[] {
-			".jpg", ".bmp", ".jpeg", ".png", ".gif", ".pict", ".tga"
+		private static string[] supportedExtensions = new string[]
+		{
+			".bmp", ".gif", ".jpg", ".jpeg", ".png", ".tga", ".tif", ".tiff"
 		};
 
 		#endregion
@@ -55,23 +56,31 @@ namespace Microsoft.Xna.Framework.Content
 			Texture2D texture = null;
 
 			SurfaceFormat surfaceFormat;
-			if (reader.version < 5) {
-				SurfaceFormat_Legacy legacyFormat =
-					(SurfaceFormat_Legacy) reader.ReadInt32();
-				switch(legacyFormat) {
-				case SurfaceFormat_Legacy.Dxt1:
-					surfaceFormat = SurfaceFormat.Dxt1;
-					break;
-				case SurfaceFormat_Legacy.Dxt3:
-					surfaceFormat = SurfaceFormat.Dxt3;
-					break;
-				case SurfaceFormat_Legacy.Dxt5:
-					surfaceFormat = SurfaceFormat.Dxt5;
-					break;
-				case SurfaceFormat_Legacy.Color:
+			if (reader.version < 5)
+			{
+				/* These integer values are based on the enum values
+				 * from previous XNA versions.
+				 * -flibit
+				 */
+				int legacyFormat = reader.ReadInt32();
+				if (legacyFormat == 1)
+				{
 					surfaceFormat = SurfaceFormat.Color;
-					break;
-				default:
+				}
+				if (legacyFormat == 28)
+				{
+					surfaceFormat = SurfaceFormat.Dxt1;
+				}
+				else if (legacyFormat == 30)
+				{
+					surfaceFormat = SurfaceFormat.Dxt3;
+				}
+				else if (legacyFormat == 32)
+				{
+					surfaceFormat = SurfaceFormat.Dxt5;
+				}
+				else
+				{
 					throw new NotSupportedException(
 						"Unsupported legacy surface format."
 					);
@@ -85,26 +94,22 @@ namespace Microsoft.Xna.Framework.Content
 			int height = reader.ReadInt32();
 			int levelCount = reader.ReadInt32();
 			int levelCountOutput = levelCount;
+
+			// Check to see if we need to convert the surface data
 			SurfaceFormat convertedFormat = surfaceFormat;
-			switch (surfaceFormat)
+			if (	surfaceFormat == SurfaceFormat.Dxt1 &&
+				!reader.GraphicsDevice.GLDevice.SupportsDxt1	)
 			{
-			case SurfaceFormat.Dxt1:
-				if (!reader.GraphicsDevice.GLDevice.SupportsDxt1)
-				{
-					convertedFormat = SurfaceFormat.Color;
-				}
-				break;
-			case SurfaceFormat.Dxt3:
-			case SurfaceFormat.Dxt5:
-				if (!reader.GraphicsDevice.GLDevice.SupportsS3tc)
-				{
-					convertedFormat = SurfaceFormat.Color;
-				}
-				break;
-			case SurfaceFormat.NormalizedByte4:
 				convertedFormat = SurfaceFormat.Color;
-				break;
 			}
+			else if (	(	surfaceFormat == SurfaceFormat.Dxt3 ||
+						surfaceFormat == SurfaceFormat.Dxt5	) &&
+					!reader.GraphicsDevice.GLDevice.SupportsS3tc	)
+			{
+				convertedFormat = SurfaceFormat.Color;
+			}
+
+			// Check for duplicate instances
 			if (existingInstance == null)
 			{
 				texture = new Texture2D(
@@ -122,7 +127,7 @@ namespace Microsoft.Xna.Framework.Content
 
 			for (int level = 0; level < levelCount; level += 1)
 			{
-				int levelDataSizeInBytes = (reader.ReadInt32 ());
+				int levelDataSizeInBytes = reader.ReadInt32();
 				byte[] levelData = null; // Don't assign this quite yet...
 				int levelWidth = width >> level;
 				int levelHeight = height >> level;
@@ -130,128 +135,37 @@ namespace Microsoft.Xna.Framework.Content
 				{
 					continue;
 				}
+
 				// Convert the image data if required
-				switch (surfaceFormat)
+				if (	surfaceFormat == SurfaceFormat.Dxt1 &&
+					!reader.GraphicsDevice.GLDevice.SupportsDxt1	)
 				{
-				case SurfaceFormat.Dxt1:
-					if (!reader.GraphicsDevice.GLDevice.SupportsDxt1)
-					{
 						levelData = reader.ReadBytes(levelDataSizeInBytes);
 						levelData = DxtUtil.DecompressDxt1(
 							levelData,
 							levelWidth,
 							levelHeight
 						);
-					}
-					break;
-				case SurfaceFormat.Dxt3:
-					if (!reader.GraphicsDevice.GLDevice.SupportsS3tc)
-					{
+				}
+				else if (	surfaceFormat == SurfaceFormat.Dxt3 &&
+						!reader.GraphicsDevice.GLDevice.SupportsS3tc	)
+				{
 						levelData = reader.ReadBytes(levelDataSizeInBytes);
 						levelData = DxtUtil.DecompressDxt3(
 							levelData,
 							levelWidth,
 							levelHeight
 						);
-					}
-					break;
-				case SurfaceFormat.Dxt5:
-					if (!reader.GraphicsDevice.GLDevice.SupportsS3tc)
-					{
+				}
+				else if (	surfaceFormat == SurfaceFormat.Dxt5 &&
+						!reader.GraphicsDevice.GLDevice.SupportsS3tc	)
+				{
 						levelData = reader.ReadBytes(levelDataSizeInBytes);
 						levelData = DxtUtil.DecompressDxt5(
 							levelData,
 							levelWidth,
 							levelHeight
 						);
-					}
-					break;
-				case SurfaceFormat.Bgr565:
-					{
-						levelData = reader.ReadBytes(levelDataSizeInBytes);
-					}
-					break;
-				case SurfaceFormat.Bgra5551:
-					{
-						levelData = reader.ReadBytes(levelDataSizeInBytes);
-						// Shift the channels to suit OPENGL
-						int offset = 0;
-						for (int y = 0; y < levelHeight; y += 1)
-						{
-							for (int x = 0; x < levelWidth; x += 1)
-							{
-								ushort pixel = BitConverter.ToUInt16(
-									levelData,
-									offset
-								);
-								pixel = (ushort) (
-									((pixel & 0x7FFF) << 1) |
-									((pixel & 0x8000) >> 15)
-								);
-								levelData[offset] =
-									(byte) (pixel);
-								levelData[offset + 1] =
-									(byte) (pixel >> 8);
-								offset += 2;
-							}
-						}
-					}
-					break;
-				case SurfaceFormat.Bgra4444:
-					{
-						levelData = reader.ReadBytes(levelDataSizeInBytes);
-						// Shift the channels to suit OPENGL
-						int offset = 0;
-						for (int y = 0; y < levelHeight; y += 1)
-						{
-							for (int x = 0; x < levelWidth; x += 1)
-							{
-								ushort pixel = BitConverter.ToUInt16(
-									levelData,
-									offset
-								);
-								pixel = (ushort) (
-									((pixel & 0x0FFF) << 4) |
-									((pixel & 0xF000) >> 12)
-								);
-								levelData[offset] =
-									(byte) (pixel);
-								levelData[offset + 1] =
-									(byte) (pixel >> 8);
-								offset += 2;
-							}
-						}
-					}
-					break;
-				case SurfaceFormat.NormalizedByte4:
-					{
-						levelData = reader.ReadBytes(levelDataSizeInBytes);
-						int bytesPerPixel = 4; // According to Texture.GetFormatSize()
-						int pitch = levelWidth * bytesPerPixel;
-						for (int y = 0; y < levelHeight; y += 1)
-						{
-							for (int x = 0; x < levelWidth; x += 1)
-							{
-								int color = BitConverter.ToInt32(
-									levelData,
-									y * pitch + x * bytesPerPixel
-								);
-								// R:=W
-								levelData[y * pitch + x * 4] =
-									(byte) (((color >> 16) & 0xff));
-								// G:=V
-								levelData[y * pitch + x * 4 + 1] =
-									(byte) (((color >> 8) & 0xff));
-								// B:=U
-								levelData[y * pitch + x * 4 + 2] =
-									(byte) (((color) & 0xff));
-								// A:=Q
-								levelData[y * pitch + x * 4 + 3] =
-									(byte) (((color >> 24) & 0xff));
-							}
-						}
-					}
-					break;
 				}
 
 				if (	levelData == null &&

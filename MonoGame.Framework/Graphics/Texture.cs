@@ -108,17 +108,17 @@ namespace Microsoft.Xna.Framework.Graphics
 					break;
 				case SurfaceFormat.Bgr565:
 					glInternalFormat = PixelInternalFormat.Rgb;
-					glFormat = PixelFormat.Rgb;
+					glFormat = PixelFormat.Bgr;
 					glType = PixelType.UnsignedShort565;
 					break;
 				case SurfaceFormat.Bgra4444:
 					glInternalFormat = PixelInternalFormat.Rgba4;
-					glFormat = PixelFormat.Rgba;
+					glFormat = PixelFormat.Bgra;
 					glType = PixelType.UnsignedShort4444;
 					break;
 				case SurfaceFormat.Bgra5551:
 					glInternalFormat = PixelInternalFormat.Rgba;
-					glFormat = PixelFormat.Rgba;
+					glFormat = PixelFormat.Bgra;
 					glType = PixelType.UnsignedShort5551;
 					break;
 				case SurfaceFormat.Alpha8:
@@ -128,15 +128,15 @@ namespace Microsoft.Xna.Framework.Graphics
 					break;
 				case SurfaceFormat.Dxt1:
 					glInternalFormat = PixelInternalFormat.CompressedRgbaS3tcDxt1Ext;
-					glFormat = (PixelFormat)All.CompressedTextureFormats;
+					glFormat = (PixelFormat) All.CompressedTextureFormats;
 					break;
 				case SurfaceFormat.Dxt3:
 					glInternalFormat = PixelInternalFormat.CompressedRgbaS3tcDxt3Ext;
-					glFormat = (PixelFormat)All.CompressedTextureFormats;
+					glFormat = (PixelFormat) All.CompressedTextureFormats;
 					break;
 				case SurfaceFormat.Dxt5:
 					glInternalFormat = PixelInternalFormat.CompressedRgbaS3tcDxt5Ext;
-					glFormat = (PixelFormat)All.CompressedTextureFormats;
+					glFormat = (PixelFormat) All.CompressedTextureFormats;
 					break;
 				case SurfaceFormat.Single:
 					glInternalFormat = PixelInternalFormat.R32f;
