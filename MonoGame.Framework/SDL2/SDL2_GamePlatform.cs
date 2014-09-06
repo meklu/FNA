@@ -116,18 +116,6 @@ namespace Microsoft.Xna.Framework
 
 		#endregion
 
-		#region Public GamePlatform Properties
-
-		public override GameRunBehavior DefaultRunBehavior
-		{
-			get
-			{
-				return GameRunBehavior.Synchronous;
-			}
-		}
-
-		#endregion
-
 		#region Private OSX-specific Variables
 
 		private bool INTERNAL_useFullscreenSpaces;
@@ -453,11 +441,6 @@ namespace Microsoft.Xna.Framework
 
 			// We out.
 			Game.Exit();
-		}
-
-		public override void StartRunLoop()
-		{
-			throw new NotSupportedException();
 		}
 
 		public override void Exit()

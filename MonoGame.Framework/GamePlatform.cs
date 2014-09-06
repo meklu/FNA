@@ -22,15 +22,6 @@ namespace Microsoft.Xna.Framework
 		#region Public Properties
 
 		/// <summary>
-		/// When implemented in a derived class, reports the default
-		/// GameRunBehavior for this platform.
-		/// </summary>
-		public abstract GameRunBehavior DefaultRunBehavior
-		{
-			get;
-		}
-
-		/// <summary>
 		/// Gets the Game instance that owns this GamePlatform instance.
 		/// </summary>
 		public Game Game
@@ -154,7 +145,6 @@ namespace Microsoft.Xna.Framework
 
 		#region Events
 
-		public event EventHandler<EventArgs> AsyncRunLoopEnded;
 		public event EventHandler<EventArgs> Activated;
 		public event EventHandler<EventArgs> Deactivated;
 
@@ -202,12 +192,6 @@ namespace Microsoft.Xna.Framework
 		/// until it has ended.
 		/// </summary>
 		public abstract void RunLoop();
-
-		/// <summary>
-		/// When implemented in a derived class, starts the run loop and returns
-		/// immediately.
-		/// </summary>
-		public abstract void StartRunLoop();
 
 		/// <summary>
 		/// Gives derived classes an opportunity to do work just before Update
@@ -302,20 +286,6 @@ namespace Microsoft.Xna.Framework
 		internal abstract void SetPresentationInterval(PresentInterval interval);
 
 		internal abstract bool HasTouch();
-
-		#endregion
-
-		#region Protected Methods
-
-		/// <summary>
-		/// Raises the AsyncRunLoopEnded event. This method must be called by
-		/// derived classes when the asynchronous run loop they start has
-		/// stopped running.
-		/// </summary>
-		protected void RaiseAsyncRunLoopEnded()
-		{
-			Raise(AsyncRunLoopEnded, EventArgs.Empty);
-		}
 
 		#endregion
 

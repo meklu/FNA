@@ -445,23 +445,6 @@ namespace Microsoft.Xna.Framework
 
 		public void Run()
 		{
-			try
-			{
-				Run(Platform.DefaultRunBehavior);
-			}
-			catch (Audio.NoAudioHardwareException)
-			{
-				// FIXME: Should we be catching this here? -flibit
-				Platform.ShowRuntimeError(
-					this.Window.Title,
-					"Could not find a suitable audio device. Verify that a sound card is\n" +
-					"installed, and check the driver properties to make sure it is not disabled."
-				);
-			}
-		}
-
-		public void Run(GameRunBehavior runBehavior)
-		{
 			AssertNotDisposed();
 			if (!Platform.BeforeRun())
 			{
@@ -478,25 +461,23 @@ namespace Microsoft.Xna.Framework
 
 			BeginRun();
 			_gameTimer = Stopwatch.StartNew();
-			switch (runBehavior)
+
+			try
 			{
-				case GameRunBehavior.Asynchronous:
-					Platform.AsyncRunLoopEnded += Platform_AsyncRunLoopEnded;
-					Platform.StartRunLoop();
-					break;
-				case GameRunBehavior.Synchronous:
-					Platform.RunLoop();
-					EndRun();
-					DoExiting();
-					break;
-				default:
-					throw new ArgumentException(
-						string.Format(
-							"Handling for the run behavior {0} is not implemented.",
-							runBehavior
-						)
-					);
+				Platform.RunLoop();
 			}
+			catch (Audio.NoAudioHardwareException)
+			{
+				// FIXME: Should we be catching this here? -flibit
+				Platform.ShowRuntimeError(
+					this.Window.Title,
+					"Could not find a suitable audio device. Verify that a sound card is\n" +
+					"installed, and check the driver properties to make sure it is not disabled."
+				);
+			}
+
+			EndRun();
+			DoExiting();
 		}
 
 		private TimeSpan _accumulatedElapsedTime;
@@ -721,16 +702,6 @@ namespace Microsoft.Xna.Framework
 			GameComponentCollectionEventArgs e
 		) {
 			DecategorizeComponent(e.GameComponent);
-		}
-
-		private void Platform_AsyncRunLoopEnded(object sender, EventArgs e)
-		{
-			AssertNotDisposed();
-
-			GamePlatform platform = (GamePlatform) sender;
-			platform.AsyncRunLoopEnded -= Platform_AsyncRunLoopEnded;
-			EndRun();
-			DoExiting();
 		}
 
 		#endregion
@@ -1213,14 +1184,4 @@ namespace Microsoft.Xna.Framework
 
 		#endregion
 	}
-
-	#region GameRunBehavior enum
-
-	public enum GameRunBehavior
-	{
-		Asynchronous,
-		Synchronous
-	}
-
-	#endregion
 }
