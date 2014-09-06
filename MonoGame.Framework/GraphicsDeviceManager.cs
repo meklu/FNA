@@ -192,36 +192,33 @@ namespace Microsoft.Xna.Framework
 
 		public void CreateDevice()
 		{
-			PresentationParameters presentationParameters = new PresentationParameters();
-			presentationParameters.DepthStencilFormat = DepthFormat.Depth24;
-			presentationParameters.IsFullScreen = false;
+			// Set the default device information
+			GraphicsDeviceInformation gdi = new GraphicsDeviceInformation();
+			gdi.Adapter = GraphicsAdapter.DefaultAdapter;
+			gdi.GraphicsProfile = GraphicsProfile;
+			gdi.PresentationParameters = new PresentationParameters();
+			gdi.PresentationParameters.DepthStencilFormat = DepthFormat.Depth24;
+			gdi.PresentationParameters.IsFullScreen = false;
 
+			// Give the user a chance to change the initial settings
 			if (PreparingDeviceSettings != null)
 			{
-				// Generate default information to provide to the application.
-				GraphicsDeviceInformation gdi = new GraphicsDeviceInformation();
-				gdi.GraphicsProfile = GraphicsProfile;
-				gdi.Adapter = GraphicsAdapter.DefaultAdapter;
-				gdi.PresentationParameters = presentationParameters;
-
-				// Prepare the settings, pass to the application, apply the changes.
-				PreparingDeviceSettingsEventArgs settings = new PreparingDeviceSettingsEventArgs(gdi);
-				PreparingDeviceSettings(this, settings);
-				presentationParameters = settings.GraphicsDeviceInformation.PresentationParameters;
-
-				// Set the GraphicsProfile based on the new settings.
-				GraphicsProfile = settings.GraphicsDeviceInformation.GraphicsProfile;
-
-				// Change our settings based on the new PresentationParameters.
-				PreferredBackBufferFormat = presentationParameters.BackBufferFormat;
-				PreferredDepthStencilFormat = presentationParameters.DepthStencilFormat;
+				PreparingDeviceSettings(
+					this,
+					new PreparingDeviceSettingsEventArgs(gdi)
+				);
 			}
+
+			// Apply these settings to this GraphicsDeviceManager
+			GraphicsProfile = gdi.GraphicsProfile;
+			PreferredBackBufferFormat = gdi.PresentationParameters.BackBufferFormat;
+			PreferredDepthStencilFormat = gdi.PresentationParameters.DepthStencilFormat;
 
 			// Create the GraphicsDevice, apply the initial settings.
 			graphicsDevice = new GraphicsDevice(
-				GraphicsAdapter.DefaultAdapter,
-				GraphicsProfile,
-				presentationParameters
+				gdi.Adapter,
+				gdi.GraphicsProfile,
+				gdi.PresentationParameters
 			);
 			ApplyChanges();
 
