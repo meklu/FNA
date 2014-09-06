@@ -14,7 +14,7 @@ using System.Collections.ObjectModel;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
-	public sealed class GraphicsAdapter : IDisposable
+	public sealed class GraphicsAdapter
 	{
 		#region Public Properties
 
@@ -50,31 +50,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
-		public Guid DeviceIdentifier
-		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-		}
-
 		public string DeviceName
-		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-		}
-
-		public string DriverDll
-		{
-			get
-			{
-				throw new NotImplementedException();
-			}
-		}
-
-		public Version DriverVersion
 		{
 			get
 			{
@@ -134,6 +110,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
+		public bool UseNullDevice
+		{
+			get;
+			set;
+		}
+
 		public bool UseReferenceDevice
 		{
 			get;
@@ -189,19 +171,23 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		internal GraphicsAdapter()
 		{
-		}
-
-		#endregion
-
-		#region Public Dispose Method
-
-		public void Dispose()
-		{
+			UseNullDevice = false;
+			UseReferenceDevice = false;
 		}
 
 		#endregion
 
 		#region Public Methods
+
+		public bool IsProfileSupported(GraphicsProfile graphicsProfile)
+		{
+			/* TODO: This method could be genuinely useful!
+			 * Maybe look into the difference between Reach/HiDef and add the
+			 * appropriate properties to the GLDevice.
+			 * -flibit
+			 */
+			return true;
+		}
 
 		public bool QueryRenderTargetFormat(
 			GraphicsProfile graphicsProfile,
