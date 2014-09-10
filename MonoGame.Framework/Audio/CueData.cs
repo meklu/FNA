@@ -581,17 +581,27 @@ namespace Microsoft.Xna.Framework.Audio
 				else if (eventType == 8)
 				{
 					// Unknown values
-					reader.ReadBytes(3);
+					reader.ReadBytes(2);
+
+					/* Event Flags
+					 * 0x01 = Add, rather than replace
+					 * Rest is unknown
+					 */
+					bool addVolume = (reader.ReadByte() & 0x01) == 0x01;
 
 					// Operand Constant
-					float constant = reader.ReadSingle();
+					float constant = reader.ReadSingle() / 100.0f;
+					if (addVolume)
+					{
+						constant += clipVolume;
+					}
 
 					// Unknown values
 					reader.ReadBytes(8);
 
 					INTERNAL_events[i] = new SetVolumeEvent(
 						eventTimestamp,
-						constant
+						XACTCalculator.CalculateAmplitudeRatio(constant)
 					);
 				}
 				else
@@ -602,6 +612,7 @@ namespace Microsoft.Xna.Framework.Audio
 					 * Type 0 - Stop Event
 					 * Type 7 - Pitch Event
 					 * Type 9 - Marker Event
+					 * Type 17 - Volume Repeat Event
 					 * -flibit
 					 */
 					throw new Exception(
@@ -855,7 +866,7 @@ namespace Microsoft.Xna.Framework.Audio
 		public float GetVolume()
 		{
 			// FIXME: There's probably more that this event does...
-			return XACTCalculator.CalculateAmplitudeRatio(INTERNAL_constant);
+			return INTERNAL_constant;
 		}
 	}
 }
