@@ -593,7 +593,7 @@ namespace Microsoft.Xna.Framework.Audio
 					float constant = reader.ReadSingle() / 100.0f;
 					if (addVolume)
 					{
-						constant += clipVolume;
+						constant += (float) clipVolume;
 					}
 
 					// Unknown values
