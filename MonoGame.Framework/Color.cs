@@ -15,7 +15,6 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.Serialization;
 using System.Text;
 
 using Microsoft.Xna.Framework.Design;

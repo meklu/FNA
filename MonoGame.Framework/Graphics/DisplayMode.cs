@@ -14,7 +14,6 @@
 #region Using Statements
 using System;
 using System.Globalization;
-using System.Runtime.Serialization;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics

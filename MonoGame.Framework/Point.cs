@@ -15,7 +15,6 @@
 using System;
 using System.Diagnostics;
 using System.ComponentModel;
-using System.Runtime.Serialization;
 
 using Microsoft.Xna.Framework.Design;
 #endregion
