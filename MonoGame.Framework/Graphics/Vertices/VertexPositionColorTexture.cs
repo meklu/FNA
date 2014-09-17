@@ -8,11 +8,13 @@
 #endregion
 
 #region Using Statements
+using System;
 using System.Runtime.InteropServices;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics
 {
+	[Serializable]
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
 	public struct VertexPositionColorTexture : IVertexType
 	{

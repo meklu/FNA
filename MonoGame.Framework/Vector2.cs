@@ -23,7 +23,7 @@ using Microsoft.Xna.Framework.Design;
 
 namespace Microsoft.Xna.Framework
 {
-	[DataContract]
+	[Serializable]
 	[TypeConverter(typeof(Vector2TypeConverter))]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct Vector2 : IEquatable<Vector2>

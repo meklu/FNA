@@ -25,7 +25,7 @@ namespace Microsoft.Xna.Framework
 	/// <summary>
 	/// Describes a 2D-point.
 	/// </summary>
-	[DataContract]
+	[Serializable]
 	[TypeConverter(typeof(PointTypeConverter))]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct Point : IEquatable<Point>

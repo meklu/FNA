@@ -26,7 +26,7 @@ namespace Microsoft.Xna.Framework
 	/// <summary>
 	/// Describes a 32-bit packed color.
 	/// </summary>
-	[DataContract]
+	[Serializable]
 	[TypeConverter(typeof(ColorTypeConverter))]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct Color : IEquatable<Color>

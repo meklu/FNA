@@ -18,7 +18,7 @@ using System.Runtime.Serialization;
 
 namespace Microsoft.Xna.Framework
 {
-	[DataContract]
+	[Serializable]
 	public class CurveKey : IEquatable<CurveKey>, IComparable<CurveKey>
 	{
 		#region Public Properties

@@ -19,7 +19,7 @@ using System.Runtime.Serialization;
 namespace Microsoft.Xna.Framework
 {
 	// TODO [TypeConverter(ExpandableObjectConverter)]
-	[DataContract]
+	[Serializable]
 	public class Curve
 	{
 		#region Public Properties

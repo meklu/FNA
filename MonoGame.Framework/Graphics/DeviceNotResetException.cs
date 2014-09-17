@@ -14,7 +14,7 @@ using System.Runtime.Serialization;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
-	[DataContract]
+	[Serializable]
 	public sealed class DeviceNotResetException : Exception
 	{
 		public DeviceNotResetException()

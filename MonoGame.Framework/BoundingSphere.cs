@@ -21,7 +21,7 @@ using System.Runtime.Serialization;
 
 namespace Microsoft.Xna.Framework
 {
-	[DataContract]
+	[Serializable]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct BoundingSphere : IEquatable<BoundingSphere>
 	{
