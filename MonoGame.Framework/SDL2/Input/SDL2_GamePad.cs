@@ -36,37 +36,37 @@ namespace Microsoft.Xna.Framework.Input
 	}
 
 	[Serializable]
-	public struct MonoGameJoystickValue
+	public class MonoGameJoystickValue
 	{
-		public InputType INPUT_TYPE;
-		public int INPUT_ID;
-		public bool INPUT_INVERT;
+		public InputType INPUT_TYPE = InputType.None;
+		public int INPUT_ID = -1;
+		public bool INPUT_INVERT = false;
 	}
 
 	[Serializable]
-	public struct MonoGameJoystickConfig
+	public class MonoGameJoystickConfig
 	{
-		// public MonoGameJoystickValue BUTTON_GUIDE;
-		public MonoGameJoystickValue BUTTON_START;
-		public MonoGameJoystickValue BUTTON_BACK;
-		public MonoGameJoystickValue BUTTON_A;
-		public MonoGameJoystickValue BUTTON_B;
-		public MonoGameJoystickValue BUTTON_X;
-		public MonoGameJoystickValue BUTTON_Y;
-		public MonoGameJoystickValue SHOULDER_LB;
-		public MonoGameJoystickValue SHOULDER_RB;
-		public MonoGameJoystickValue TRIGGER_RT;
-		public MonoGameJoystickValue TRIGGER_LT;
-		public MonoGameJoystickValue BUTTON_LSTICK;
-		public MonoGameJoystickValue BUTTON_RSTICK;
-		public MonoGameJoystickValue DPAD_UP;
-		public MonoGameJoystickValue DPAD_DOWN;
-		public MonoGameJoystickValue DPAD_LEFT;
-		public MonoGameJoystickValue DPAD_RIGHT;
-		public MonoGameJoystickValue AXIS_LX;
-		public MonoGameJoystickValue AXIS_LY;
-		public MonoGameJoystickValue AXIS_RX;
-		public MonoGameJoystickValue AXIS_RY;
+		// public MonoGameJoystickValue BUTTON_GUIDE = new MonoGameJoystickValue();
+		public MonoGameJoystickValue BUTTON_START = new MonoGameJoystickValue();
+		public MonoGameJoystickValue BUTTON_BACK = new MonoGameJoystickValue();
+		public MonoGameJoystickValue BUTTON_A = new MonoGameJoystickValue();
+		public MonoGameJoystickValue BUTTON_B = new MonoGameJoystickValue();
+		public MonoGameJoystickValue BUTTON_X = new MonoGameJoystickValue();
+		public MonoGameJoystickValue BUTTON_Y = new MonoGameJoystickValue();
+		public MonoGameJoystickValue SHOULDER_LB = new MonoGameJoystickValue();
+		public MonoGameJoystickValue SHOULDER_RB = new MonoGameJoystickValue();
+		public MonoGameJoystickValue TRIGGER_RT = new MonoGameJoystickValue();
+		public MonoGameJoystickValue TRIGGER_LT = new MonoGameJoystickValue();
+		public MonoGameJoystickValue BUTTON_LSTICK = new MonoGameJoystickValue();
+		public MonoGameJoystickValue BUTTON_RSTICK = new MonoGameJoystickValue();
+		public MonoGameJoystickValue DPAD_UP = new MonoGameJoystickValue();
+		public MonoGameJoystickValue DPAD_DOWN = new MonoGameJoystickValue();
+		public MonoGameJoystickValue DPAD_LEFT = new MonoGameJoystickValue();
+		public MonoGameJoystickValue DPAD_RIGHT = new MonoGameJoystickValue();
+		public MonoGameJoystickValue AXIS_LX = new MonoGameJoystickValue();
+		public MonoGameJoystickValue AXIS_LY = new MonoGameJoystickValue();
+		public MonoGameJoystickValue AXIS_RX = new MonoGameJoystickValue();
+		public MonoGameJoystickValue AXIS_RY = new MonoGameJoystickValue();
 	}
 
 	#endregion
@@ -293,20 +293,13 @@ namespace Microsoft.Xna.Framework.Input
 
 		#endregion
 
-		#region MonoGameJoystick.cfg Load Methods
-
-		private static void INTERNAL_ClearButton(ref MonoGameJoystickValue value)
-		{
-			value.INPUT_TYPE = InputType.None;
-			value.INPUT_ID = -1;
-			value.INPUT_INVERT = false;
-		}
+		#region MonoGameJoystick.cfg Load Method
 
 		// Prepare the MonoGameJoystick configuration system
 		internal static void INTERNAL_InitMonoGameJoystick()
 		{
 			// Get the intended config file path.
-			string osConfigFile = "";
+			string osConfigFile = String.Empty;
 			if (Game.Instance.Platform.OSVersion.Equals("Windows"))
 			{
 				osConfigFile = "MonoGameJoystick.cfg"; // Oh well.
@@ -363,29 +356,8 @@ namespace Microsoft.Xna.Framework.Input
 			}
 			else
 			{
-				// First of all, just set our config to null values.
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.BUTTON_START);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.BUTTON_BACK);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.BUTTON_A);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.BUTTON_B);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.BUTTON_X);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.BUTTON_Y);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.SHOULDER_LB);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.SHOULDER_RB);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.TRIGGER_LT);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.TRIGGER_RT);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.BUTTON_LSTICK);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.BUTTON_RSTICK);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.DPAD_UP);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.DPAD_DOWN);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.DPAD_LEFT);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.DPAD_RIGHT);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.AXIS_LX);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.AXIS_LY);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.AXIS_RX);
-				INTERNAL_ClearButton(ref INTERNAL_joystickConfig.AXIS_RY);
-
 				// Since it doesn't exist, we need to generate the default config.
+				INTERNAL_joystickConfig = new MonoGameJoystickConfig();
 
 				// ... but is our directory even there?
 				string osConfigDir = osConfigFile.Substring(0, osConfigFile.IndexOf("MonoGameJoystick.cfg"));
