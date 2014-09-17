@@ -40,10 +40,7 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Fields
 
-		[DataMember]
 		public Vector3 Direction;
-
-		[DataMember]
 		public Vector3 Position;
 
 		#endregion

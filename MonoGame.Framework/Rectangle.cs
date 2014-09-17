@@ -157,25 +157,21 @@ namespace Microsoft.Xna.Framework
 		/// <summary>
 		/// The x coordinate of the top-left corner of this <see>Rectangle</see>.
 		/// </summary>
-		[DataMember]
 		public int X;
 
 		/// <summary>
 		/// The y coordinate of the top-left corner of this <see>Rectangle</see>.
 		/// </summary>
-		[DataMember]
 		public int Y;
 
 		/// <summary>
 		/// The width of this <see>Rectangle</see>.
 		/// </summary>
-		[DataMember]
 		public int Width;
 
 		/// <summary>
 		/// The height of this <see>Rectangle</see>.
 		/// </summary>
-		[DataMember]
 		public int Height;
 
 		#endregion

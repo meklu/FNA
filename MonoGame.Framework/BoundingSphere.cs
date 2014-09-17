@@ -42,10 +42,8 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Fields
 
-		[DataMember]
 		public Vector3 Center;
 
-		[DataMember]
 		public float Radius;
 
 		#endregion

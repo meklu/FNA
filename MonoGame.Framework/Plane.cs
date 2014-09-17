@@ -40,10 +40,7 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Fields
 
-		[DataMember]
 		public float D;
-
-		[DataMember]
 		public Vector3 Normal;
 
 		#endregion

@@ -24,7 +24,6 @@ namespace Microsoft.Xna.Framework
 	{
 		#region Public Properties
 
-		[DataMember]
 		public bool IsConstant
 		{
 			get
@@ -33,21 +32,18 @@ namespace Microsoft.Xna.Framework
 			}
 		}
 
-		[DataMember]
 		public CurveKeyCollection Keys
 		{
 			get;
 			private set;
 		}
 
-		[DataMember]
 		public CurveLoopType PostLoop
 		{
 			get;
 			set;
 		}
 
-		[DataMember]
 		public CurveLoopType PreLoop
 		{
 			get;

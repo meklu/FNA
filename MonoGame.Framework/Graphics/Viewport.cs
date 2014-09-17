@@ -19,7 +19,6 @@ namespace Microsoft.Xna.Framework.Graphics
 	{
 		#region Public Properties
 
-		[DataMember]
 		public int Height
 		{
 			get
@@ -32,7 +31,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
-		[DataMember]
 		public float MaxDepth
 		{
 			get
@@ -45,7 +43,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
-		[DataMember]
 		public float MinDepth
 		{
 			get
@@ -58,7 +55,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
-		[DataMember]
 		public int Width
 		{
 			get
@@ -71,7 +67,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
-		[DataMember]
 		public int Y
 		{
 			get
@@ -85,7 +80,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
-		[DataMember]
 		public int X
 		{
 			get

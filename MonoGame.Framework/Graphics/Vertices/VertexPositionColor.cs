@@ -33,10 +33,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Public Variables
 
-		[DataMember]
 		public Vector3 Position;
 
-		[DataMember]
 		public Color Color;
 
 		#endregion

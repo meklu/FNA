@@ -230,52 +230,21 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Fields
 
-		[DataMember]
 		public float M11;
-
-		[DataMember]
 		public float M12;
-
-		[DataMember]
 		public float M13;
-
-		[DataMember]
 		public float M14;
-
-		[DataMember]
 		public float M21;
-
-		[DataMember]
 		public float M22;
-
-		[DataMember]
 		public float M23;
-
-		[DataMember]
 		public float M24;
-
-		[DataMember]
 		public float M31;
-
-		[DataMember]
 		public float M32;
-
-		[DataMember]
 		public float M33;
-
-		[DataMember]
 		public float M34;
-
-		[DataMember]
 		public float M41;
-
-		[DataMember]
 		public float M42;
-
-		[DataMember]
 		public float M43;
-
-		[DataMember]
 		public float M44;
 
 		#endregion

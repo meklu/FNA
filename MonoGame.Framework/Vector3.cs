@@ -169,13 +169,8 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Fields
 
-		[DataMember]
 		public float X;
-
-		[DataMember]
 		public float Y;
-
-		[DataMember]
 		public float Z;
 
 		#endregion

@@ -41,10 +41,8 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Fields
 
-		[DataMember]
 		public Vector3 Min;
 
-		[DataMember]
 		public Vector3 Max;
 
 		public const int CornerCount = 8;

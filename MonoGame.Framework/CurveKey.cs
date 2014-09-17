@@ -23,35 +23,30 @@ namespace Microsoft.Xna.Framework
 	{
 		#region Public Properties
 
-		[DataMember]
 		public CurveContinuity Continuity
 		{
 			get;
 			set;
 		}
 
-		[DataMember]
 		public float Position
 		{
 			get;
 			private set;
 		}
 
-		[DataMember]
 		public float TangentIn
 		{
 			get;
 			set;
 		}
 
-		[DataMember]
 		public float TangentOut
 		{
 			get;
 			set;
 		}
 
-		[DataMember]
 		public float Value
 		{
 			get;
