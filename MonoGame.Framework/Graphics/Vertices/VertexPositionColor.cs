@@ -89,13 +89,10 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public override string ToString()
 		{
-			return string.Format(
-				"{{Position:{0} Color:{1}}}",
-				new object[]
-				{
-					Position,
-					Color
-				}
+			return (
+				"{{Position:" + Position.ToString() +
+				" Color:" + Color.ToString() +
+				"}}"
 			);
 		}
 

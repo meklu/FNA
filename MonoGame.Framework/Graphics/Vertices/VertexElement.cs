@@ -65,15 +65,12 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public override string ToString()
 		{
-			return string.Format(
-				"{{Offset:{0} Format:{1} Usage:{2} UsageIndex:{3}}}",
-				new object[]
-				{
-					Offset,
-					VertexElementFormat,
-					VertexElementUsage,
-					UsageIndex
-				}
+			return (
+				"{{Offset:" + Offset.ToString() +
+				" Format:" + VertexElementFormat.ToString() +
+				" Usage:" + VertexElementUsage.ToString() +
+				" UsageIndex: " + UsageIndex.ToString() +
+				"}}"
 			);
 		}
 

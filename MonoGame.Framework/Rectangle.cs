@@ -319,12 +319,12 @@ namespace Microsoft.Xna.Framework
 
 		public override string ToString()
 		{
-			return string.Format(
-				"{{X:{0} Y:{1} Width:{2} Height:{3}}}",
-				X,
-				Y,
-				Width,
-				Height
+			return (
+				"{{X:" + X.ToString() +
+				" Y:" + Y.ToString() +
+				" Width:" + Width.ToString() +
+				" Height:" + Height.ToString() +
+				"}}"
 			);
 		}
 

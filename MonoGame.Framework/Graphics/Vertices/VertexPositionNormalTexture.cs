@@ -99,14 +99,11 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public override string ToString()
 		{
-			return string.Format(
-				"{{Position:{0} Normal:{1} TextureCoordinate:{2}}}",
-				new object[]
-				{
-					Position,
-					Normal,
-					TextureCoordinate
-				}
+			return (
+				"{{Position:" + Position.ToString() +
+				" Normal:" + Normal.ToString() +
+				" TextureCoordinate:" + TextureCoordinate.ToString() +
+				"}}"
 			);
 		}
 

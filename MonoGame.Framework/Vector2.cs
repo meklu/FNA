@@ -164,14 +164,10 @@ namespace Microsoft.Xna.Framework
 
 		public override string ToString()
 		{
-			CultureInfo currentCulture = CultureInfo.CurrentCulture;
-			return string.Format(
-				currentCulture,
-				"{{X:{0} Y:{1}}}",
-				new object[] {
-					this.X.ToString(currentCulture),
-					this.Y.ToString(currentCulture)
-				}
+			return (
+				"{{X:" + X.ToString() +
+				" Y:" + Y.ToString() +
+				"}}"
 			);
 		}
 

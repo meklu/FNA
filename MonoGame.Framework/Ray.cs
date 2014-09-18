@@ -277,10 +277,10 @@ namespace Microsoft.Xna.Framework
 
 		public override string ToString()
 		{
-			return string.Format(
-				"{{Position:{0} Direction:{1}}}",
-				Position.ToString(),
-				Direction.ToString()
+			return (
+				"{{Position:" + Position.ToString() +
+				" Direction:" + Direction.ToString() +
+				"}}"
 			);
 		}
 

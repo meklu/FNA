@@ -104,15 +104,11 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public override string ToString()
 		{
-			return string.Format(
-				CultureInfo.CurrentCulture,
-				"{{Width:{0} Height:{1} Format:{2}}}",
-				new object[]
-				{
-					Width,
-					Height,
-					Format
-				}
+			return (
+				"{{Width:" + Width.ToString() +
+				" Height:" + Height.ToString() +
+				" Format:" + Format.ToString() +
+				"}}"
 			);
 		}
 
