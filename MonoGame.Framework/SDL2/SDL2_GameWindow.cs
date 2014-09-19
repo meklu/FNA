@@ -231,8 +231,8 @@ namespace Microsoft.Xna.Framework
 				Rectangle curBounds = ClientBounds;
 				SDL.SDL_SetWindowPosition(
 					INTERNAL_sdlWindow,
-					prevX + ((curBounds.Width - clientWidth) / 2),
-					prevY + ((curBounds.Height - clientHeight) / 2)
+					Math.Max(prevX + ((curBounds.Width - clientWidth) / 2), 0),
+					Math.Max(prevY + ((curBounds.Height - clientHeight) / 2), 0)
 				);
 			}
 
