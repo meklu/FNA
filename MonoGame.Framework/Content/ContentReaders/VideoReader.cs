@@ -40,9 +40,13 @@ namespace Microsoft.Xna.Framework.Content
 			ContentReader input,
 			Video existingInstance
 		) {
-			string path = input.ReadObject<string>();
-			path = FileHelpers.ResolveRelativePath(input.AssetName, path);
-			path = Path.Combine(input.ContentManager.RootDirectory, path);
+			string path = FileHelpers.ResolveRelativePath(
+				Path.Combine(
+					input.ContentManager.RootDirectoryFullPath,
+					input.AssetName
+				),
+				input.ReadObject<string>()
+			);
 
 			/* The path string includes the ".wmv" extension. Let's see if this
 			 * file exists in a format we actually support...
