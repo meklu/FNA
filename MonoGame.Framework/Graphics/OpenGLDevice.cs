@@ -428,23 +428,28 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Public Constructor
 
-		public OpenGLDevice()
-		{
+		public OpenGLDevice(
+			PresentationParameters presentationParameters
+		) {
 			// Create OpenGL context
-			glContext = SDL.SDL_GL_CreateContext(Game.Instance.Window.Handle);
+			glContext = SDL.SDL_GL_CreateContext(
+				presentationParameters.DeviceWindowHandle
+			);
 			OpenTK.Graphics.GraphicsContext.CurrentContext = glContext;
 
 #if THREADED_GL
 			// Create a background context
 			SDL.SDL_GL_SetAttribute(SDL.SDL_GLattr.SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
-			Threading.WindowInfo = Game.Instance.Window.Handle;
+			Threading.WindowInfo = presentationParameters.DeviceWindowHandle;
 			Threading.BackgroundContext = new Threading.GL_ContextHandle()
 			{
-				context = SDL.SDL_GL_CreateContext(Game.Instance.Window.Handle)
+				context = SDL.SDL_GL_CreateContext(
+					presentationParameters.DeviceWindowHandle
+				)
 			};
 
 			// Make the foreground context current.
-			SDL.SDL_GL_MakeCurrent(Game.Instance.Window.Handle, glContext);
+			SDL.SDL_GL_MakeCurrent(presentationParameters.DeviceWindowHandle, glContext);
 #endif
 
 			// Load OpenGL entry points

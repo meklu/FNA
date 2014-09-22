@@ -373,7 +373,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GraphicsProfile = graphicsProfile;
 
 			// Set up the OpenGL Device. Loads entry points.
-			GLDevice = new OpenGLDevice();
+			GLDevice = new OpenGLDevice(PresentationParameters);
 
 			// Force set the default render states.
 			BlendState = BlendState.Opaque;
