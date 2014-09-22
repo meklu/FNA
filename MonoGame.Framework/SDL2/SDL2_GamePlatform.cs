@@ -516,22 +516,6 @@ namespace Microsoft.Xna.Framework
 			if (device != null)
 			{
 				device.Present();
-			}
-
-			if (Window != null)
-			{
-				int windowWidth, windowHeight;
-				SDL.SDL_GetWindowSize(Window.Handle, out windowWidth, out windowHeight);
-				OpenGLDevice.Framebuffer.BlitToBackbuffer(
-					device,
-					device.GLDevice.Backbuffer.Width,
-					device.GLDevice.Backbuffer.Height,
-					windowWidth,
-					windowHeight
-				);
-				SDL.SDL_GL_SwapWindow(Window.Handle);
-				OpenGLDevice.Framebuffer.BindFramebuffer(device.GLDevice.Backbuffer.Handle);
-
 #if WIIU_GAMEPAD
 				if (wiiuStream != IntPtr.Zero)
 				{

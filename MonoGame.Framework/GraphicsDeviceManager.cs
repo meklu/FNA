@@ -197,6 +197,7 @@ namespace Microsoft.Xna.Framework
 			gdi.Adapter = GraphicsAdapter.DefaultAdapter;
 			gdi.GraphicsProfile = GraphicsProfile;
 			gdi.PresentationParameters = new PresentationParameters();
+			gdi.PresentationParameters.DeviceWindowHandle = game.Window.Handle;
 			gdi.PresentationParameters.DepthStencilFormat = DepthFormat.Depth24;
 			gdi.PresentationParameters.IsFullScreen = false;
 
@@ -262,8 +263,9 @@ namespace Microsoft.Xna.Framework
 			{
 				return;
 			}
-			
-			BeginDeviceReset();
+
+			// We're about to reset a device, notify the application.
+			OnDeviceResetting(null);
 
 			// Apply the GraphicsDevice changes internally.
 			GraphicsDevice.PresentationParameters.BackBufferFormat =
@@ -294,7 +296,14 @@ namespace Microsoft.Xna.Framework
 					PresentInterval.Immediate
 			);
 
-			EndDeviceReset();
+			// Reset!
+			GraphicsDevice.Reset();
+
+			// We just reset a device, notify the application.
+			OnDeviceReset(null);
+
+			// FIXME: When does this actually happen?
+			UpdateTouchPanel();
 		}
 
 		public void ToggleFullScreen()
@@ -323,12 +332,19 @@ namespace Microsoft.Xna.Framework
 			// Only reset if there's an actual change in size
 			if (pp.BackBufferWidth != width || pp.BackBufferHeight != height)
 			{
-				BeginDeviceReset();
+				// We're about to reset a device, notify the application.
+				OnDeviceResetting(null);
 
 				pp.BackBufferWidth = width;
 				pp.BackBufferHeight = height;
 
-				EndDeviceReset();
+				GraphicsDevice.Reset();
+
+				// We just reset a device, notify the application.
+				OnDeviceReset(null);
+
+				// FIXME: When does this actually happen?
+				UpdateTouchPanel();
 			}
 		}
 
@@ -336,51 +352,11 @@ namespace Microsoft.Xna.Framework
 
 		#region Private Methods
 
-		private void BeginDeviceReset()
+		private void UpdateTouchPanel()
 		{
-			// Notify DeviceResetting EventHandlers.
-			OnDeviceResetting(null);
-			GraphicsDevice.OnDeviceResetting();
-		}
-
-		private void EndDeviceReset()
-		{
-			/* Reset the backbuffer first, before doing anything else.
-			 * The GLDevice needs to know what we're up to right away.
-			 * -flibit
-			 */
-			GraphicsDevice.GLDevice.Backbuffer.ResetFramebuffer(
-				GraphicsDevice,
-				GraphicsDevice.PresentationParameters.BackBufferWidth,
-				GraphicsDevice.PresentationParameters.BackBufferHeight,
-				GraphicsDevice.PresentationParameters.DepthStencilFormat
-			);
-
-			// Now, update the viewport
-			GraphicsDevice.Viewport = new Viewport(
-				0,
-				0,
-				GraphicsDevice.PresentationParameters.BackBufferWidth,
-				GraphicsDevice.PresentationParameters.BackBufferHeight
-			);
-
-			// Update the scissor rectangle to our new default target size
-			GraphicsDevice.ScissorRectangle = new Rectangle(
-				0,
-				0,
-				GraphicsDevice.PresentationParameters.BackBufferWidth,
-				GraphicsDevice.PresentationParameters.BackBufferHeight
-			);
-
-			// Notify DeviceReset EventHandlers.
-			OnDeviceReset(null);
-			GraphicsDevice.OnDeviceReset();
-
-			/* Set the new display size on the touch panel.
-			 * 
-			 * TODO: In XNA this seems to be done as part of the
+			/* TODO: In XNA this seems to be done as part of the
 			 * GraphicsDevice.DeviceReset event... we need to get
-			 * those working.
+			 * those working. -MonoGame
 			 */
 			TouchPanel.DisplayWidth =
 				graphicsDevice.PresentationParameters.BackBufferWidth;

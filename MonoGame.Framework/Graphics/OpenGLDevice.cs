@@ -556,6 +556,31 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
+		#region Window SwapBuffers Method
+
+		public void SwapBuffers(GraphicsDevice device)
+		{
+			int windowWidth, windowHeight;
+			SDL.SDL_GetWindowSize(
+				device.PresentationParameters.DeviceWindowHandle,
+				out windowWidth,
+				out windowHeight
+			);
+			OpenGLDevice.Framebuffer.BlitToBackbuffer(
+				device,
+				Backbuffer.Width,
+				Backbuffer.Height,
+				windowWidth,
+				windowHeight
+			);
+			SDL.SDL_GL_SwapWindow(
+				device.PresentationParameters.DeviceWindowHandle
+			);
+			OpenGLDevice.Framebuffer.BindFramebuffer(Backbuffer.Handle);
+		}
+
+		#endregion
+
 		#region State Management Methods
 
 		public void SetViewport(Viewport vp, bool renderTargetBound)

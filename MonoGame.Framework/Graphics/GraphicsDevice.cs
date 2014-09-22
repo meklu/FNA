@@ -319,40 +319,17 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region GraphicsDevice Events
 
+#pragma warning disable 0067
+		// We never lose devices, but lol XNA4 compliance -flibit
 		public event EventHandler<EventArgs> DeviceLost;
+#pragma warning restore 0067
 		public event EventHandler<EventArgs> DeviceReset;
 		public event EventHandler<EventArgs> DeviceResetting;
 		public event EventHandler<ResourceCreatedEventArgs> ResourceCreated;
 		public event EventHandler<ResourceDestroyedEventArgs> ResourceDestroyed;
 		public event EventHandler<EventArgs> Disposing;
 
-		internal void OnDeviceLost()
-		{
-			if (DeviceLost != null)
-			{
-				DeviceLost(this, EventArgs.Empty);
-			}
-		}
-
-		internal void OnDeviceReset()
-		{
-			if (DeviceReset != null)
-			{
-				DeviceReset(this, EventArgs.Empty);
-			}
-		}
-
-		internal void OnDeviceResetting()
-		{
-			if (DeviceResetting != null)
-			{
-				DeviceResetting(this, EventArgs.Empty);
-			}
-
-			// FIXME: What, why, why -flibit
-			// GraphicsResource.DoGraphicsDeviceResetting();
-		}
-
+		// TODO: Hook this up to GraphicsResource
 		internal void OnResourceCreated()
 		{
 			if (ResourceCreated != null)
@@ -361,19 +338,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
+		// TODO: Hook this up to GraphicsResource
 		internal void OnResourceDestroyed()
 		{
 			if (ResourceDestroyed != null)
 			{
 				ResourceDestroyed(this, (ResourceDestroyedEventArgs) EventArgs.Empty);
-			}
-		}
-
-		internal void OnDisposing()
-		{
-			if (Disposing != null)
-			{
-				Disposing(this, EventArgs.Empty);
 			}
 		}
 
@@ -451,8 +421,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				if (disposing)
 				{
-					// Invoke the Disposing Event
-					OnDisposing();
+					// We're about to dispose, notify the application.
+					if (Disposing != null)
+					{
+						Disposing(this, EventArgs.Empty);
+					}
 
 					/* Dispose of all remaining graphics resources before
 					 * disposing of the GraphicsDevice.
@@ -501,6 +474,96 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
+		#region Public Present Method
+
+		public void Present()
+		{
+			// Dispose of any GL resources that were disposed in another thread
+			lock (disposeActionsLock)
+			{
+				if (disposeActions.Count > 0)
+				{
+					foreach (Action action in disposeActions)
+					{
+						action();
+					}
+					disposeActions.Clear();
+				}
+			}
+			GLDevice.SwapBuffers(this);
+		}
+
+		#endregion
+
+		#region Public Reset Methods
+
+		public void Reset()
+		{
+			Reset(PresentationParameters, Adapter);
+		}
+
+		public void Reset(PresentationParameters presentationParameters)
+		{
+			Reset(presentationParameters, Adapter);
+		}
+
+		public void Reset(
+			PresentationParameters presentationParameters,
+			GraphicsAdapter graphicsAdapter
+		) {
+			if (presentationParameters == null)
+			{
+				throw new ArgumentNullException("presentationParameters");
+			}
+
+			// We're about to reset, let the application know.
+			if (DeviceResetting != null)
+			{
+				DeviceResetting(this, EventArgs.Empty);
+			}
+
+			// Set the new PresentationParameters first.
+			PresentationParameters = presentationParameters;
+
+			/* Reset the backbuffer first, before doing anything else.
+			 * The GLDevice needs to know what we're up to right away.
+			 * -flibit
+			 */
+			GLDevice.Backbuffer.ResetFramebuffer(
+				this,
+				PresentationParameters.BackBufferWidth,
+				PresentationParameters.BackBufferHeight,
+				PresentationParameters.DepthStencilFormat
+			);
+
+			// Now, update the viewport
+			Viewport = new Viewport(
+				0,
+				0,
+				PresentationParameters.BackBufferWidth,
+				PresentationParameters.BackBufferHeight
+			);
+
+			// Update the scissor rectangle to our new default target size
+			ScissorRectangle = new Rectangle(
+				0,
+				0,
+				PresentationParameters.BackBufferWidth,
+				PresentationParameters.BackBufferHeight
+			);
+
+			// FIXME: This should probably mean something. -flibit
+			Adapter = graphicsAdapter;
+
+			// We just reset, let the application know.
+			if (DeviceReset != null)
+			{
+				DeviceReset(this, EventArgs.Empty);
+			}
+		}
+
+		#endregion
+
 		#region Public Clear Methods
 
 		public void Clear(Color color)
@@ -531,26 +594,6 @@ namespace Microsoft.Xna.Framework.Graphics
 				depth,
 				stencil
 			);
-		}
-
-		#endregion
-
-		#region Public Present Method
-
-		public void Present()
-		{
-			// Dispose of any GL resources that were disposed in another thread
-			lock (disposeActionsLock)
-			{
-				if (disposeActions.Count > 0)
-				{
-					foreach (Action action in disposeActions)
-					{
-						action();
-					}
-					disposeActions.Clear();
-				}
-			}
 		}
 
 		#endregion
