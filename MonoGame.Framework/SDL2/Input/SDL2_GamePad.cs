@@ -90,6 +90,10 @@ namespace Microsoft.Xna.Framework.Input
 		private static IntPtr[] INTERNAL_devices = new IntPtr[4];
 		private static bool[] INTERNAL_isGameController = new bool[4];
 		private static Dictionary<int, int> INTERNAL_instanceList = new Dictionary<int, int>();
+		private static string[] INTERNAL_guids = new string[]
+		{
+			String.Empty, String.Empty, String.Empty, String.Empty
+		};
 
 		// Haptic device information
 		private static IntPtr[] INTERNAL_haptics = new IntPtr[4];
@@ -155,7 +159,7 @@ namespace Microsoft.Xna.Framework.Input
 			// Clear the error buffer. We're about to do a LOT of dangerous stuff.
 			SDL.SDL_ClearError();
 
-			// We use this when dealing with Haptic initialization.
+			// We use this when dealing with Haptic/GUID initialization.
 			IntPtr thisJoystick;
 
 			// Initialize either a GameController or a Joystick.
@@ -244,6 +248,69 @@ namespace Microsoft.Xna.Framework.Input
 				}
 			}
 
+			// Store the GUID string for this device
+			StringBuilder result = new StringBuilder();
+			byte[] resChar = new byte[33]; // FIXME: Sort of arbitrary.
+			SDL.SDL_JoystickGetGUIDString(
+				SDL.SDL_JoystickGetGUID(thisJoystick),
+				resChar,
+				resChar.Length
+			);
+			if (Game.Instance.Platform.OSVersion.Equals("Linux"))
+			{
+				result.Append((char) resChar[8]);
+				result.Append((char) resChar[9]);
+				result.Append((char) resChar[10]);
+				result.Append((char) resChar[11]);
+				result.Append((char) resChar[16]);
+				result.Append((char) resChar[17]);
+				result.Append((char) resChar[18]);
+				result.Append((char) resChar[19]);
+			}
+			else if (Game.Instance.Platform.OSVersion.Equals("Mac OS X"))
+			{
+				result.Append((char) resChar[0]);
+				result.Append((char) resChar[1]);
+				result.Append((char) resChar[2]);
+				result.Append((char) resChar[3]);
+				result.Append((char) resChar[16]);
+				result.Append((char) resChar[17]);
+				result.Append((char) resChar[18]);
+				result.Append((char) resChar[19]);
+			}
+			else if (Game.Instance.Platform.OSVersion.Equals("Windows"))
+			{
+				bool isXInput = true;
+				foreach (byte b in resChar)
+				{
+					if (((char) b) != '0' && b != 0)
+					{
+						isXInput = false;
+						break;
+					}
+				}
+				if (isXInput)
+				{
+					result.Append("xinput");
+				}
+				else
+				{
+					result.Append((char) resChar[0]);
+					result.Append((char) resChar[1]);
+					result.Append((char) resChar[2]);
+					result.Append((char) resChar[3]);
+					result.Append((char) resChar[4]);
+					result.Append((char) resChar[5]);
+					result.Append((char) resChar[6]);
+					result.Append((char) resChar[7]);
+				}
+			}
+			else
+			{
+				throw new Exception("SDL2_GamePad: Platform.OSVersion not handled!");
+			}
+			INTERNAL_guids[which] = result.ToString();
+
 			// Check for an SDL_GameController configuration first!
 			if (INTERNAL_isGameController[which])
 			{
@@ -284,6 +351,7 @@ namespace Microsoft.Xna.Framework.Input
 			}
 			INTERNAL_devices[output] = IntPtr.Zero;
 			INTERNAL_states[output] = InitializedState;
+			INTERNAL_guids[output] = String.Empty;
 
 			// A lot of errors can happen here, but honestly, they can be ignored...
 			SDL.SDL_ClearError();
@@ -935,81 +1003,7 @@ namespace Microsoft.Xna.Framework.Input
 
 		public static string GetGUIDEXT(PlayerIndex playerIndex)
 		{
-			IntPtr device = INTERNAL_devices[(int) playerIndex];
-			if (device == IntPtr.Zero)
-			{
-				return String.Empty;
-			}
-
-			if (INTERNAL_isGameController[(int) playerIndex])
-			{
-				device = SDL.SDL_GameControllerGetJoystick(device);
-			}
-
-			StringBuilder result = new StringBuilder();
-			Threading.ForceToMainThread(() =>
-			{
-				byte[] resChar = new byte[33]; // FIXME: Sort of arbitrary.
-				SDL.SDL_JoystickGetGUIDString(
-					SDL.SDL_JoystickGetGUID(device),
-					resChar,
-					resChar.Length
-				);
-				if (Game.Instance.Platform.OSVersion.Equals("Linux"))
-				{
-					result.Append((char) resChar[8]);
-					result.Append((char) resChar[9]);
-					result.Append((char) resChar[10]);
-					result.Append((char) resChar[11]);
-					result.Append((char) resChar[16]);
-					result.Append((char) resChar[17]);
-					result.Append((char) resChar[18]);
-					result.Append((char) resChar[19]);
-				}
-				else if (Game.Instance.Platform.OSVersion.Equals("Mac OS X"))
-				{
-					result.Append((char) resChar[0]);
-					result.Append((char) resChar[1]);
-					result.Append((char) resChar[2]);
-					result.Append((char) resChar[3]);
-					result.Append((char) resChar[16]);
-					result.Append((char) resChar[17]);
-					result.Append((char) resChar[18]);
-					result.Append((char) resChar[19]);
-				}
-				else if (Game.Instance.Platform.OSVersion.Equals("Windows"))
-				{
-					bool isXInput = true;
-					foreach (byte b in resChar)
-					{
-						if (((char) b) != '0' && b != 0)
-						{
-							isXInput = false;
-							break;
-						}
-					}
-					if (isXInput)
-					{
-						result.Append("xinput");
-					}
-					else
-					{
-						result.Append((char) resChar[0]);
-						result.Append((char) resChar[1]);
-						result.Append((char) resChar[2]);
-						result.Append((char) resChar[3]);
-						result.Append((char) resChar[4]);
-						result.Append((char) resChar[5]);
-						result.Append((char) resChar[6]);
-						result.Append((char) resChar[7]);
-					}
-				}
-				else
-				{
-					throw new Exception("SDL2_GamePad: Platform.OSVersion not handled!");
-				}
-			});
-			return result.ToString();
+			return INTERNAL_guids[(int) playerIndex];
 		}
 
 		public static void SetLightBarEXT(PlayerIndex playerIndex, Color color)
