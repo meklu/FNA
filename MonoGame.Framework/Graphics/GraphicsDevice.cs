@@ -360,8 +360,11 @@ namespace Microsoft.Xna.Framework.Graphics
 		/// <exception cref="ArgumentNullException">
 		/// <paramref name="presentationParameters"/> is <see langword="null"/>.
 		/// </exception>
-		public GraphicsDevice(GraphicsAdapter adapter, GraphicsProfile graphicsProfile, PresentationParameters presentationParameters)
-		{
+		public GraphicsDevice(
+			GraphicsAdapter adapter,
+			GraphicsProfile graphicsProfile,
+			PresentationParameters presentationParameters
+		) {
 			if (presentationParameters == null)
 			{
 				throw new ArgumentNullException("presentationParameters");
