@@ -519,15 +519,7 @@ namespace Microsoft.Xna.Framework
 #if WIIU_GAMEPAD
 				if (wiiuStream != IntPtr.Zero)
 				{
-					OpenTK.Graphics.OpenGL.GL.ReadPixels(
-						0,
-						0,
-						device.GLDevice.Backbuffer.Width,
-						device.GLDevice.Backbuffer.Height,
-						OpenTK.Graphics.OpenGL.PixelFormat.Rgba,
-						OpenTK.Graphics.OpenGL.PixelType.UnsignedByte,
-						wiiuPixelData
-					);
+					device.GetBackBufferData(wiiuPixelData);
 					DRC.drc_push_vid_frame(
 						wiiuStream,
 						wiiuPixelData,
@@ -535,7 +527,7 @@ namespace Microsoft.Xna.Framework
 						(ushort) device.GLDevice.Backbuffer.Width,
 						(ushort) device.GLDevice.Backbuffer.Height,
 						DRC.drc_pixel_format.DRC_RGBA,
-						DRC.drc_flipping_mode.DRC_FLIP_VERTICALLY
+						DRC.drc_flipping_mode.DRC_NO_FLIP
 					);
 				}
 #endif
