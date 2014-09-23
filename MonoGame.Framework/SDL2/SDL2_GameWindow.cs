@@ -59,7 +59,37 @@ namespace Microsoft.Xna.Framework
 		{
 			get
 			{
-				return INTERNAL_clientBounds;
+				Rectangle result;
+				if (INTERNAL_isFullscreen)
+				{
+					/* FIXME: SDL2 bug!
+					 * SDL's a little weird about SDL_GetWindowSize.
+					 * If you call it early enough (for example,
+					 * Game.Initialize()), it reports outdated ints.
+					 * So you know what, let's just use this.
+					 * -flibit
+					 */
+					SDL.SDL_DisplayMode mode;
+					SDL.SDL_GetCurrentDisplayMode(0, out mode);
+					result.X = 0;
+					result.Y = 0;
+					result.Width = mode.w;
+					result.Height = mode.h;
+				}
+				else
+				{
+					SDL.SDL_GetWindowPosition(
+						INTERNAL_sdlWindow,
+						out result.X,
+						out result.Y
+					);
+					SDL.SDL_GetWindowSize(
+						INTERNAL_sdlWindow,
+						out result.Width,
+						out result.Height
+					);
+				}
+				return result;
 			}
 		}
 
@@ -114,8 +144,6 @@ namespace Microsoft.Xna.Framework
 
 		private string INTERNAL_deviceName;
 
-		private Rectangle INTERNAL_clientBounds;
-
 		#endregion
 
 		#region Internal Constructor
@@ -159,18 +187,6 @@ namespace Microsoft.Xna.Framework
 				initFlags
 			);
 			INTERNAL_SetIcon(title);
-
-			// Initialize the internal client bounds rectangle
-			SDL.SDL_GetWindowPosition(
-				INTERNAL_sdlWindow,
-				out INTERNAL_clientBounds.X,
-				out INTERNAL_clientBounds.Y
-			);
-			SDL.SDL_GetWindowSize(
-				INTERNAL_sdlWindow,
-				out INTERNAL_clientBounds.Width,
-				out INTERNAL_clientBounds.Height
-			);
 
 			INTERNAL_isFullscreen = false;
 			INTERNAL_wantsFullscreen = false;
@@ -236,37 +252,6 @@ namespace Microsoft.Xna.Framework
 				);
 			}
 
-			// Update the internal client bounds rectangle
-			if (INTERNAL_wantsFullscreen)
-			{
-				/* FIXME: SDL2 bug!
-				 * SDL's a little weird about SDL_GetWindowSize.
-				 * If you call it early enough (for example,
-				 * Game.Initialize()), it reports outdated ints.
-				 * So you know what, let's just use this.
-				 * -flibit
-				 */
-				SDL.SDL_DisplayMode mode;
-				SDL.SDL_GetCurrentDisplayMode(0, out mode);
-				INTERNAL_clientBounds.X = 0;
-				INTERNAL_clientBounds.Y = 0;
-				INTERNAL_clientBounds.Width = mode.w;
-				INTERNAL_clientBounds.Height = mode.h;
-			}
-			else
-			{
-				SDL.SDL_GetWindowPosition(
-					INTERNAL_sdlWindow,
-					out INTERNAL_clientBounds.X,
-					out INTERNAL_clientBounds.Y
-				);
-				SDL.SDL_GetWindowSize(
-					INTERNAL_sdlWindow,
-					out INTERNAL_clientBounds.Width,
-					out INTERNAL_clientBounds.Height
-				);
-			}
-
 			// Current window state has just been updated.
 			INTERNAL_isFullscreen = INTERNAL_wantsFullscreen;
 		}
@@ -277,25 +262,7 @@ namespace Microsoft.Xna.Framework
 
 		internal void INTERNAL_ClientSizeChanged()
 		{
-			// Update our client bounds rectangle before invoking the event
-			SDL.SDL_GetWindowPosition(
-				INTERNAL_sdlWindow,
-				out INTERNAL_clientBounds.X,
-				out INTERNAL_clientBounds.Y
-			);
-			SDL.SDL_GetWindowSize(
-				INTERNAL_sdlWindow,
-				out INTERNAL_clientBounds.Width,
-				out INTERNAL_clientBounds.Height
-			);
-
 			OnClientSizeChanged();
-		}
-
-		internal void INTERNAL_ClientMoved(int x, int y)
-		{
-			INTERNAL_clientBounds.X = x;
-			INTERNAL_clientBounds.Y = y;
 		}
 
 		#endregion

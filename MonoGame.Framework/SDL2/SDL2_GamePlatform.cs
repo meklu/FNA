@@ -384,15 +384,6 @@ namespace Microsoft.Xna.Framework
 							}
 						}
 
-						// Window Move
-						else if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_MOVED)
-						{
-							((SDL2_GameWindow) Window).INTERNAL_ClientMoved(
-								evt.window.data1,
-								evt.window.data2
-							);
-						}
-
 						// Mouse Focus
 						else if (evt.window.windowEvent == SDL.SDL_WindowEventID.SDL_WINDOWEVENT_ENTER)
 						{
