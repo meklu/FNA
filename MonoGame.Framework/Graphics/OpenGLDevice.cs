@@ -563,25 +563,43 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Window SwapBuffers Method
 
-		public void SwapBuffers(GraphicsDevice device)
+		public void SwapBuffers(IntPtr overrideWindowHandle)
 		{
+#if !DISABLE_FAUXBACKBUFFER
 			int windowWidth, windowHeight;
 			SDL.SDL_GetWindowSize(
-				device.PresentationParameters.DeviceWindowHandle,
+				overrideWindowHandle,
 				out windowWidth,
 				out windowHeight
 			);
-			OpenGLDevice.Framebuffer.BlitToBackbuffer(
-				device,
+
+			if (scissorTestEnable)
+			{
+				GL.Disable(EnableCap.ScissorTest);
+			}
+
+			Framebuffer.BindReadFramebuffer(Backbuffer.Handle);
+			Framebuffer.BindDrawFramebuffer(0);
+
+			Framebuffer.BlitFramebuffer(
 				Backbuffer.Width,
 				Backbuffer.Height,
 				windowWidth,
 				windowHeight
 			);
+
+			Framebuffer.BindFramebuffer(0);
+
+			if (scissorTestEnable)
+			{
+				GL.Enable(EnableCap.ScissorTest);
+			}
+#endif
+
 			SDL.SDL_GL_SwapWindow(
-				device.PresentationParameters.DeviceWindowHandle
+				overrideWindowHandle
 			);
-			OpenGLDevice.Framebuffer.BindFramebuffer(Backbuffer.Handle);
+			Framebuffer.BindFramebuffer(Backbuffer.Handle);
 		}
 
 		#endregion
@@ -2090,23 +2108,12 @@ namespace Microsoft.Xna.Framework.Graphics
 				}
 			}
 
-			public static void BlitToBackbuffer(
-				GraphicsDevice graphicsDevice,
+			public static void BlitFramebuffer(
 				int srcWidth,
 				int srcHeight,
 				int dstWidth,
 				int dstHeight
 			) {
-#if !DISABLE_FAUXBACKBUFFER
-				bool scissorTest = graphicsDevice.GLDevice.scissorTestEnable;
-				if (scissorTest)
-				{
-					GL.Disable(EnableCap.ScissorTest);
-				}
-
-				BindReadFramebuffer(graphicsDevice.GLDevice.Backbuffer.Handle);
-				BindDrawFramebuffer(0);
-
 				if (hasARB)
 				{
 					GL.BlitFramebuffer(
@@ -2125,14 +2132,6 @@ namespace Microsoft.Xna.Framework.Graphics
 						BlitFramebufferFilter.Linear
 					);
 				}
-
-				BindFramebuffer(0);
-
-				if (scissorTest)
-				{
-					GL.Enable(EnableCap.ScissorTest);
-				}
-#endif
 			}
 		}
 

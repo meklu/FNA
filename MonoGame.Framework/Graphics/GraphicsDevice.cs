@@ -493,7 +493,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					disposeActions.Clear();
 				}
 			}
-			GLDevice.SwapBuffers(this);
+			GLDevice.SwapBuffers(PresentationParameters.DeviceWindowHandle);
 		}
 
 		#endregion
