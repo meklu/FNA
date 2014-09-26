@@ -217,37 +217,6 @@ namespace Microsoft.Xna.Framework.Input
 				}
 			}
 
-			// Initialize light bar
-			if (	Game.Instance.Platform.OSVersion.Equals("Linux") &&
-				GetGUIDEXT((PlayerIndex) which).Equals("4c05c405")	)
-			{
-				// Get all of the individual PS4 LED instances
-				List<string> ledList = new List<string>();
-				string[] dirs = Directory.GetDirectories("/sys/class/leds/");
-				foreach (string dir in dirs)
-				{
-					if (	dir.Contains("054C:05C4") &&
-						dir.EndsWith("blue")	)
-					{
-						ledList.Add(dir.Substring(0, dir.LastIndexOf(':') + 1));
-					}
-				}
-				// Find how many of these are already in use
-				int numLights = 0;
-				for (int i = 0; i < INTERNAL_lightBars.Length; i += 1)
-				{
-					if (!String.IsNullOrEmpty(INTERNAL_lightBars[i]))
-					{
-						numLights += 1;
-					}
-				}
-				// If all are not already in use, use the first unused light
-				if (numLights < ledList.Count)
-				{
-					INTERNAL_lightBars[which] = ledList[numLights];
-				}
-			}
-
 			// Store the GUID string for this device
 			StringBuilder result = new StringBuilder();
 			byte[] resChar = new byte[33]; // FIXME: Sort of arbitrary.
@@ -310,6 +279,37 @@ namespace Microsoft.Xna.Framework.Input
 				throw new Exception("SDL2_GamePad: Platform.OSVersion not handled!");
 			}
 			INTERNAL_guids[which] = result.ToString();
+
+			// Initialize light bar
+			if (	Game.Instance.Platform.OSVersion.Equals("Linux") &&
+				INTERNAL_guids[which].Equals("4c05c405")	)
+			{
+				// Get all of the individual PS4 LED instances
+				List<string> ledList = new List<string>();
+				string[] dirs = Directory.GetDirectories("/sys/class/leds/");
+				foreach (string dir in dirs)
+				{
+					if (	dir.Contains("054C:05C4") &&
+						dir.EndsWith("blue")	)
+					{
+						ledList.Add(dir.Substring(0, dir.LastIndexOf(':') + 1));
+					}
+				}
+				// Find how many of these are already in use
+				int numLights = 0;
+				for (int i = 0; i < INTERNAL_lightBars.Length; i += 1)
+				{
+					if (!String.IsNullOrEmpty(INTERNAL_lightBars[i]))
+					{
+						numLights += 1;
+					}
+				}
+				// If all are not already in use, use the first unused light
+				if (numLights < ledList.Count)
+				{
+					INTERNAL_lightBars[which] = ledList[numLights];
+				}
+			}
 
 			// Check for an SDL_GameController configuration first!
 			if (INTERNAL_isGameController[which])
