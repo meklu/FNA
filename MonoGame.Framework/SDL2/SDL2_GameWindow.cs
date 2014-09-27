@@ -222,11 +222,10 @@ namespace Microsoft.Xna.Framework
 			 * centered when resizing in windowed mode.
 			 * -Nick
 			 */
-			int prevX = 0;
-			int prevY = 0;
+			Rectangle prevBounds = Rectangle.Empty;
 			if (!INTERNAL_wantsFullscreen)
 			{
-				SDL.SDL_GetWindowPosition(INTERNAL_sdlWindow, out prevX, out prevY);
+				prevBounds = ClientBounds;
 			}
 
 			// Window bounds
@@ -244,11 +243,16 @@ namespace Microsoft.Xna.Framework
 			}
 			else if (!INTERNAL_wantsFullscreen)
 			{
-				Rectangle curBounds = ClientBounds;
 				SDL.SDL_SetWindowPosition(
 					INTERNAL_sdlWindow,
-					Math.Max(prevX + ((curBounds.Width - clientWidth) / 2), 0),
-					Math.Max(prevY + ((curBounds.Height - clientHeight) / 2), 0)
+					Math.Max(
+						prevBounds.X + ((prevBounds.Width - clientWidth) / 2),
+						0
+					),
+					Math.Max(
+						prevBounds.Y + ((prevBounds.Height - clientHeight) / 2),
+						0
+					)
 				);
 			}
 
