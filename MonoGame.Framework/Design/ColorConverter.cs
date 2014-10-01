@@ -14,7 +14,7 @@ using System.ComponentModel;
 
 namespace Microsoft.Xna.Framework.Design
 {
-	public class ColorTypeConverter : TypeConverter
+	public class ColorConverter : TypeConverter
 	{
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 		{

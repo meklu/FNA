@@ -15,7 +15,7 @@ using System.Globalization;
 
 namespace Microsoft.Xna.Framework.Design
 {
-	public class Vector2TypeConverter : TypeConverter
+	public class Vector2Converter : TypeConverter
 	{
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 		{

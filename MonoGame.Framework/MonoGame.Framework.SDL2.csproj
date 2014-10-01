@@ -345,11 +345,11 @@
     <Compile Include="Media\AlbumCollection.cs" />
     <Compile Include="Media\Artist.cs" />
     <Compile Include="Media\Genre.cs" />
-    <Compile Include="Design\ColorTypeConverter.cs" />
-    <Compile Include="Design\PointTypeConverter.cs" />
-    <Compile Include="Design\Vector2TypeConverter.cs" />
-    <Compile Include="Design\Vector3TypeConverter.cs" />
-    <Compile Include="Design\Vector4TypeConverter.cs" />
+    <Compile Include="Design\ColorConverter.cs" />
+    <Compile Include="Design\PointConverter.cs" />
+    <Compile Include="Design\Vector2Converter.cs" />
+    <Compile Include="Design\Vector3Converter.cs" />
+    <Compile Include="Design\Vector4Converter.cs" />
     <Compile Include="Design\VectorConversion.cs" />
     <Compile Include="NamespaceDocs.cs" />
   </ItemGroup>
