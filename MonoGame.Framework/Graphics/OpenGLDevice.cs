@@ -242,7 +242,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		#region Alpha Blending State Variables
 
 		internal bool alphaBlendEnable = false;
-		private Color blendColor = Color.TransparentBlack;
+		private Color blendColor = Color.Transparent;
 		private BlendFunction blendOp = BlendFunction.Add;
 		private BlendFunction blendOpAlpha = BlendFunction.Add;
 		private Blend srcBlend = Blend.One;
