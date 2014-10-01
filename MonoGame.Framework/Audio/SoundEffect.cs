@@ -438,5 +438,33 @@ namespace Microsoft.Xna.Framework.Audio
 		}
 
 		#endregion
+
+		#region Public Static Methods
+
+		public static TimeSpan GetSampleDuration(
+			int sizeInBytes,
+			int sampleRate,
+			AudioChannels channels
+		) {
+			int ms = (int) (
+				(sizeInBytes / (int) channels) /
+				(sampleRate / 1000.0f)
+			);
+			return new TimeSpan(0, 0, 0, 0, ms);
+		}
+
+		public static int GetSampleSizeInBytes(
+			TimeSpan duration,
+			int sampleRate,
+			AudioChannels channels
+		) {
+			return (int) (
+				duration.TotalSeconds *
+				sampleRate *
+				(int) channels
+			);
+		}
+
+		#endregion
 	}
 }

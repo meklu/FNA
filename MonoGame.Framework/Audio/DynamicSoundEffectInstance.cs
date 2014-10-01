@@ -126,13 +126,20 @@ namespace Microsoft.Xna.Framework.Audio
 
 		public TimeSpan GetSampleDuration(int sizeInBytes)
 		{
-			int ms = (int) (sizeInBytes / (sampleRate / 1000.0f));
-			return new TimeSpan(0, 0, 0, 0, ms);
+			return SoundEffect.GetSampleDuration(
+				sizeInBytes,
+				sampleRate,
+				channels
+			);
 		}
 
 		public int GetSampleSizeInBytes(TimeSpan duration)
 		{
-			return (int) (duration.TotalSeconds * sampleRate);
+			return SoundEffect.GetSampleSizeInBytes(
+				duration,
+				sampleRate,
+				channels
+			);
 		}
 
 		#endregion
