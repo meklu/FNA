@@ -676,7 +676,7 @@ namespace Microsoft.Xna.Framework.Media
 			// Set up the vertex pointers/arrays.
 			currentDevice.GLDevice.AttributeEnabled[0] = true;
 			currentDevice.GLDevice.AttributeEnabled[1] = true;
-			for (int i = 2; i < currentDevice.GLDevice.MaxVertexAttributes; i += 1)
+			for (int i = 2; i < currentDevice.GLDevice.AttributeEnabled.Length; i += 1)
 			{
 				currentDevice.GLDevice.AttributeEnabled[i] = false;
 			}

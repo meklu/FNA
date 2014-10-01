@@ -418,12 +418,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			private set;
 		}
 
-		public int MaxVertexAttributes
-		{
-			get;
-			private set;
-		}
-
 		#endregion
 
 		#region Public Constructor
@@ -521,7 +515,6 @@ namespace Microsoft.Xna.Framework.Graphics
 				previousAttributeEnabled[i] = false;
 				previousAttributeDivisor[i] = 0;
 			}
-			MaxVertexAttributes = numAttributes;
 
 			// Initialize render target FBO and state arrays
 			int numAttachments;

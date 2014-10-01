@@ -233,13 +233,16 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Private RenderTarget Variables
 
+		// 4, per XNA4 HiDef spec
 		private readonly RenderTargetBinding[] renderTargetBindings = new RenderTargetBinding[4];
 
 		#endregion
 
 		#region Private Buffer Object Variables
 
-		private VertexBufferBinding[] vertexBufferBindings;
+		// 16, per XNA4 HiDef spec
+		private VertexBufferBinding[] vertexBufferBindings = new VertexBufferBinding[16];
+		private int vertexBufferCount = 0;
 
 		#endregion
 
@@ -379,9 +382,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Clear constant buffers
 			vertexConstantBuffers.Clear();
 			pixelConstantBuffers.Clear();
-
-			// Force set the buffers and shaders on next ApplyState() call
-			vertexBufferBindings = new VertexBufferBinding[GLDevice.MaxVertexAttributes];
 
 			// First draw will need to set the shaders.
 			vertexShaderDirty = true;
@@ -752,7 +752,14 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public void SetVertexBuffer(VertexBuffer vertexBuffer, int vertexOffset)
 		{
-			if (!ReferenceEquals(vertexBufferBindings[0].VertexBuffer, vertexBuffer))
+			if (vertexBuffer == null)
+			{
+				vertexBufferCount = 0;
+				return;
+			}
+
+			if (	!ReferenceEquals(vertexBufferBindings[0].VertexBuffer, vertexBuffer) ||
+				vertexBufferBindings[0].VertexOffset != vertexOffset	)
 			{
 				vertexBufferBindings[0] = new VertexBufferBinding(
 					vertexBuffer,
@@ -760,45 +767,62 @@ namespace Microsoft.Xna.Framework.Graphics
 				);
 			}
 
-			for (int vertexStreamSlot = 1; vertexStreamSlot < vertexBufferBindings.Length; vertexStreamSlot += 1)
+			for (int i = 1; i < vertexBufferCount; i += 1)
 			{
-				if (vertexBufferBindings[vertexStreamSlot].VertexBuffer != null)
-				{
-					vertexBufferBindings[vertexStreamSlot] = VertexBufferBinding.None;
-				}
+				vertexBufferBindings[i] = VertexBufferBinding.None;
 			}
+
+			vertexBufferCount = 1;
 		}
 
 		public void SetVertexBuffers(params VertexBufferBinding[] vertexBuffers)
 		{
-			if ((vertexBuffers != null) && (vertexBuffers.Length > vertexBufferBindings.Length))
+			if (vertexBuffers == null)
 			{
-				throw new ArgumentOutOfRangeException("vertexBuffers", String.Format("Max Vertex Buffers supported is {0}", vertexBufferBindings.Length));
+				vertexBufferCount = 0;
+				return;
 			}
 
-			// Set vertex buffers if they are different
-			int slot = 0;
-			if (vertexBuffers != null)
+			if (vertexBuffers.Length > vertexBufferBindings.Length)
 			{
-				for (; slot < vertexBuffers.Length; slot += 1)
-				{
-					if (!ReferenceEquals(vertexBufferBindings[slot].VertexBuffer, vertexBuffers[slot].VertexBuffer)
-						|| (vertexBufferBindings[slot].VertexOffset != vertexBuffers[slot].VertexOffset)
-						|| (vertexBufferBindings[slot].InstanceFrequency != vertexBuffers[slot].InstanceFrequency))
-					{
-						vertexBufferBindings[slot] = vertexBuffers[slot];
-					}
-				}
+				throw new ArgumentOutOfRangeException(
+					"vertexBuffers",
+					String.Format(
+						"Max Vertex Buffers supported is {0}",
+						vertexBufferBindings.Length
+					)
+				);
 			}
 
-			// Unset any unused vertex buffers
-			for (; slot < vertexBufferBindings.Length; slot += 1)
+			int i = 0;
+			while (i < vertexBuffers.Length)
 			{
-				if (vertexBufferBindings[slot].VertexBuffer != null)
+				if (	!ReferenceEquals(vertexBufferBindings[i].VertexBuffer, vertexBuffers[i].VertexBuffer) ||
+					vertexBufferBindings[i].VertexOffset != vertexBuffers[i].VertexOffset ||
+					vertexBufferBindings[i].InstanceFrequency != vertexBuffers[i].InstanceFrequency	)
 				{
-					vertexBufferBindings[slot] = new VertexBufferBinding(null);
+					vertexBufferBindings[i] = vertexBuffers[i];
 				}
+				i += 1;
 			}
+			while (i < vertexBufferCount)
+			{
+				vertexBufferBindings[i] = VertexBufferBinding.None;
+				i += 1;
+			}
+
+			vertexBufferCount = vertexBuffers.Length;
+		}
+
+		public VertexBufferBinding[] GetVertexBuffers()
+		{
+			VertexBufferBinding[] result = new VertexBufferBinding[vertexBufferCount];
+			Array.Copy(
+				vertexBufferBindings,
+				result,
+				vertexBufferCount
+			);
+			return result;
 		}
 
 		#endregion
@@ -840,16 +864,18 @@ namespace Microsoft.Xna.Framework.Graphics
 			bool shortIndices = Indices.IndexElementSize == IndexElementSize.SixteenBits;
 
 			// Set up the vertex buffers.
-			foreach (VertexBufferBinding vertBuffer in vertexBufferBindings)
+			for (int i = 0; i < vertexBufferCount; i += 1)
 			{
-				if (vertBuffer.VertexBuffer != null)
-				{
-					GLDevice.BindVertexBuffer(vertBuffer.VertexBuffer.Handle);
-					vertBuffer.VertexBuffer.VertexDeclaration.Apply(
-						VertexShader,
-						(IntPtr) (vertBuffer.VertexBuffer.VertexDeclaration.VertexStride * (vertBuffer.VertexOffset + baseVertex))
-					);
-				}
+				GLDevice.BindVertexBuffer(
+					vertexBufferBindings[i].VertexBuffer.Handle
+				);
+				vertexBufferBindings[i].VertexBuffer.VertexDeclaration.Apply(
+					VertexShader,
+					(IntPtr) (
+						vertexBufferBindings[i].VertexBuffer.VertexDeclaration.VertexStride *
+						(vertexBufferBindings[i].VertexOffset + baseVertex)
+					)
+				);
 			}
 
 			// Enable the appropriate vertex attributes.
@@ -892,18 +918,20 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Unsigned short or unsigned int?
 			bool shortIndices = Indices.IndexElementSize == IndexElementSize.SixteenBits;
 
-			// Set up the vertex buffers
-			foreach (VertexBufferBinding vertBuffer in vertexBufferBindings)
+			// Set up the vertex buffers.
+			for (int i = 0; i < vertexBufferCount; i += 1)
 			{
-				if (vertBuffer.VertexBuffer != null)
-				{
-					GLDevice.BindVertexBuffer(vertBuffer.VertexBuffer.Handle);
-					vertBuffer.VertexBuffer.VertexDeclaration.Apply(
-						VertexShader,
-						(IntPtr) (vertBuffer.VertexBuffer.VertexDeclaration.VertexStride * (vertBuffer.VertexOffset + baseVertex)),
-						vertBuffer.InstanceFrequency
-					);
-				}
+				GLDevice.BindVertexBuffer(
+					vertexBufferBindings[i].VertexBuffer.Handle
+				);
+				vertexBufferBindings[i].VertexBuffer.VertexDeclaration.Apply(
+					VertexShader,
+					(IntPtr) (
+						vertexBufferBindings[i].VertexBuffer.VertexDeclaration.VertexStride *
+						(vertexBufferBindings[i].VertexOffset + baseVertex)
+					),
+					vertexBufferBindings[i].InstanceFrequency
+				);
 			}
 
 			// Enable the appropriate vertex attributes.
@@ -932,16 +960,18 @@ namespace Microsoft.Xna.Framework.Graphics
 			ApplyState();
 
 			// Set up the vertex buffers.
-			foreach (VertexBufferBinding vertBuffer in vertexBufferBindings)
+			for (int i = 0; i < vertexBufferCount; i += 1)
 			{
-				if (vertBuffer.VertexBuffer != null)
-				{
-					GLDevice.BindVertexBuffer(vertBuffer.VertexBuffer.Handle);
-					vertBuffer.VertexBuffer.VertexDeclaration.Apply(
-						VertexShader,
-						(IntPtr) (vertBuffer.VertexBuffer.VertexDeclaration.VertexStride * vertBuffer.VertexOffset)
-					);
-				}
+				GLDevice.BindVertexBuffer(
+					vertexBufferBindings[i].VertexBuffer.Handle
+				);
+				vertexBufferBindings[i].VertexBuffer.VertexDeclaration.Apply(
+					VertexShader,
+					(IntPtr) (
+						vertexBufferBindings[i].VertexBuffer.VertexDeclaration.VertexStride *
+						vertexBufferBindings[i].VertexOffset
+					)
+				);
 			}
 
 			// Enable the appropriate vertex attributes.

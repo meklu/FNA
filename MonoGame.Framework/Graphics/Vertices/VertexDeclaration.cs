@@ -76,7 +76,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (!shaderAttributeInfo.TryGetValue(shaderHash, out attrInfo))
 			{
 				// Get the vertex attribute info and cache it
-				attrInfo = new List<Element>(GraphicsDevice.GLDevice.MaxVertexAttributes);
+				attrInfo = new List<Element>(16); // 16, per XNA4 HiDef spec
 
 				foreach (VertexElement ve in elements)
 				{
