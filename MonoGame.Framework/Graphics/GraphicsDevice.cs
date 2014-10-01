@@ -754,6 +754,10 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (vertexBuffer == null)
 			{
+				for (int i = 0; i < vertexBufferCount; i += 1)
+				{
+					vertexBufferBindings[i] = VertexBufferBinding.None;
+				}
 				vertexBufferCount = 0;
 				return;
 			}
@@ -779,6 +783,10 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (vertexBuffers == null)
 			{
+				for (int j = 0; j < vertexBufferCount; j += 1)
+				{
+					vertexBufferBindings[j] = VertexBufferBinding.None;
+				}
 				vertexBufferCount = 0;
 				return;
 			}
