@@ -754,7 +754,10 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (!ReferenceEquals(vertexBufferBindings[0].VertexBuffer, vertexBuffer))
 			{
-				vertexBufferBindings[0] = new VertexBufferBinding(vertexBuffer);
+				vertexBufferBindings[0] = new VertexBufferBinding(
+					vertexBuffer,
+					vertexOffset
+				);
 			}
 
 			for (int vertexStreamSlot = 1; vertexStreamSlot < vertexBufferBindings.Length; vertexStreamSlot += 1)
