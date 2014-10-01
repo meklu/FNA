@@ -107,11 +107,11 @@ namespace Microsoft.Xna.Framework.Graphics
 		#region Public SetData Methods
 
 		public void SetData<T>(
-			CubeMapFace face,
+			CubeMapFace cubeMapFace,
 			T[] data
 		) where T : struct {
 			SetData(
-				face,
+				cubeMapFace,
 				0,
 				null,
 				data,
@@ -121,13 +121,13 @@ namespace Microsoft.Xna.Framework.Graphics
 		}
 
 		public void SetData<T>(
-			CubeMapFace face,
+			CubeMapFace cubeMapFace,
 			T[] data,
 			int startIndex,
 			int elementCount
 		) where T : struct {
 			SetData(
-				face,
+				cubeMapFace,
 				0,
 				null,
 				data,
@@ -137,7 +137,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		}
 
 		public void SetData<T>(
-			CubeMapFace face,
+			CubeMapFace cubeMapFace,
 			int level,
 			Rectangle? rect,
 			T[] data,
@@ -194,7 +194,7 @@ namespace Microsoft.Xna.Framework.Graphics
 						 * -flibit
 						 */
 						GL.CompressedTexSubImage2D(
-							GetGLCubeFace(face),
+							GetGLCubeFace(cubeMapFace),
 							level,
 							xOffset,
 							yOffset,
@@ -208,7 +208,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					else
 					{
 						GL.TexSubImage2D(
-							GetGLCubeFace(face),
+							GetGLCubeFace(cubeMapFace),
 							level,
 							xOffset,
 							yOffset,
