@@ -72,7 +72,7 @@ namespace Microsoft.Xna.Framework
 			{
 				if (_window == null)
 				{
-					Mouse.PrimaryWindow = value;
+					Mouse.WindowHandle = value.Handle;
 					TouchPanel.PrimaryWindow = value;
 				}
 

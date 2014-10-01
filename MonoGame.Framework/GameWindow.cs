@@ -86,7 +86,6 @@ namespace Microsoft.Xna.Framework
 
 		#region Internal Variables
 
-		internal MouseState MouseState;
 		internal TouchPanelState TouchPanelState;
 
 		#endregion

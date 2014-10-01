@@ -24,17 +24,13 @@ namespace Microsoft.Xna.Framework.Input
 
 		public static IntPtr WindowHandle
 		{
-			get
-			{
-				return PrimaryWindow.Handle;
-			}
+			get;
+			set;
 		}
 
 		#endregion
 
 		#region Internal Variables
-
-		internal static GameWindow PrimaryWindow;
 
 		internal static int INTERNAL_WindowWidth = 800;
 		internal static int INTERNAL_WindowHeight = 600;
@@ -45,6 +41,12 @@ namespace Microsoft.Xna.Framework.Input
 
 		#endregion
 
+		#region Private Variables
+
+		private static MouseState state;
+
+		#endregion
+
 		#region Public Interface
 
 		/// <summary>
@@ -52,7 +54,7 @@ namespace Microsoft.Xna.Framework.Input
 		/// presses for the provided window
 		/// </summary>
 		/// <returns>Current state of the mouse.</returns>
-		public static MouseState GetState(GameWindow window)
+		public static MouseState GetState()
 		{
 			int x, y;
 			uint flags = SDL.SDL_GetMouseState(out x, out y);
@@ -64,29 +66,19 @@ namespace Microsoft.Xna.Framework.Input
 			if (!INTERNAL_IsWarped)
 			{
 				// If we warped the mouse, we've already done this.
-				window.MouseState.X = x;
-				window.MouseState.Y = y;
+				state.X = x;
+				state.Y = y;
 			}
 
-			window.MouseState.LeftButton =		(ButtonState) (flags & SDL.SDL_BUTTON_LMASK);
-			window.MouseState.MiddleButton =	(ButtonState) ((flags & SDL.SDL_BUTTON_MMASK) >> 1);
-			window.MouseState.RightButton =		(ButtonState) ((flags & SDL.SDL_BUTTON_RMASK) >> 2);
-			window.MouseState.XButton1 =		(ButtonState) ((flags & SDL.SDL_BUTTON_X1MASK) >> 3);
-			window.MouseState.XButton2 =		(ButtonState) ((flags & SDL.SDL_BUTTON_X2MASK) >> 4);
+			state.LeftButton =	(ButtonState) (flags & SDL.SDL_BUTTON_LMASK);
+			state.MiddleButton =	(ButtonState) ((flags & SDL.SDL_BUTTON_MMASK) >> 1);
+			state.RightButton =	(ButtonState) ((flags & SDL.SDL_BUTTON_RMASK) >> 2);
+			state.XButton1 =	(ButtonState) ((flags & SDL.SDL_BUTTON_X1MASK) >> 3);
+			state.XButton2 =	(ButtonState) ((flags & SDL.SDL_BUTTON_X2MASK) >> 4);
 
-			window.MouseState.ScrollWheelValue = INTERNAL_MouseWheel;
+			state.ScrollWheelValue = INTERNAL_MouseWheel;
 
-			return window.MouseState;
-		}
-
-		/// <summary>
-		/// Gets mouse state information that includes position and button presses
-		/// for the primary window
-		/// </summary>
-		/// <returns>Current state of the mouse.</returns>
-		public static MouseState GetState()
-		{
-			return GetState(PrimaryWindow);
+			return state;
 		}
 
 		/// <summary>
@@ -100,8 +92,8 @@ namespace Microsoft.Xna.Framework.Input
 			x = (int) ((double) x * INTERNAL_WindowWidth / Game.Instance.GraphicsDevice.GLDevice.Backbuffer.Width);
 			y = (int) ((double) y * INTERNAL_WindowHeight / Game.Instance.GraphicsDevice.GLDevice.Backbuffer.Height);
 
-			PrimaryWindow.MouseState.X = x;
-			PrimaryWindow.MouseState.Y = y;
+			state.X = x;
+			state.Y = y;
 
 			SDL.SDL_WarpMouseInWindow(WindowHandle, x, y);
 			INTERNAL_IsWarped = true;
