@@ -73,21 +73,6 @@ namespace Microsoft.Xna.Framework
 			return null;
 		}
 
-		public void AddService<T>(T provider)
-		{
-			AddService(typeof(T), provider);
-		}
-
-		public T GetService<T>() where T : class
-		{
-			object service = GetService(typeof(T));
-			if (service == null)
-			{
-				return null;
-			}
-			return (T) service;
-		}
-
 		public void RemoveService(Type type)
 		{
 			if (type == null)
