@@ -61,9 +61,9 @@ namespace Microsoft.Xna.Framework
 
 		#endregion
 
-		#region Public Static Readonly Fields
+		#region Internal Static Readonly Fields
 
-		public static readonly float MachineEpsilonFloat = GetMachineEpsilonFloat();
+		internal static readonly float MachineEpsilonFloat = GetMachineEpsilonFloat();
 
 		#endregion
 
@@ -348,30 +348,13 @@ namespace Microsoft.Xna.Framework
 			return angle;
 		}
 
-		/// <summary>
-		/// Determines if value is powered by two.
-		/// </summary>
-		/// <param name="value">A value.</param>
-		/// <returns>
-		/// <c>True</c> if <c>value</c> is powered by two; otherwise <c>false</c>.
-		/// </returns>
-		public static bool IsPowerOfTwo(int value)
-		{
-			return (value > 0) && ((value & (value - 1)) == 0);
-		}
-
 		#endregion
 
 		#region Internal Static Methods
 
 		internal static bool WithinEpsilon(float floatA, float floatB)
 		{
-			return WithinEpsilon(floatA, floatB, MachineEpsilonFloat);
-		}
-
-		internal static bool WithinEpsilon(float floatA, float floatB, float epsilon)
-		{
-			return Math.Abs(floatA - floatB) < epsilon;
+			return Math.Abs(floatA - floatB) < MachineEpsilonFloat;
 		}
 
 		#endregion
