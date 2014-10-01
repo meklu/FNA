@@ -27,17 +27,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			private set;
 		}
 
-		public bool IsContentLost
-		{
-			get
-			{
-				/* We will just return IsDisposed, as that
-				 * is the only case I can see for now.
-				 */
-				return IsDisposed;
-			}
-		}
-
 		public GraphicsDeviceStatus GraphicsDeviceStatus
 		{
 			get
@@ -752,16 +741,16 @@ namespace Microsoft.Xna.Framework.Graphics
 			return bindings;
 		}
 
-		public void GetRenderTargets(RenderTargetBinding[] outTargets)
-		{
-			Array.Copy(renderTargetBindings, outTargets, RenderTargetCount);
-		}
-
 		#endregion
 
 		#region Public Buffer Object Methods
 
 		public void SetVertexBuffer(VertexBuffer vertexBuffer)
+		{
+			SetVertexBuffer(vertexBuffer, 0);
+		}
+
+		public void SetVertexBuffer(VertexBuffer vertexBuffer, int vertexOffset)
 		{
 			if (!ReferenceEquals(vertexBufferBindings[0].VertexBuffer, vertexBuffer))
 			{
