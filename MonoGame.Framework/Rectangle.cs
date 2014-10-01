@@ -218,20 +218,6 @@ namespace Microsoft.Xna.Framework
 		}
 
 		/// <summary>
-		/// Gets whether or not the provided coordinates lie within the bounds of this <see cref="Rectangle"/>.
-		/// </summary>
-		/// <param name="x">The x coordinate of the point to check for containment.</param>
-		/// <param name="y">The y coordinate of the point to check for containment.</param>
-		/// <returns>True if the provided coordinates lie inside this <see cref="Rectangle"/>. False otherwise.</returns>
-		public bool Contains(float x, float y)
-		{
-			return (	(this.X <= x) &&
-					(x < (this.X + this.Width)) &&
-					(this.Y <= y) &&
-					(y < (this.Y + this.Height))	);
-		}
-
-		/// <summary>
 		/// Gets whether or not the provided <see cref="Point"/> lies within the bounds of this <see cref="Rectangle"/>.
 		/// </summary>
 		/// <param name="value">The coordinates to check for inclusion in this <see cref="Rectangle"/>.</param>
@@ -255,6 +241,22 @@ namespace Microsoft.Xna.Framework
 					((value.X + value.Width) <= (this.X + this.Width)) &&
 					(this.Y <= value.Y) &&
 					((value.Y + value.Height) <= (this.Y + this.Height))	);
+		}
+
+		public void Contains(ref Point value, out bool result)
+		{
+			result = (	(this.X <= value.X) &&
+					(value.X < (this.X + this.Width)) &&
+					(this.Y <= value.Y) &&
+					(value.Y < (this.Y + this.Height))	);
+		}
+
+		public void Contains(ref Rectangle value, out bool result)
+		{
+			result = (	(this.X <= value.X) &&
+					(value.X < (this.X + this.Width)) &&
+					(this.Y <= value.Y) &&
+					(value.Y < (this.Y + this.Height))	);
 		}
 
 		/// <summary>
