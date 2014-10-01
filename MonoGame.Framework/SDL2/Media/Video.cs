@@ -24,7 +24,7 @@ using System.Threading;
 
 namespace Microsoft.Xna.Framework.Media
 {
-	public sealed class Video : IDisposable
+	public sealed class Video
 	{
 		#region Public Properties
 
@@ -35,12 +35,6 @@ namespace Microsoft.Xna.Framework.Media
 		}
 
 		public int Height
-		{
-			get;
-			private set;
-		}
-
-		public string FileName
 		{
 			get;
 			private set;
@@ -90,11 +84,17 @@ namespace Microsoft.Xna.Framework.Media
 
 		#endregion
 
+		#region Private Variables
+
+		private string fileName;
+
+		#endregion
+
 		#region Internal Constructors
 
 		internal Video(string fileName)
 		{
-			FileName = fileName;
+			this.fileName = fileName;
 
 			// Set everything to NULL. Yes, this actually matters later.
 			theoraDecoder = IntPtr.Zero;
@@ -141,9 +141,9 @@ namespace Microsoft.Xna.Framework.Media
 
 		#endregion
 
-		#region Public Dispose Method
+		#region Internal Dispose Method
 
-		public void Dispose()
+		internal void Dispose()
 		{
 			if (AttachedToPlayer)
 			{
@@ -180,7 +180,7 @@ namespace Microsoft.Xna.Framework.Media
 
 			// Initialize the decoder.
 			theoraDecoder = TheoraPlay.THEORAPLAY_startDecodeFile(
-				FileName,
+				fileName,
 				150, // Max frames to buffer.  Arbitrarily set 5 seconds, assuming 30fps.
 #if VIDEOPLAYER_OPENGL
 				TheoraPlay.THEORAPLAY_VideoFormat.THEORAPLAY_VIDFMT_IYUV
