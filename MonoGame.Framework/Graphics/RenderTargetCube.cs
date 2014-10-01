@@ -50,6 +50,14 @@ namespace Microsoft.Xna.Framework.Graphics
 			private set;
 		}
 
+		public bool IsContentLost
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		#endregion
 
 		#region IRenderTarget Properties

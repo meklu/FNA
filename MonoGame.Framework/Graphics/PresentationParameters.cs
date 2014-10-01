@@ -13,14 +13,9 @@ using System;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
-	public class PresentationParameters : IDisposable
+	[Serializable]
+	public class PresentationParameters
 	{
-		#region Public Constants
-
-		public const int DefaultPresentRate = 60;
-
-		#endregion
-
 		#region Public Properties
 
 		public SurfaceFormat BackBufferFormat
@@ -106,33 +101,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			MultiSampleCount = 0;
 			PresentationInterval = PresentInterval.Default;
 			DisplayOrientation = DisplayOrientation.Default;
-		}
-
-		#endregion
-
-		#region Destructor
-
-		~PresentationParameters()
-		{
-			Dispose(false);
-		}
-
-		#endregion
-
-		#region Public Dispose Method
-
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		#endregion
-
-		#region Protected Dispose Method
-
-		protected virtual void Dispose(bool disposing)
-		{
 		}
 
 		#endregion

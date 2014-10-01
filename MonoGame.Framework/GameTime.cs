@@ -20,19 +20,19 @@ namespace Microsoft.Xna.Framework
 		public TimeSpan TotalGameTime
 		{
 			get;
-			set;
+			internal set;
 		}
 
 		public TimeSpan ElapsedGameTime
 		{
 			get;
-			set;
+			internal set;
 		}
 
 		public bool IsRunningSlowly
 		{
 			get;
-			set;
+			internal set;
 		}
 
 		#endregion

@@ -53,5 +53,19 @@ namespace Microsoft.Xna.Framework
 		}
 
 		#endregion
+
+		#region Public Methods
+
+		public GraphicsDeviceInformation Clone()
+		{
+			return new GraphicsDeviceInformation()
+			{
+				Adapter = this.Adapter,
+				GraphicsProfile = this.GraphicsProfile,
+				PresentationParameters = this.PresentationParameters.Clone()
+			};
+		}
+
+		#endregion
 	}
 }

@@ -382,7 +382,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 		~AudioEngine()
 		{
-			Dispose(true);
+			Dispose();
 		}
 
 		#endregion
@@ -390,11 +390,6 @@ namespace Microsoft.Xna.Framework.Audio
 		#region Public Dispose Methods
 
 		public void Dispose()
-		{
-			Dispose(false);
-		}
-
-		public void Dispose(bool disposing)
 		{
 			if (!IsDisposed)
 			{

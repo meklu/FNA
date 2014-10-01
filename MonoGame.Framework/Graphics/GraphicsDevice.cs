@@ -178,16 +178,6 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region Public RenderTarget Properties
-
-		public int RenderTargetCount
-		{
-			get;
-			private set;
-		}
-
-		#endregion
-
 		#region Public Buffer Object Properties
 
 		public IndexBuffer Indices
@@ -201,6 +191,16 @@ namespace Microsoft.Xna.Framework.Graphics
 		#region Internal OpenGL Device Property
 
 		internal OpenGLDevice GLDevice
+		{
+			get;
+			private set;
+		}
+
+		#endregion
+
+		#region Internal RenderTarget Properties
+
+		internal int RenderTargetCount
 		{
 			get;
 			private set;
