@@ -26,11 +26,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
-		public int ArraySlice
+		public CubeMapFace CubeMapFace
 		{
 			get
 			{
-				return arraySlice;
+				return cubeMapFace;
 			}
 		}
 
@@ -39,7 +39,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		#region Private Variables
 
 		private readonly Texture renderTarget;
-		private readonly int arraySlice;
+		private readonly CubeMapFace cubeMapFace;
 
 		#endregion
 
@@ -53,7 +53,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			this.renderTarget = renderTarget;
-			arraySlice = (int) CubeMapFace.PositiveX;
+			cubeMapFace = CubeMapFace.PositiveX;
 		}
 
 		public RenderTargetBinding(RenderTargetCube renderTarget, CubeMapFace cubeMapFace)
@@ -68,7 +68,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 
 			this.renderTarget = renderTarget;
-			arraySlice = (int) cubeMapFace;
+			this.cubeMapFace = cubeMapFace;
 		}
 
 		#endregion
