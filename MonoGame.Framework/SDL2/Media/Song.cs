@@ -103,15 +103,6 @@ namespace Microsoft.Xna.Framework.Media
 			private set;
 		}
 
-		// TODO: A real Vorbis stream would have this info.
-		public TimeSpan Position
-		{
-			get
-			{
-				return new TimeSpan(0);
-			}
-		}
-
 		public bool IsProtected
 		{
 			get
