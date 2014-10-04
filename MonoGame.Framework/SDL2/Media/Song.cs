@@ -164,6 +164,15 @@ namespace Microsoft.Xna.Framework.Media
 			private set;
 		}
 
+		// TODO: A real Vorbis stream would have this info.
+		internal TimeSpan Position
+		{
+			get
+			{
+				return TimeSpan.Zero;
+			}
+		}
+
 		internal float Volume
 		{
 			get
