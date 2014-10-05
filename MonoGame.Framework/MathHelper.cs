@@ -159,6 +159,7 @@ namespace Microsoft.Xna.Framework
 			return value;
 		}
 
+		// FIXME: This could be an extension! ClampIntEXT? -flibit
 		/// <summary>
 		/// Restricts a value to be within a specified range.
 		/// </summary>
@@ -172,7 +173,7 @@ namespace Microsoft.Xna.Framework
 		/// will be returned.
 		/// </param>
 		/// <returns>The clamped value.</returns>
-		public static int Clamp(int value, int min, int max)
+		internal static int Clamp(int value, int min, int max)
 		{
 			value = (value > max) ? max : value;
 			value = (value < min) ? min : value;
