@@ -74,6 +74,7 @@ namespace Microsoft.Xna.Framework
 
 		#region Events
 
+		public event EventHandler<EventArgs> Disposed;
 		public event EventHandler<EventArgs> EnabledChanged;
 		public event EventHandler<EventArgs> UpdateOrderChanged;
 
@@ -127,14 +128,19 @@ namespace Microsoft.Xna.Framework
 		/// <summary>
 		/// Shuts down the component.
 		/// </summary>
-		protected virtual void Dispose(bool disposing) {}
+		protected virtual void Dispose(bool disposing)
+		{
+			if (disposing && Disposed != null)
+			{
+				Disposed(this, EventArgs.Empty);
+			}
+		}
 
 		#endregion
 
 		#region IComparable<GameComponent> Members
 
-		// TODO: Should be removed, as it is not part of XNA 4.0.
-		public int CompareTo(GameComponent other)
+		int IComparable<GameComponent>.CompareTo(GameComponent other)
 		{
 			return other.UpdateOrder - this.UpdateOrder;
 		}
