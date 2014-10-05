@@ -56,9 +56,9 @@ namespace Microsoft.Xna.Framework.Content
 
 		#endregion
 
-		#region Public Filename Normalizer Method
+		#region Protected Internal Filename Normalizer Method
 
-		public static string Normalize(string fileName, string[] extensions)
+		protected internal static string Normalize(string fileName, string[] extensions)
 		{
 			if (File.Exists(fileName))
 			{
