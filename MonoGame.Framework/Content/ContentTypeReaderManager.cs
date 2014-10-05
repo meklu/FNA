@@ -234,7 +234,7 @@ namespace Microsoft.Xna.Framework.Content
 
 		#endregion
 
-		#region Public Static Methods
+		#region Internal Static Methods
 
 		/// <summary>
 		/// Adds the type creator.
@@ -245,7 +245,7 @@ namespace Microsoft.Xna.Framework.Content
 		/// <param name='createFunction'>
 		/// Create function.
 		/// </param>
-		public static void AddTypeCreator(
+		internal static void AddTypeCreator(
 			string typeString,
 			Func<ContentTypeReader> createFunction
 		) {
@@ -255,7 +255,7 @@ namespace Microsoft.Xna.Framework.Content
 			}
 		}
 
-		public static void ClearTypeCreators()
+		internal static void ClearTypeCreators()
 		{
 			typeCreators.Clear();
 		}
@@ -273,7 +273,7 @@ namespace Microsoft.Xna.Framework.Content
 		/// <returns>
 		/// A <see cref="System.String"/>
 		/// </returns>
-		public static string PrepareType(string type)
+		internal static string PrepareType(string type)
 		{
 			// Needed to support nested types
 			int count = type.Split(
