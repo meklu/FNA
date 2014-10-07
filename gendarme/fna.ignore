@@ -1,2 +1,4 @@
 R: Gendarme.Rules.Design.AvoidRefAndOutParametersRule
 A: MonoGame.Framework
+
+# TODO: Exclude SDL2/OpenAL/TheoraPlay/Vorbisfile!

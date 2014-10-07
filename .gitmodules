@@ -1,12 +1,9 @@
-[submodule "ThirdParty/TheoraPlay#"]
-	path = "ThirdParty/TheoraPlay#"
+[submodule "lib/TheoraPlay#"]
+	path = lib/TheoraPlay-CS
 	url = https://github.com/flibitijibibo/TheoraPlay-CS.git
-[submodule "ThirdParty/SDL2#"]
-	path = "ThirdParty/SDL2#"
+[submodule "lib/SDL2#"]
+	path = lib/SDL2-CS
 	url = https://github.com/flibitijibibo/SDL2-CS.git
-[submodule "ThirdParty/MonoKickstart"]
-	path = ThirdParty/MonoKickstart
-	url = https://github.com/flibitijibibo/MonoKickstart.git
-[submodule "ThirdParty/OpenAL#"]
-	path = "ThirdParty/OpenAL#"
+[submodule "lib/OpenAL#"]
+	path = lib/OpenAL-CS
 	url = git://github.com/flibitijibibo/OpenAL-CS.git
