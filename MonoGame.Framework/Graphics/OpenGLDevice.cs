@@ -2180,6 +2180,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_UNSIGNED_BYTE =			0x1401,
 			GL_SHORT =				0x1402,
 			GL_UNSIGNED_SHORT =			0x1402,
+			GL_UNSIGNED_INT =			0x1405,
 			GL_FLOAT =				0x1406,
 			GL_HALF_FLOAT =				0x140B,
 			GL_UNSIGNED_SHORT_4_4_4_4 =		0x8033,
@@ -2326,6 +2327,9 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_RENDERBUFFER =			0x8D41,
 			GL_MAX_DRAW_BUFFERS =			0x8824,
 			// Draw Primitives
+			GL_LINES =				0x0001,
+			GL_LINE_STRIP =				0x0003,
+			GL_TRIANGLES =				0x0004,
 			GL_TRIANGLE_STRIP =			0x0005,
 			// Query Objects
 			GL_QUERY_RESULT =			0x8866,
@@ -2719,7 +2723,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		private delegate void DrawBuffers(IntPtr n, GLenum[] bufs);
 		private DrawBuffers glDrawBuffers;
 
-		private delegate void ReadPixels(
+		public delegate void ReadPixels(
 			int x,
 			int y,
 			IntPtr width,
@@ -2728,7 +2732,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLenum type,
 			IntPtr pixels
 		);
-		private ReadPixels glReadPixels;
+		public ReadPixels glReadPixels;
 
 		public delegate void GenFramebuffers(
 			IntPtr n,
@@ -2809,6 +2813,25 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		/* BEGIN DRAWING FUNCTIONS */
 
+		public delegate void DrawElementsInstanced(
+			GLenum mode,
+			IntPtr count,
+			GLenum type,
+			IntPtr indices,
+			IntPtr instanceCount
+		);
+		public DrawElementsInstanced glDrawElementsInstanced;
+
+		public delegate void DrawRangeElements(
+			GLenum mode,
+			int start,
+			int end,
+			IntPtr count,
+			GLenum type,
+			IntPtr indices
+		);
+		public DrawRangeElements glDrawRangeElements;
+
 		public delegate void DrawArrays(
 			GLenum mode,
 			int first,
@@ -2877,6 +2900,13 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public delegate void Uniform1i(int location, int v0);
 		public Uniform1i glUniform1i;
+
+		public delegate void Uniform4fv(
+			int location,
+			IntPtr count,
+			float[] value
+		);
+		public Uniform4fv glUniform4fv;
 
 		public delegate int GetUniformLocation(
 			uint program,

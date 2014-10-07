@@ -11,8 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-
-using OpenTK.Graphics.OpenGL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics
@@ -598,14 +596,22 @@ namespace Microsoft.Xna.Framework.Graphics
 			uint prevReadBuffer = GLDevice.CurrentReadFramebuffer;
 
 			GLDevice.BindReadFramebuffer(GLDevice.Backbuffer.Handle);
-			GL.ReadPixels(
-				0, 0,
-				GLDevice.Backbuffer.Width,
-				GLDevice.Backbuffer.Height,
-				PixelFormat.Rgba,
-				PixelType.UnsignedByte,
-				data
-			);
+			GCHandle ptr = GCHandle.Alloc(data, GCHandleType.Pinned);
+			try
+			{
+				GLDevice.glReadPixels(
+					0, 0,
+					(IntPtr) GLDevice.Backbuffer.Width,
+					(IntPtr) GLDevice.Backbuffer.Height,
+					OpenGLDevice.GLenum.GL_RGBA,
+					OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
+					ptr.AddrOfPinnedObject()
+				);
+			}
+			finally
+			{
+				ptr.Free();
+			}
 
 			// Restore old buffer components
 			GLDevice.BindReadFramebuffer(prevReadBuffer);
@@ -893,12 +899,14 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLDevice.BindIndexBuffer(Indices.Handle);
 
 			// Draw!
-			GL.DrawRangeElements(
+			GLDevice.glDrawRangeElements(
 				PrimitiveTypeGL(primitiveType),
 				minVertexIndex,
 				minVertexIndex + numVertices - 1,
 				GetElementCountArray(primitiveType, primitiveCount),
-				shortIndices ? DrawElementsType.UnsignedShort : DrawElementsType.UnsignedInt,
+				shortIndices ?
+					OpenGLDevice.GLenum.GL_UNSIGNED_SHORT :
+					OpenGLDevice.GLenum.GL_UNSIGNED_INT,
 				(IntPtr) (startIndex * (shortIndices ? 2 : 4))
 			);
 		}
@@ -949,12 +957,14 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLDevice.BindIndexBuffer(Indices.Handle);
 
 			// Draw!
-			GL.DrawElementsInstanced(
+			GLDevice.glDrawElementsInstanced(
 				PrimitiveTypeGL(primitiveType),
 				GetElementCountArray(primitiveType, primitiveCount),
-				shortIndices ? DrawElementsType.UnsignedShort : DrawElementsType.UnsignedInt,
+				shortIndices ?
+					OpenGLDevice.GLenum.GL_UNSIGNED_SHORT :
+					OpenGLDevice.GLenum.GL_UNSIGNED_INT,
 				(IntPtr) (startIndex * (shortIndices ? 2 : 4)),
-				instanceCount
+				(IntPtr) instanceCount
 			);
 		}
 
@@ -986,7 +996,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLDevice.FlushGLVertexAttributes();
 
 			// Draw!
-			GL.DrawArrays(
+			GLDevice.glDrawArrays(
 				PrimitiveTypeGL(primitiveType),
 				vertexStart,
 				GetElementCountArray(primitiveType, primitiveCount)
@@ -1050,12 +1060,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLDevice.FlushGLVertexAttributes();
 
 			// Draw!
-			GL.DrawRangeElements(
+			GLDevice.glDrawRangeElements(
 				PrimitiveTypeGL(primitiveType),
 				0,
 				numVertices - 1,
 				GetElementCountArray(primitiveType, primitiveCount),
-				DrawElementsType.UnsignedShort,
+				OpenGLDevice.GLenum.GL_UNSIGNED_SHORT,
 				(IntPtr) (ibHandle.AddrOfPinnedObject().ToInt64() + (indexOffset * sizeof(short)))
 			);
 
@@ -1117,12 +1127,12 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLDevice.FlushGLVertexAttributes();
 
 			// Draw!
-			GL.DrawRangeElements(
+			GLDevice.glDrawRangeElements(
 				PrimitiveTypeGL(primitiveType),
 				0,
 				numVertices - 1,
 				GetElementCountArray(primitiveType, primitiveCount),
-				DrawElementsType.UnsignedInt,
+				OpenGLDevice.GLenum.GL_UNSIGNED_INT,
 				(IntPtr) (ibHandle.AddrOfPinnedObject().ToInt64() + (indexOffset * sizeof(int)))
 			);
 
@@ -1174,7 +1184,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLDevice.FlushGLVertexAttributes();
 
 			// Draw!
-			GL.DrawArrays(
+			GLDevice.glDrawArrays(
 				PrimitiveTypeGL(primitiveType),
 				vertexOffset,
 				GetElementCountArray(primitiveType, primitiveCount)
@@ -1188,35 +1198,35 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Private XNA->GL Conversion Methods
 
-		private static int GetElementCountArray(PrimitiveType primitiveType, int primitiveCount)
+		private static IntPtr GetElementCountArray(PrimitiveType primitiveType, int primitiveCount)
 		{
 			switch (primitiveType)
 			{
 				case PrimitiveType.LineList:
-					return primitiveCount * 2;
+					return (IntPtr) (primitiveCount * 2);
 				case PrimitiveType.LineStrip:
-					return primitiveCount + 1;
+					return (IntPtr) (primitiveCount + 1);
 				case PrimitiveType.TriangleList:
-					return primitiveCount * 3;
+					return (IntPtr) (primitiveCount * 3);
 				case PrimitiveType.TriangleStrip:
-					return 3 + (primitiveCount - 1);
+					return (IntPtr) (3 + (primitiveCount - 1));
 			}
 
 			throw new NotSupportedException();
 		}
 
-		private static BeginMode PrimitiveTypeGL(PrimitiveType primitiveType)
+		private static OpenGLDevice.GLenum PrimitiveTypeGL(PrimitiveType primitiveType)
 		{
 			switch (primitiveType)
 			{
 				case PrimitiveType.LineList:
-					return BeginMode.Lines;
+					return OpenGLDevice.GLenum.GL_LINES;
 				case PrimitiveType.LineStrip:
-					return BeginMode.LineStrip;
+					return OpenGLDevice.GLenum.GL_LINE_STRIP;
 				case PrimitiveType.TriangleList:
-					return BeginMode.Triangles;
+					return OpenGLDevice.GLenum.GL_TRIANGLES;
 				case PrimitiveType.TriangleStrip:
-					return BeginMode.TriangleStrip;
+					return OpenGLDevice.GLenum.GL_TRIANGLE_STRIP;
 			}
 
 			throw new ArgumentException("Should be a value defined in PrimitiveType", "primitiveType");
@@ -1270,7 +1280,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Set the new program if it has changed.
 			if (shaderProgram != program)
 			{
-				GL.UseProgram(program.Program);
+				GLDevice.glUseProgram((uint) program.Program);
 				shaderProgram = program;
 			}
 
@@ -1321,7 +1331,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				posFixup[3] *= -1.0f;
 			}
 
-			GL.Uniform4(posFixupLoc, 1, posFixup);
+			GLDevice.glUniform4fv(posFixupLoc, (IntPtr) 1, posFixup);
 		}
 
 		#endregion
