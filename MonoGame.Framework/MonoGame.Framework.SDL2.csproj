@@ -331,6 +331,7 @@
     <Compile Include="Graphics\DeviceNotResetException.cs" />
     <Compile Include="Graphics\NoSuitableGraphicsDeviceException.cs" />
     <Compile Include="Graphics\OpenGLDevice.cs" />
+    <Compile Include="Graphics\OpenGLDevice_GL.cs" />
     <Compile Include="Graphics\OcclusionQuery.cs" />
     <Compile Include="Input\Touch\TouchPanelState.cs" />
     <Compile Include="Audio\DynamicSoundEffectInstance.cs" />
