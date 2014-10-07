@@ -471,7 +471,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			System.Console.WriteLine("OpenGL Device: " + glGetString(GLenum.GL_RENDERER));
 			System.Console.WriteLine("OpenGL Driver: " + glGetString(GLenum.GL_VERSION));
 			System.Console.WriteLine("OpenGL Vendor: " + glGetString(GLenum.GL_VENDOR));
-			
+
 			// Load the extension list, initialize extension-dependent components
 			Extensions = glGetString(GLenum.GL_EXTENSIONS);
 			SupportsS3tc = (
@@ -484,19 +484,6 @@ namespace Microsoft.Xna.Framework.Graphics
 				SupportsS3tc ||
 				Extensions.Contains("GL_EXT_texture_compression_dxt1")
 			);
-			SupportsHardwareInstancing = (
-				Extensions.Contains("GL_ARB_draw_instanced") &&
-				Extensions.Contains("GL_ARB_instanced_arrays")
-			);
-
-			/* So apparently OSX Lion likes to lie about hardware instancing support.
-			 * This is incredibly stupid, but it works!
-			 * -flibit
-			 */
-			if (SupportsHardwareInstancing) // TODO: Let's just load our own entry points.
-			{
-				SupportsHardwareInstancing = SDL2.SDL.SDL_GL_GetProcAddress("glVertexAttribDivisorARB") != IntPtr.Zero;
-			}
 
 			// Initialize the faux-backbuffer
 			Backbuffer = new FauxBackbuffer(

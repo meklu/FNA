@@ -60,7 +60,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_BYTE =				0x1400,
 			GL_UNSIGNED_BYTE =			0x1401,
 			GL_SHORT =				0x1402,
-			GL_UNSIGNED_SHORT =			0x1402,
+			GL_UNSIGNED_SHORT =			0x1403,
 			GL_UNSIGNED_INT =			0x1405,
 			GL_FLOAT =				0x1406,
 			GL_HALF_FLOAT =				0x140B,
@@ -246,8 +246,15 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		/* BEGIN GET FUNCTIONS */
 
-		private delegate string GetString(GLenum pname);
-		private GetString glGetString;
+		private delegate IntPtr GetString(GLenum pname);
+		private GetString INTERNAL_glGetString;
+		private string glGetString(GLenum pname)
+		{
+			unsafe
+			{
+				return new string((sbyte*) INTERNAL_glGetString(pname));
+			}
+		}
 
 		public delegate void GetIntegerv(GLenum pname, out int param);
 		public GetIntegerv glGetIntegerv;
@@ -828,13 +835,13 @@ namespace Microsoft.Xna.Framework.Graphics
 		public BindAttribLocation glBindAttribLocation;
 
 		public delegate bool IsShader(uint shader);
-		public IsProgram glIsShader;
+		public IsShader glIsShader;
 
 		public delegate bool IsProgram(uint program);
 		public IsProgram glIsProgram;
 
 		public delegate string GetShaderInfoLog(uint shader);
-		public GetProgramInfoLog glGetShaderInfoLog;
+		public GetShaderInfoLog glGetShaderInfoLog;
 
 		public delegate string GetProgramInfoLog(uint program);
 		public GetProgramInfoLog glGetProgramInfoLog;
@@ -903,8 +910,413 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public void LoadGLEntryPoints()
 		{
-			IntPtr messageCallback = SDL2.SDL.SDL_GL_GetProcAddress("glDebugMessageCallbackARB");
-			IntPtr messageControl = SDL2.SDL.SDL_GL_GetProcAddress("glDebugMessageControlARB");
+			/* Basic entry points. If you don't have these, you're screwed. */
+			try
+			{
+				INTERNAL_glGetString = (GetString) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetString"),
+					typeof(GetString)
+				);
+				glGetIntegerv = (GetIntegerv) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetIntegerv"),
+					typeof(GetIntegerv)
+				);
+				glEnable = (Enable) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glEnable"),
+					typeof(Enable)
+				);
+				glDisable = (Disable) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDisable"),
+					typeof(Disable)
+				);
+				glViewport = (G_Viewport) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glViewport"),
+					typeof(G_Viewport)
+				);
+				glDepthRange = (DepthRange) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDepthRange"),
+					typeof(DepthRange)
+				);
+				glScissor = (Scissor) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glScissor"),
+					typeof(Scissor)
+				);
+				glBlendColor = (BlendColor) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glBlendColor"),
+					typeof(BlendColor)
+				);
+				glBlendFuncSeparate = (BlendFuncSeparate) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glBlendFuncSeparate"),
+					typeof(BlendFuncSeparate)
+				);
+				glBlendEquationSeparate = (BlendEquationSeparate) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glBlendEquationSeparate"),
+					typeof(BlendEquationSeparate)
+				);
+				glColorMask = (ColorMask) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glColorMask"),
+					typeof(ColorMask)
+				);
+				glDepthMask = (DepthMask) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDepthMask"),
+					typeof(DepthMask)
+				);
+				glDepthFunc = (DepthFunc) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDepthFunc"),
+					typeof(DepthFunc)
+				);
+				glStencilMask = (StencilMask) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glStencilMask"),
+					typeof(StencilMask)
+				);
+				glStencilFuncSeparate = (StencilFuncSeparate) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glStencilFuncSeparate"),
+					typeof(StencilFuncSeparate)
+				);
+				glStencilOpSeparate = (StencilOpSeparate) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glStencilOpSeparate"),
+					typeof(StencilOpSeparate)
+				);
+				glStencilFunc = (StencilFunc) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glStencilFunc"),
+					typeof(StencilFunc)
+				);
+				glStencilOp = (StencilOp) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glStencilOp"),
+					typeof(StencilOp)
+				);
+				glCullFace = (CullFace) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glCullFace"),
+					typeof(CullFace)
+				);
+				glFrontFace = (FrontFace) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glFrontFace"),
+					typeof(FrontFace)
+				);
+				glPolygonMode = (PolygonMode) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glPolygonMode"),
+					typeof(PolygonMode)
+				);
+				glPolygonOffset = (PolygonOffset) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glPolygonOffset"),
+					typeof(PolygonOffset)
+				);
+				glGenTextures = (GenTextures) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGenTextures"),
+					typeof(GenTextures)
+				);
+				glDeleteTextures = (DeleteTextures) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDeleteTextures"),
+					typeof(DeleteTextures)
+				);
+				glBindTexture = (G_BindTexture) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glBindTexture"),
+					typeof(G_BindTexture)
+				);
+				glTexImage2D = (TexImage2D) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glTexImage2D"),
+					typeof(TexImage2D)
+				);
+				glTexSubImage2D = (TexSubImage2D) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glTexSubImage2D"),
+					typeof(TexSubImage2D)
+				);
+				glCompressedTexImage2D = (CompressedTexImage2D) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glCompressedTexImage2D"),
+					typeof(CompressedTexImage2D)
+				);
+				glCompressedTexSubImage2D = (CompressedTexSubImage2D) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glCompressedTexSubImage2D"),
+					typeof(CompressedTexSubImage2D)
+				);
+				glTexImage3D = (TexImage3D) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glTexImage3D"),
+					typeof(TexImage3D)
+				);
+				glTexSubImage3D = (TexSubImage3D) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glTexSubImage3D"),
+					typeof(TexSubImage3D)
+				);
+				glGetTexImage = (GetTexImage) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetTexImage"),
+					typeof(GetTexImage)
+				);
+				glTexParameteri = (TexParameteri) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glTexParameteri"),
+					typeof(TexParameteri)
+				);
+				glTexParameterf = (TexParameterf) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glTexParameterf"),
+					typeof(TexParameterf)
+				);
+				glActiveTexture = (ActiveTexture) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glActiveTexture"),
+					typeof(ActiveTexture)
+				);
+				glGetTexLevelParameteriv = (GetTexLevelParameteriv) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetTexLevelParameteriv"),
+					typeof(GetTexLevelParameteriv)
+				);
+				glPixelStorei = (PixelStorei) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glPixelStorei"),
+					typeof(PixelStorei)
+				);
+				glGenBuffers = (GenBuffers) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGenBuffers"),
+					typeof(GenBuffers)
+				);
+				glDeleteBuffers = (DeleteBuffers) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDeleteBuffers"),
+					typeof(DeleteBuffers)
+				);
+				glBindBuffer = (BindBuffer) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glBindBuffer"),
+					typeof(BindBuffer)
+				);
+				glBufferData = (BufferData) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glBufferData"),
+					typeof(BufferData)
+				);
+				glBufferSubData = (BufferSubData) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glBufferSubData"),
+					typeof(BufferSubData)
+				);
+				glMapBuffer = (MapBuffer) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glMapBuffer"),
+					typeof(MapBuffer)
+				);
+				glUnmapBuffer = (UnmapBuffer) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glUnmapBuffer"),
+					typeof(UnmapBuffer)
+				);
+				glEnableVertexAttribArray = (EnableVertexAttribArray) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glEnableVertexAttribArray"),
+					typeof(EnableVertexAttribArray)
+				);
+				glDisableVertexAttribArray = (DisableVertexAttribArray) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDisableVertexAttribArray"),
+					typeof(DisableVertexAttribArray)
+				);
+				glVertexAttribPointer = (G_VertexAttribPointer) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glVertexAttribPointer"),
+					typeof(G_VertexAttribPointer)
+				);
+				glClearColor = (ClearColor) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glClearColor"),
+					typeof(ClearColor)
+				);
+				glClearDepth = (ClearDepth) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glClearDepth"),
+					typeof(ClearDepth)
+				);
+				glClearStencil = (ClearStencil) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glClearStencil"),
+					typeof(ClearStencil)
+				);
+				glClear = (G_Clear) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glClear"),
+					typeof(G_Clear)
+				);
+				glDrawBuffers = (DrawBuffers) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDrawBuffers"),
+					typeof(DrawBuffers)
+				);
+				glReadPixels = (ReadPixels) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glReadPixels"),
+					typeof(ReadPixels)
+				);
+				glDrawRangeElements = (DrawRangeElements) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDrawRangeElements"),
+					typeof(DrawRangeElements)
+				);
+				glDrawArrays = (DrawArrays) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDrawArrays"),
+					typeof(DrawArrays)
+				);
+				glGenQueries = (GenQueries) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGenQueries"),
+					typeof(GenQueries)
+				);
+				glDeleteQueries = (DeleteQueries) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDeleteQueries"),
+					typeof(DeleteQueries)
+				);
+				glBeginQuery = (BeginQuery) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glBeginQuery"),
+					typeof(BeginQuery)
+				);
+				glEndQuery = (EndQuery) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glEndQuery"),
+					typeof(EndQuery)
+				);
+				glGetQueryObjectiv = (GetQueryObjectiv) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetQueryObjectiv"),
+					typeof(GetQueryObjectiv)
+				);
+				glCreateShader = (CreateShader) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glCreateShader"),
+					typeof(CreateShader)
+				);
+				glDeleteShader = (DeleteShader) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDeleteShader"),
+					typeof(DeleteShader)
+				);
+				glShaderSource = (ShaderSource) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glShaderSource"),
+					typeof(ShaderSource)
+				);
+				glCompileShader = (CompileShader) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glCompileShader"),
+					typeof(CompileShader)
+				);
+				glCreateProgram = (CreateProgram) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glCreateProgram"),
+					typeof(CreateProgram)
+				);
+				glDeleteProgram = (DeleteProgram) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDeleteProgram"),
+					typeof(DeleteProgram)
+				);
+				glAttachShader = (AttachShader) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glAttachShader"),
+					typeof(AttachShader)
+				);
+				glDetachShader = (DetachShader) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDetachShader"),
+					typeof(DetachShader)
+				);
+				glLinkProgram = (LinkProgram) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glLinkProgram"),
+					typeof(LinkProgram)
+				);
+				glUseProgram = (UseProgram) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glUseProgram"),
+					typeof(UseProgram)
+				);
+				glUniform1i = (Uniform1i) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glUniform1i"),
+					typeof(Uniform1i)
+				);
+				glUniform4fv = (Uniform4fv) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glUniform4fv"),
+					typeof(Uniform4fv)
+				);
+				glGetShaderiv = (GetShaderiv) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetShaderiv"),
+					typeof(GetShaderiv)
+				);
+				glGetProgramiv = (GetProgramiv) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetProgramiv"),
+					typeof(GetProgramiv)
+				);
+				glGetUniformLocation = (GetUniformLocation) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetUniformLocation"),
+					typeof(GetUniformLocation)
+				);
+				glGetAttribLocation = (GetAttribLocation) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetAttribLocation"),
+					typeof(GetAttribLocation)
+				);
+				glBindAttribLocation = (BindAttribLocation) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glBindAttribLocation"),
+					typeof(BindAttribLocation)
+				);
+				glIsShader = (IsShader) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glIsShader"),
+					typeof(IsShader)
+				);
+				glIsProgram = (IsProgram) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glIsProgram"),
+					typeof(IsProgram)
+				);
+				glGetShaderInfoLog = (GetShaderInfoLog) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetShaderInfoLog"),
+					typeof(GetShaderInfoLog)
+				);
+				glGetProgramInfoLog = (GetProgramInfoLog) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGetProgramInfoLog"),
+					typeof(GetProgramInfoLog)
+				);
+				glFlush = (Flush) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glFlush"),
+					typeof(Flush)
+				);
+			}
+			catch
+			{
+				throw new NoSuitableGraphicsDeviceException("OpenGL 2.1 support is required!");
+			}
+
+			/* ARB_framebuffer_object. We're flexible, but not _that_ flexible. */
+			try
+			{
+				glGenFramebuffers = (GenFramebuffers) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glGenFramebuffers"),
+					typeof(GenFramebuffers)
+				);
+				glDeleteFramebuffers = (DeleteFramebuffers) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glDeleteFramebuffers"),
+					typeof(DeleteFramebuffers)
+				);
+				glBindFramebuffer = (G_BindFramebuffer) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glBindFramebuffer"),
+					typeof(G_BindFramebuffer)
+				);
+				glFramebufferTexture2D = (FramebufferTexture2D) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glFramebufferTexture2D"),
+					typeof(FramebufferTexture2D)
+				);
+				glFramebufferRenderbuffer = (FramebufferRenderbuffer) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glFramebufferRenderbuffer"),
+					typeof(FramebufferRenderbuffer)
+				);
+				glBlitFramebuffer = (BlitFramebuffer) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glBlitFramebuffer"),
+					typeof(BlitFramebuffer)
+				);
+				glGenRenderbuffers = (GenRenderbuffers) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glGenRenderbuffers"),
+					typeof(GenRenderbuffers)
+				);
+				glDeleteRenderbuffers = (DeleteRenderbuffers) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glDeleteRenderbuffers"),
+					typeof(DeleteRenderbuffers)
+				);
+				glBindRenderbuffer = (BindRenderbuffer) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glBindRenderbuffer"),
+					typeof(BindRenderbuffer)
+				);
+				glRenderbufferStorage = (RenderbufferStorage) Marshal.GetDelegateForFunctionPointer(
+					TryGetFramebufferEP("glRenderbufferStorage"),
+					typeof(RenderbufferStorage)
+				);
+			}
+			catch
+			{
+				throw new NoSuitableGraphicsDeviceException("OpenGL framebuffer support is required!");
+			}
+
+			/* ARB_instanced_arrays/ARB_draw_instanced are almost optional. */
+			SupportsHardwareInstancing = true;
+			try
+			{
+				glVertexAttribDivisor = (VertexAttribDivisor) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glVertexAttribDivisor"),
+					typeof(VertexAttribDivisor)
+				);
+				glDrawElementsInstanced = (DrawElementsInstanced) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glDrawElementsInstanced"),
+					typeof(DrawElementsInstanced)
+				);
+			}
+			catch
+			{
+				SupportsHardwareInstancing = false;
+			}
+
+			/* ARB_debug_output, for debug contexts */
+			IntPtr messageCallback = SDL.SDL_GL_GetProcAddress("glDebugMessageCallbackARB");
+			IntPtr messageControl = SDL.SDL_GL_GetProcAddress("glDebugMessageControlARB");
 			if (messageCallback == IntPtr.Zero || messageControl == IntPtr.Zero)
 			{
 				System.Console.WriteLine("ARB_debug_output not supported!");
@@ -935,6 +1347,21 @@ namespace Microsoft.Xna.Framework.Graphics
 				IntPtr.Zero,
 				false
 			);
+		}
+
+		private IntPtr TryGetFramebufferEP(string ep)
+		{
+			IntPtr result;
+			result = SDL.SDL_GL_GetProcAddress(ep);
+			if (result == IntPtr.Zero)
+			{
+				result = SDL.SDL_GL_GetProcAddress(ep + "EXT");
+				if (result == IntPtr.Zero)
+				{
+					throw new NoSuitableGraphicsDeviceException();
+				}
+			}
+			return result;
 		}
 
 		#endregion
