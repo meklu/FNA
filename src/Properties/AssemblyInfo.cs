@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -7,33 +7,17 @@ using System.Resources;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MonoGame.Framework")]
-#if OUYA
-[assembly: AssemblyDescription("MonoGame for OUYA")]
-#elif ANDROID
-[assembly: AssemblyDescription("MonoGame for Android")]
-#elif SDL2
-[assembly: AssemblyDescription("MonoGame for SDL2 Desktop")]
-#elif WINDOWS_STOREAPP
-[assembly: AssemblyDescription("MonoGame for Windows Store")]
-#elif WINDOWS
-[assembly: AssemblyDescription("MonoGame for Windows Desktop (DirectX)")]
-#elif PSM
-[assembly: AssemblyDescription("MonoGame for PlayStation Mobile")]
-#elif IOS
-[assembly: AssemblyDescription("MonoGame for iOS")]
-#elif WINDOWS_PHONE
-[assembly: AssemblyDescription("MonoGame for Windows Phone 8")]
-#endif
+[assembly: AssemblyTitle("FNA")]
+[assembly: AssemblyDescription("XNA4 Reimplementation for Desktop")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("MonoGame.Framework")]
-[assembly: AssemblyCopyright("Copyright © 2011-2013")]
+[assembly: AssemblyProduct("FNA")]
+[assembly: AssemblyCopyright("Copyright (c) 2011-2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Mark the assembly as CLS compliant so it can be safely used in other .NET languages
-[assembly:CLSCompliant(true)]
+[assembly:CLSCompliant(false)]
 
 // Allow the content pipeline assembly to access 
 // some of our internal helper methods that it needs.
@@ -61,6 +45,6 @@ using System.Resources;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("3.1.2.0")]
-[assembly: AssemblyFileVersion("3.1.2.0")]
+[assembly: AssemblyVersion("0.0.0.1")]
+[assembly: AssemblyFileVersion("0.0.0.1")]
 [assembly: NeutralResourcesLanguageAttribute("en-US")]
