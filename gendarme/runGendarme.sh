@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Filename of the FNA assembly output
-ASSEMBLYNAME="../MonoGame.Framework/bin/SDL2/Debug/MonoGame.Framework.dll"
+ASSEMBLYNAME="../bin/Debug/FNA.dll"
 
 # Move to script's directory
 cd "`dirname "$0"`"
