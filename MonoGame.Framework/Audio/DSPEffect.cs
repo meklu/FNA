@@ -10,7 +10,7 @@
 #region Using Statements
 using System;
 
-using OpenTK.Audio.OpenAL;
+using OpenAL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Audio
@@ -23,7 +23,7 @@ namespace Microsoft.Xna.Framework.Audio
 	{
 		#region Public Properties
 
-		public int Handle
+		public uint Handle
 		{
 			get;
 			private set;
@@ -33,7 +33,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#region Protected Variables
 
-		protected int effectHandle;
+		protected uint effectHandle;
 
 		#endregion
 
@@ -41,12 +41,11 @@ namespace Microsoft.Xna.Framework.Audio
 
 		public DSPEffect()
 		{
-			// Obtain EFX entry points
-			EffectsExtension EFX = OpenALDevice.Instance.EFX;
-
 			// Generate the EffectSlot and Effect
-			Handle = EFX.GenAuxiliaryEffectSlot();
-			effectHandle = EFX.GenEffect();
+			uint handle;
+			EFX.alGenAuxiliaryEffectSlots((IntPtr) 1, out handle);
+			Handle = handle;
+			EFX.alGenEffects((IntPtr) 1, out effectHandle);
 		}
 
 		#endregion
@@ -55,12 +54,10 @@ namespace Microsoft.Xna.Framework.Audio
 
 		public void Dispose()
 		{
-			// Obtain EFX entry points
-			EffectsExtension EFX = OpenALDevice.Instance.EFX;
-
 			// Delete EFX data
-			EFX.DeleteAuxiliaryEffectSlot(Handle);
-			EFX.DeleteEffect(effectHandle);
+			uint handle = Handle;
+			EFX.alDeleteAuxiliaryEffectSlots((IntPtr) 1, ref handle);
+			EFX.alDeleteEffects((IntPtr) 1, ref effectHandle);
 		}
 
 		#endregion
@@ -72,16 +69,21 @@ namespace Microsoft.Xna.Framework.Audio
 
 		public DSPReverbEffect(DSPParameter[] parameters) : base()
 		{
-			// Obtain EFX entry points
-			EffectsExtension EFX = OpenALDevice.Instance.EFX;
-
 			// Set up the Reverb Effect
-			EFX.BindEffect(effectHandle, EfxEffectType.EaxReverb);
+			EFX.alEffecti(
+				effectHandle,
+				EFX.AL_EFFECT_TYPE,
+				EFX.AL_EFFECT_EAXREVERB
+			);
 
 			// TODO: Use DSP Parameters on EAXReverb Effect. They don't bind very cleanly. :/
 
 			// Bind the Effect to the EffectSlot. XACT will use the EffectSlot.
-			EFX.BindEffectToAuxiliarySlot(Handle, effectHandle);
+			EFX.alAuxiliaryEffectSloti(
+				Handle,
+				EFX.AL_EFFECTSLOT_EFFECT,
+				(int) effectHandle
+			);
 		}
 
 		#endregion
@@ -90,18 +92,19 @@ namespace Microsoft.Xna.Framework.Audio
 
 		public void SetGain(float value)
 		{
-			// Obtain EFX entry points
-			EffectsExtension EFX = OpenALDevice.Instance.EFX;
-
 			// Apply the value to the effect
-			EFX.Effect(
+			EFX.alEffectf(
 				effectHandle,
-				EfxEffectf.EaxReverbGain,
+				EFX.AL_EAXREVERB_GAIN,
 				value
 			);
 
 			// Apply the newly modified effect to the effect slot
-			EFX.BindEffectToAuxiliarySlot(Handle, effectHandle);
+			EFX.alAuxiliaryEffectSloti(
+				Handle,
+				EFX.AL_EFFECTSLOT_EFFECT,
+				(int) effectHandle
+			);
 		}
 
 		public void SetDecayTime(float value)

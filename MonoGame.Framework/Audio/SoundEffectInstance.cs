@@ -10,7 +10,7 @@
 #region Using Statements
 using System;
 
-using OpenTK.Audio.OpenAL;
+using OpenAL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Audio
@@ -36,9 +36,13 @@ namespace Microsoft.Xna.Framework.Audio
 			set
 			{
 				INTERNAL_looped = value;
-				if (INTERNAL_alSource != -1)
+				if (INTERNAL_alSource != 0)
 				{
-					AL.Source(INTERNAL_alSource, ALSourceb.Looping, INTERNAL_looped);
+					AL10.alSourcei(
+						INTERNAL_alSource,
+						AL10.AL_LOOPING,
+						Convert.ToInt32(INTERNAL_looped)
+					);
 				}
 			}
 		}
@@ -53,11 +57,11 @@ namespace Microsoft.Xna.Framework.Audio
 			set
 			{
 				INTERNAL_pan = value;
-				if (INTERNAL_alSource != -1)
+				if (INTERNAL_alSource != 0)
 				{
-					AL.Source(
+					AL10.alSource3f(
 						INTERNAL_alSource,
-						ALSource3f.Position,
+						AL10.AL_POSITION,
 						INTERNAL_pan,
 						0.0f,
 						(float) Math.Sqrt(1 - Math.Pow(INTERNAL_pan, 2))
@@ -76,9 +80,13 @@ namespace Microsoft.Xna.Framework.Audio
 			set
 			{
 				INTERNAL_pitch = value;
-				if (INTERNAL_alSource != -1)
+				if (INTERNAL_alSource != 0)
 				{
-					AL.Source(INTERNAL_alSource, ALSourcef.Pitch, INTERNAL_XNA_To_AL_Pitch(INTERNAL_pitch));
+					AL10.alSourcef(
+						INTERNAL_alSource,
+						AL10.AL_PITCH,
+						INTERNAL_XNA_To_AL_Pitch(INTERNAL_pitch)
+					);
 				}
 			}
 		}
@@ -95,16 +103,21 @@ namespace Microsoft.Xna.Framework.Audio
 				{
 					return SoundState.Paused;
 				}
-				if (INTERNAL_alSource == -1)
+				if (INTERNAL_alSource == 0)
 				{
 					return SoundState.Stopped;
 				}
-				ALSourceState state = AL.GetSourceState(INTERNAL_alSource);
-				if (state == ALSourceState.Playing)
+				int state;
+				AL10.alGetSourcei(
+					INTERNAL_alSource,
+					AL10.AL_SOURCE_STATE,
+					out state
+				);
+				if (state == AL10.AL_PLAYING)
 				{
 					return SoundState.Playing;
 				}
-				else if (state == ALSourceState.Paused)
+				else if (state == AL10.AL_PAUSED)
 				{
 					return SoundState.Paused;
 				}
@@ -122,9 +135,13 @@ namespace Microsoft.Xna.Framework.Audio
 			set
 			{
 				INTERNAL_volume = value;
-				if (INTERNAL_alSource != -1)
+				if (INTERNAL_alSource != 0)
 				{
-					AL.Source(INTERNAL_alSource, ALSourcef.Gain, INTERNAL_volume * SoundEffect.MasterVolume);
+					AL10.alSourcef(
+						INTERNAL_alSource,
+						AL10.AL_GAIN,
+						INTERNAL_volume * SoundEffect.MasterVolume
+					);
 				}
 			}
 		}
@@ -150,8 +167,9 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#region Private Variables: OpenAL Source, EffectSlot
 
-		protected int INTERNAL_alSource = -1;
-		private int INTERNAL_alEffectSlot = -1;
+		[CLSCompliant(false)]
+		protected uint INTERNAL_alSource = 0;
+		private uint INTERNAL_alEffectSlot = 0;
 
 		#endregion
 
@@ -223,7 +241,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 		public void Apply3D(AudioListener listener, AudioEmitter emitter)
 		{
-			if (INTERNAL_alSource == -1)
+			if (INTERNAL_alSource == 0)
 			{
 				return;
 			}
@@ -239,7 +257,13 @@ namespace Microsoft.Xna.Framework.Audio
 			}
 
 			// Set the position based on relative positon
-			AL.Source(INTERNAL_alSource, ALSource3f.Position, position.X, position.Y, position.Z);
+			AL10.alSource3f(
+				INTERNAL_alSource,
+				AL10.AL_POSITION,
+				position.X,
+				position.Y,
+				position.Z
+			);
 
 			// We positional now
 			INTERNAL_positionalAudio = true;
@@ -256,7 +280,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 		public virtual void Play()
 		{
-			if (State != SoundState.Stopped && INTERNAL_alSource != -1) // FIXME: alSource check part of timer hack!
+			if (State != SoundState.Stopped && INTERNAL_alSource != 0) // FIXME: alSource check part of timer hack!
 			{
 				// FIXME: Is this XNA4 behavior?
 				Stop();
@@ -273,15 +297,15 @@ namespace Microsoft.Xna.Framework.Audio
 			INTERNAL_timer.Stop();
 			INTERNAL_timer.Reset();
 
-			if (INTERNAL_alSource != -1)
+			if (INTERNAL_alSource != 0)
 			{
 				// The sound has stopped, but hasn't cleaned up yet...
-				AL.SourceStop(INTERNAL_alSource);
-				AL.DeleteSource(INTERNAL_alSource);
-				INTERNAL_alSource = -1;
+				AL10.alSourceStop(INTERNAL_alSource);
+				AL10.alDeleteSources((IntPtr) 1, ref INTERNAL_alSource);
+				INTERNAL_alSource = 0;
 			}
 
-			INTERNAL_alSource = AL.GenSource();
+			AL10.alGenSources((IntPtr) 1, out INTERNAL_alSource);
 			if (INTERNAL_alSource == 0)
 			{
 				System.Console.WriteLine("WARNING: AL SOURCE WAS NOT AVAILABLE. SKIPPING.");
@@ -289,17 +313,23 @@ namespace Microsoft.Xna.Framework.Audio
 			}
 
 			// Attach the buffer to this source
-			AL.Source(
+			AL10.alSourcei(
 				INTERNAL_alSource,
-				ALSourcei.Buffer,
-				INTERNAL_parentEffect.INTERNAL_buffer
+				AL10.AL_BUFFER,
+				(int) INTERNAL_parentEffect.INTERNAL_buffer
 			);
 
 			// Apply Pan/Position
 			if (INTERNAL_positionalAudio)
 			{
 				INTERNAL_positionalAudio = false;
-				AL.Source(INTERNAL_alSource, ALSource3f.Position, position.X, position.Y, position.Z);
+				AL10.alSource3f(
+					INTERNAL_alSource,
+					AL10.AL_POSITION,
+					position.X,
+					position.Y,
+					position.Z
+				);
 			}
 			else
 			{
@@ -312,18 +342,18 @@ namespace Microsoft.Xna.Framework.Audio
 			Pitch = Pitch;
 
 			// Apply EFX
-			if (INTERNAL_alEffectSlot != -1)
+			if (INTERNAL_alEffectSlot != 0)
 			{
-				AL.Source(
+				AL10.alSource3i(
 					INTERNAL_alSource,
-					ALSource3i.EfxAuxiliarySendFilter,
-					INTERNAL_alEffectSlot,
+					EFX.AL_AUXILIARY_SEND_FILTER,
+					(int) INTERNAL_alEffectSlot,
 					0,
 					0
 				);
 			}
 
-			AL.SourcePlay(INTERNAL_alSource);
+			AL10.alSourcePlay(INTERNAL_alSource);
 		}
 
 		public void Pause()
@@ -332,9 +362,9 @@ namespace Microsoft.Xna.Framework.Audio
 			{
 				INTERNAL_timer.Stop();
 			}
-			if (INTERNAL_alSource != -1 && State == SoundState.Playing)
+			if (INTERNAL_alSource != 0 && State == SoundState.Playing)
 			{
-				AL.SourcePause(INTERNAL_alSource);
+				AL10.alSourcePause(INTERNAL_alSource);
 			}
 		}
 
@@ -344,9 +374,9 @@ namespace Microsoft.Xna.Framework.Audio
 			{
 				INTERNAL_timer.Start();
 			}
-			if (INTERNAL_alSource != -1 && State == SoundState.Paused)
+			if (INTERNAL_alSource != 0 && State == SoundState.Paused)
 			{
-				AL.SourcePlay(INTERNAL_alSource);
+				AL10.alSourcePlay(INTERNAL_alSource);
 			}
 		}
 
@@ -357,11 +387,11 @@ namespace Microsoft.Xna.Framework.Audio
 				INTERNAL_timer.Stop();
 				INTERNAL_timer.Reset();
 			}
-			if (INTERNAL_alSource != -1)
+			if (INTERNAL_alSource != 0)
 			{
-				AL.SourceStop(INTERNAL_alSource);
-				AL.DeleteSource(INTERNAL_alSource);
-				INTERNAL_alSource = -1;
+				AL10.alSourceStop(INTERNAL_alSource);
+				AL10.alDeleteSources((IntPtr) 1, ref INTERNAL_alSource);
+				INTERNAL_alSource = 0;
 			}
 		}
 
@@ -377,12 +407,12 @@ namespace Microsoft.Xna.Framework.Audio
 		internal void INTERNAL_applyEffect(DSPEffect effectSlotHandle)
 		{
 			INTERNAL_alEffectSlot = effectSlotHandle.Handle;
-			if (INTERNAL_alSource != -1)
+			if (INTERNAL_alSource != 0)
 			{
-				AL.Source(
+				AL10.alSource3i(
 					INTERNAL_alSource,
-					ALSource3i.EfxAuxiliarySendFilter,
-					INTERNAL_alEffectSlot,
+					EFX.AL_AUXILIARY_SEND_FILTER,
+					(int) INTERNAL_alEffectSlot,
 					0,
 					0
 				);

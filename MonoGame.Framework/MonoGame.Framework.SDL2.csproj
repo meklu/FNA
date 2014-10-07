@@ -355,12 +355,16 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ThirdParty\TheoraPlay#\TheoraPlay-CS.csproj">
-      <Project>{85480198-8711-4355-830E-72FD794AD3F6}</Project>
+      <Project>{47CF0C2E-3710-4188-BB11-30D248B2B5FB}</Project>
       <Name>TheoraPlay-CS</Name>
     </ProjectReference>
     <ProjectReference Include="..\ThirdParty\SDL2#\SDL2-CS.csproj">
       <Project>{85480198-8711-4355-830E-72FD794AD3F6}</Project>
       <Name>SDL2-CS</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ThirdParty\OpenAL#\OpenAL-CS.csproj">
+      <Project>{4FF0E874-ADB4-4AE5-B059-DD6116C4A370}</Project>
+      <Name>OpenAL-CS</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -7,3 +7,6 @@
 [submodule "ThirdParty/MonoKickstart"]
 	path = ThirdParty/MonoKickstart
 	url = https://github.com/flibitijibibo/MonoKickstart.git
+[submodule "ThirdParty/OpenAL#"]
+	path = "ThirdParty/OpenAL#"
+	url = git://github.com/flibitijibibo/OpenAL-CS.git

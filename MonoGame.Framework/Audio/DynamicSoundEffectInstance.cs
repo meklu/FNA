@@ -11,7 +11,7 @@
 using System;
 using System.Collections.Generic;
 
-using OpenTK.Audio.OpenAL;
+using OpenAL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Audio
@@ -38,24 +38,24 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#region Private OpenAL Variables
 
-		private Queue<int> queuedBuffers;
-		private Queue<int> buffersToQueue;
-		private Queue<int> availableBuffers;
+		private Queue<uint> queuedBuffers;
+		private Queue<uint> buffersToQueue;
+		private Queue<uint> availableBuffers;
 
 		#endregion
 
 		#region Private Static XNA->AL Dictionaries
 
-		private static readonly Dictionary<AudioChannels, ALFormat> XNAToShort = new Dictionary<AudioChannels, ALFormat>
+		private static readonly Dictionary<AudioChannels, int> XNAToShort = new Dictionary<AudioChannels, int>
 		{
-			{ AudioChannels.Mono, ALFormat.Mono16 },
-			{ AudioChannels.Stereo, ALFormat.Stereo16 }
+			{ AudioChannels.Mono, AL10.AL_FORMAT_MONO16 },
+			{ AudioChannels.Stereo, AL10.AL_FORMAT_STEREO16 }
 		};
 
-		private static readonly Dictionary<AudioChannels, ALFormat> XNAToFloat = new Dictionary<AudioChannels, ALFormat>
+		private static readonly Dictionary<AudioChannels, int> XNAToFloat = new Dictionary<AudioChannels, int>
 		{
-			{ AudioChannels.Mono, ALFormat.MonoFloat32Ext },
-			{ AudioChannels.Stereo, ALFormat.StereoFloat32Ext }
+			{ AudioChannels.Mono, ALEXT.AL_FORMAT_MONO_FLOAT32 },
+			{ AudioChannels.Stereo, ALEXT.AL_FORMAT_STEREO_FLOAT32 }
 		};
 
 		#endregion
@@ -75,9 +75,9 @@ namespace Microsoft.Xna.Framework.Audio
 
 			PendingBufferCount = 0;
 
-			queuedBuffers = new Queue<int>();
-			buffersToQueue = new Queue<int>();
-			availableBuffers = new Queue<int>();
+			queuedBuffers = new Queue<uint>();
+			buffersToQueue = new Queue<uint>();
+			availableBuffers = new Queue<uint>();
 		}
 
 		#endregion
@@ -100,19 +100,23 @@ namespace Microsoft.Xna.Framework.Audio
 				base.Dispose(); // Will call Stop(true);
 
 				// Delete all known buffer objects
+				uint qBuffer;
 				while (queuedBuffers.Count > 0)
 				{
-					AL.DeleteBuffer(queuedBuffers.Dequeue());
+					qBuffer = queuedBuffers.Dequeue();
+					AL10.alDeleteBuffers((IntPtr) 1, ref qBuffer);
 				}
 				queuedBuffers = null;
 				while (availableBuffers.Count > 0)
 				{
-					AL.DeleteBuffer(availableBuffers.Dequeue());
+					qBuffer = queuedBuffers.Dequeue();
+					AL10.alDeleteBuffers((IntPtr) 1, ref qBuffer);
 				}
 				availableBuffers = null;
 				while (buffersToQueue.Count > 0)
 				{
-					AL.DeleteBuffer(buffersToQueue.Dequeue());
+					qBuffer = queuedBuffers.Dequeue();
+					AL10.alDeleteBuffers((IntPtr) 1, ref qBuffer);
 				}
 				buffersToQueue = null;
 
@@ -156,23 +160,29 @@ namespace Microsoft.Xna.Framework.Audio
 			// Generate a buffer if we don't have any to use.
 			if (availableBuffers.Count == 0)
 			{
-				availableBuffers.Enqueue(AL.GenBuffer());
+				uint buf;
+				AL10.alGenBuffers((IntPtr) 1, out buf);
+				availableBuffers.Enqueue(buf);
 			}
 
 			// Push the data to OpenAL.
-			int newBuf = availableBuffers.Dequeue();
-			AL.BufferData(
+			uint newBuf = availableBuffers.Dequeue();
+			AL10.alBufferData(
 				newBuf,
 				XNAToShort[channels],
 				buffer, // TODO: offset -flibit
-				count,
-				sampleRate
+				(IntPtr) count,
+				(IntPtr) sampleRate
 			);
 
 			// If we're already playing, queue immediately.
 			if (State == SoundState.Playing)
 			{
-				AL.SourceQueueBuffer(INTERNAL_alSource, newBuf);
+				AL10.alSourceQueueBuffers(
+					INTERNAL_alSource,
+					(IntPtr) 1,
+					ref newBuf
+				);
 				queuedBuffers.Enqueue(newBuf);
 			}
 			else
@@ -194,19 +204,19 @@ namespace Microsoft.Xna.Framework.Audio
 				return; // No-op if we're already playing.
 			}
 
-			if (INTERNAL_alSource != -1)
+			if (INTERNAL_alSource != 0)
 			{
 				// The sound has stopped, but hasn't cleaned up yet...
-				AL.SourceStop(INTERNAL_alSource);
-				AL.DeleteSource(INTERNAL_alSource);
-				INTERNAL_alSource = -1;
+				AL10.alSourceStop(INTERNAL_alSource);
+				AL10.alDeleteSources((IntPtr) 1, ref INTERNAL_alSource);
+				INTERNAL_alSource = 0;
 			}
 			while (queuedBuffers.Count > 0)
 			{
 				availableBuffers.Enqueue(queuedBuffers.Dequeue());
 			}
 
-			INTERNAL_alSource = AL.GenSource();
+			AL10.alGenSources((IntPtr) 1, out INTERNAL_alSource);
 			if (INTERNAL_alSource == 0)
 			{
 				System.Console.WriteLine("WARNING: AL SOURCE WAS NOT AVAILABLE. SKIPPING.");
@@ -216,16 +226,26 @@ namespace Microsoft.Xna.Framework.Audio
 			// Queue the buffers to this source
 			while (buffersToQueue.Count > 0)
 			{
-				int nextBuf = buffersToQueue.Dequeue();
+				uint nextBuf = buffersToQueue.Dequeue();
 				queuedBuffers.Enqueue(nextBuf);
-				AL.SourceQueueBuffer(INTERNAL_alSource, nextBuf);
+				AL10.alSourceQueueBuffers(
+					INTERNAL_alSource,
+					(IntPtr) 1,
+					ref nextBuf
+				);
 			}
 
 			// Apply Pan/Position
 			if (INTERNAL_positionalAudio)
 			{
 				INTERNAL_positionalAudio = false;
-				AL.Source(INTERNAL_alSource, ALSource3f.Position, position.X, position.Y, position.Z);
+				AL10.alSource3f(
+					INTERNAL_alSource,
+					AL10.AL_POSITION,
+					position.X,
+					position.Y,
+					position.Z
+				);
 			}
 			else
 			{
@@ -238,7 +258,7 @@ namespace Microsoft.Xna.Framework.Audio
 			Pitch = Pitch;
 
 			// Finally.
-			AL.SourcePlay(INTERNAL_alSource);
+			AL10.alSourcePlay(INTERNAL_alSource);
 			OpenALDevice.Instance.dynamicInstancePool.Add(this);
 
 			// ... but wait! What if we need moar buffers?
@@ -265,14 +285,23 @@ namespace Microsoft.Xna.Framework.Audio
 
 			// Get the processed buffers.
 			int finishedBuffers;
-			AL.GetSource(INTERNAL_alSource, ALGetSourcei.BuffersProcessed, out finishedBuffers);
+			AL10.alGetSourcei(
+				INTERNAL_alSource,
+				AL10.AL_BUFFERS_PROCESSED,
+				out finishedBuffers
+			);
 			if (finishedBuffers == 0)
 			{
 				// Nothing to do... yet.
 				return true;
 			}
 
-			int[] bufs = AL.SourceUnqueueBuffers(INTERNAL_alSource, finishedBuffers);
+			uint[] bufs = new uint[finishedBuffers];
+			AL10.alSourceUnqueueBuffers(
+				INTERNAL_alSource,
+				(IntPtr) finishedBuffers,
+				bufs
+			);
 			PendingBufferCount -= finishedBuffers;
 			if (BufferNeeded != null)
 			{
@@ -283,7 +312,7 @@ namespace Microsoft.Xna.Framework.Audio
 			// Error check our queuedBuffers list.
 			for (int i = 0; i < finishedBuffers; i += 1)
 			{
-				int newBuf = queuedBuffers.Dequeue();
+				uint newBuf = queuedBuffers.Dequeue();
 				if (newBuf != bufs[i])
 				{
 					throw new Exception("Buffer desync!");
@@ -315,23 +344,29 @@ namespace Microsoft.Xna.Framework.Audio
 			// Generate a buffer if we don't have any to use.
 			if (availableBuffers.Count == 0)
 			{
-				availableBuffers.Enqueue(AL.GenBuffer());
+				uint buf;
+				AL10.alGenBuffers((IntPtr) 1, out buf);
+				availableBuffers.Enqueue(buf);
 			}
 
 			// Push the data to OpenAL.
-			int newBuf = availableBuffers.Dequeue();
-			AL.BufferData(
+			uint newBuf = availableBuffers.Dequeue();
+			AL10.alBufferData(
 				newBuf,
 				XNAToFloat[channels],
 				buffer,
-				buffer.Length * 4,
-				sampleRate
+				(IntPtr) (buffer.Length * 4),
+				(IntPtr) sampleRate
 			);
 
 			// If we're already playing, queue immediately.
 			if (State == SoundState.Playing)
 			{
-				AL.SourceQueueBuffer(INTERNAL_alSource, newBuf);
+				AL10.alSourceQueueBuffers(
+					INTERNAL_alSource,
+					(IntPtr) 1,
+					ref newBuf
+				);
 				queuedBuffers.Enqueue(newBuf);
 			}
 			else

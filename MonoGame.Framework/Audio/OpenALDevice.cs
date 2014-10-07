@@ -11,8 +11,7 @@
 using System;
 using System.Collections.Generic;
 
-using OpenTK;
-using OpenTK.Audio.OpenAL;
+using OpenAL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Audio
@@ -29,21 +28,11 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#endregion
 
-		#region Public EFX Entry Points
-
-		public EffectsExtension EFX
-		{
-			get;
-			private set;
-		}
-
-		#endregion
-
 		#region Private ALC Variables
 
 		// OpenAL Device/Context Handles
 		private IntPtr alDevice;
-		private ContextHandle alContext;
+		private IntPtr alContext;
 
 		#endregion
 
@@ -90,40 +79,38 @@ namespace Microsoft.Xna.Framework.Audio
 
 		private OpenALDevice()
 		{
-			alDevice = Alc.OpenDevice(string.Empty);
+			alDevice = ALC10.alcOpenDevice(string.Empty);
 			if (CheckALCError("Could not open AL device") || alDevice == IntPtr.Zero)
 			{
-				throw new Exception("Could not open AL device!");
+				throw new Exception("Could not open audio device!");
 			}
 
 			int[] attribute = new int[0];
-			alContext = Alc.CreateContext(alDevice, attribute);
-			if (CheckALCError("Could not create OpenAL context") || alContext == ContextHandle.Zero)
+			alContext = ALC10.alcCreateContext(alDevice, attribute);
+			if (CheckALCError("Could not create OpenAL context") || alContext == IntPtr.Zero)
 			{
 				Dispose();
 				throw new Exception("Could not create OpenAL context");
 			}
 
-			Alc.MakeContextCurrent(alContext);
+			ALC10.alcMakeContextCurrent(alContext);
 			if (CheckALCError("Could not make OpenAL context current"))
 			{
 				Dispose();
 				throw new Exception("Could not make OpenAL context current");
 			}
 
-			EFX = new EffectsExtension();
-
 			float[] ori = new float[]
 			{
 				0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f
 			};
-			AL.Listener(ALListenerfv.Orientation, ref ori);
-			AL.Listener(ALListener3f.Position, 0.0f, 0.0f, 0.0f);
-			AL.Listener(ALListener3f.Velocity, 0.0f, 0.0f, 0.0f);
-			AL.Listener(ALListenerf.Gain, 1.0f);
+			AL10.alListenerfv(AL10.AL_ORIENTATION, ori);
+			AL10.alListener3f(AL10.AL_POSITION, 0.0f, 0.0f, 0.0f);
+			AL10.alListener3f(AL10.AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+			AL10.alListenerf(AL10.AL_GAIN, 1.0f);
 
 			// We do NOT use automatic attenuation! XNA does not do this!
-			AL.DistanceModel(ALDistanceModel.None);
+			AL10.alDistanceModel(AL10.AL_NONE);
 
 			instancePool = new List<SoundEffectInstance>();
 			dynamicInstancePool = new List<DynamicSoundEffectInstance>();
@@ -135,15 +122,15 @@ namespace Microsoft.Xna.Framework.Audio
 
 		public void Dispose()
 		{
-			Alc.MakeContextCurrent(ContextHandle.Zero);
-			if (alContext != ContextHandle.Zero)
+			ALC10.alcMakeContextCurrent(IntPtr.Zero);
+			if (alContext != IntPtr.Zero)
 			{
-				Alc.DestroyContext(alContext);
-				alContext = ContextHandle.Zero;
+				ALC10.alcDestroyContext(alContext);
+				alContext = IntPtr.Zero;
 			}
 			if (alDevice != IntPtr.Zero)
 			{
-				Alc.CloseDevice(alDevice);
+				ALC10.alcCloseDevice(alDevice);
 				alDevice = IntPtr.Zero;
 			}
 			Instance = null;
@@ -185,9 +172,9 @@ namespace Microsoft.Xna.Framework.Audio
 
 		private void CheckALError()
 		{
-			ALError err = AL.GetError();
+			int err = AL10.alGetError();
 
-			if (err == ALError.NoError)
+			if (err == AL10.AL_NO_ERROR)
 			{
 				return;
 			}
@@ -198,9 +185,9 @@ namespace Microsoft.Xna.Framework.Audio
 		private bool CheckALCError(string message)
 		{
 			bool retVal = false;
-			AlcError err = Alc.GetError(alDevice);
+			int err = ALC10.alcGetError(alDevice);
 
-			if (err != AlcError.NoError)
+			if (err != ALC10.ALC_NO_ERROR)
 			{
 				System.Console.WriteLine("OpenAL Error: " + err.ToString());
 				retVal = true;

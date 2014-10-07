@@ -11,7 +11,7 @@
 using System;
 using System.IO;
 
-using OpenTK.Audio.OpenAL;
+using OpenAL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Audio
@@ -111,7 +111,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#region Internal Audio Data
 
-		internal int INTERNAL_buffer;
+		internal uint INTERNAL_buffer;
 
 		#endregion
 
@@ -235,7 +235,7 @@ namespace Microsoft.Xna.Framework.Audio
 		{
 			if (!IsDisposed)
 			{
-				AL.DeleteBuffer(INTERNAL_buffer);
+				AL10.alDeleteBuffers((IntPtr) 1, ref INTERNAL_buffer);
 				IsDisposed = true;
 			}
 		}
@@ -390,39 +390,57 @@ namespace Microsoft.Xna.Framework.Audio
 			}
 
 			// Generate the buffer now, in case we need to perform alBuffer ops.
-			INTERNAL_buffer = AL.GenBuffer();
+			AL10.alGenBuffers((IntPtr) 1, out INTERNAL_buffer);
 
-			ALFormat format;
+			int format;
 			if (isADPCM)
 			{
-				format = (channels == 2) ? ALFormat.StereoMsadpcmSoft : ALFormat.MonoMsadpcmSoft;
-				AL.Buffer(INTERNAL_buffer, ALBufferi.UnpackBlockAlignmentSoft, formatParameter);
+				format = (channels == 2) ?
+					ALEXT.AL_FORMAT_STEREO_MSADPCM_SOFT :
+					ALEXT.AL_FORMAT_MONO_MSADPCM_SOFT;
+				AL10.alBufferi(
+					INTERNAL_buffer,
+					ALEXT.AL_UNPACK_BLOCK_ALIGNMENT_SOFT,
+					(int) formatParameter
+				);
 			}
 			else
 			{
 				if (formatParameter == 1)
 				{
-					format = (channels == 2) ? ALFormat.Stereo16 : ALFormat.Mono16;
+					format = (channels == 2) ?
+						AL10.AL_FORMAT_STEREO16:
+						AL10.AL_FORMAT_MONO16;
 				}
 				else
 				{
-					format = (channels == 2) ? ALFormat.Stereo8 : ALFormat.Mono8;
+					format = (channels == 2) ?
+						AL10.AL_FORMAT_STEREO8:
+						AL10.AL_FORMAT_MONO8;
 				}
 			}
 
 			// Load it!
-			AL.BufferData(
+			AL10.alBufferData(
 				INTERNAL_buffer,
 				format,
 				data,
-				data.Length,
-				(int) sampleRate
+				(IntPtr) data.Length,
+				(IntPtr) sampleRate
 			);
 
 			// Calculate the duration now, after we've unpacked the buffer
 			int bufLen, bits;
-			AL.GetBuffer(INTERNAL_buffer, ALGetBufferi.Size, out bufLen);
-			AL.GetBuffer(INTERNAL_buffer, ALGetBufferi.Bits, out bits);
+			AL10.alGetBufferi(
+				INTERNAL_buffer,
+				AL10.AL_SIZE,
+				out bufLen
+			);
+			AL10.alGetBufferi(
+				INTERNAL_buffer,
+				AL10.AL_BITS,
+				out bits
+			);
 			Duration = TimeSpan.FromSeconds(
 				bufLen /
 				(bits / 8) /
@@ -433,13 +451,13 @@ namespace Microsoft.Xna.Framework.Audio
 			// Set the loop points, if applicable
 			if (loopStart > 0 || loopEnd > 0)
 			{
-				AL.Buffer(
+				AL10.alBufferiv(
 					INTERNAL_buffer,
-					ALBufferiv.LoopPointsSoft,
-					new uint[]
+					ALEXT.AL_LOOP_POINTS_SOFT,
+					new int[]
 					{
-						loopStart,
-						loopEnd
+						(int) loopStart,
+						(int) loopEnd
 					}
 				);
 			}
