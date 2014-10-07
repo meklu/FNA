@@ -41,7 +41,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 using SDL2;
-using OpenTK.Graphics.OpenGL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics
@@ -52,13 +51,13 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public class OpenGLTexture
 		{
-			public int Handle
+			public uint Handle
 			{
 				get;
 				private set;
 			}
 
-			public TextureTarget Target
+			public GLenum Target
 			{
 				get;
 				private set;
@@ -84,10 +83,14 @@ namespace Microsoft.Xna.Framework.Graphics
 			public int MaxMipmapLevel;
 			public float LODBias;
 
-			public OpenGLTexture(TextureTarget target, SurfaceFormat format, bool hasMipmaps)
-			{
-				Handle = GL.GenTexture();
-				Target = target;
+			public OpenGLTexture(
+				uint handle,
+				Type target,
+				SurfaceFormat format,
+				bool hasMipmaps
+			) {
+				Handle = handle;
+				Target = XNAToGL.TextureType[target];
 				Format = format;
 				HasMipmaps = hasMipmaps;
 
@@ -100,17 +103,11 @@ namespace Microsoft.Xna.Framework.Graphics
 				LODBias = 0.0f;
 			}
 
-			public void Dispose()
-			{
-				GL.DeleteTexture(Handle);
-				Handle = 0;
-			}
-
 			// We can't set a SamplerState Texture to null, so use this.
 			private OpenGLTexture()
 			{
 				Handle = 0;
-				Target = TextureTarget.Texture2D; // FIXME: Assumption! -flibit
+				Target = GLenum.GL_TEXTURE_2D; // FIXME: Assumption! -flibit
 			}
 			public static readonly OpenGLTexture NullTexture = new OpenGLTexture();
 		}
@@ -121,13 +118,13 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public class OpenGLVertexBuffer
 		{
-			public int Handle
+			public uint Handle
 			{
 				get;
 				private set;
 			}
 
-			public BufferUsageHint Dynamic
+			public GLenum Dynamic
 			{
 				get;
 				private set;
@@ -139,13 +136,15 @@ namespace Microsoft.Xna.Framework.Graphics
 				int vertexCount,
 				int vertexStride
 			) {
-				Handle = GL.GenBuffer();
-				Dynamic = dynamic ? BufferUsageHint.StreamDraw : BufferUsageHint.StaticDraw;
+				uint handle;
+				graphicsDevice.GLDevice.glGenBuffers((IntPtr) 1, out handle);
+				Handle = handle;
+				Dynamic = dynamic ? GLenum.GL_STREAM_DRAW : GLenum.GL_STATIC_DRAW;
 
 				graphicsDevice.GLDevice.BindVertexBuffer(this);
-				GL.BufferData(
-					BufferTarget.ArrayBuffer,
-					new IntPtr(vertexStride * vertexCount),
+				graphicsDevice.GLDevice.glBufferData(
+					GLenum.GL_ARRAY_BUFFER,
+					(IntPtr) (vertexStride * vertexCount),
 					IntPtr.Zero,
 					Dynamic
 				);
@@ -164,13 +163,13 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public class OpenGLIndexBuffer
 		{
-			public int Handle
+			public uint Handle
 			{
 				get;
 				private set;
 			}
 
-			public BufferUsageHint Dynamic
+			public GLenum Dynamic
 			{
 				get;
 				private set;
@@ -188,13 +187,15 @@ namespace Microsoft.Xna.Framework.Graphics
 				int indexCount,
 				IndexElementSize elementSize
 			) {
-				Handle = GL.GenBuffer();
-				Dynamic = dynamic ? BufferUsageHint.StreamDraw : BufferUsageHint.StaticDraw;
+				uint handle;
+				graphicsDevice.GLDevice.glGenBuffers((IntPtr) 1, out handle);
+				Handle = handle;
+				Dynamic = dynamic ? GLenum.GL_STREAM_DRAW : GLenum.GL_STATIC_DRAW;
 				BufferSize = (IntPtr) (indexCount * (elementSize == IndexElementSize.SixteenBits ? 2 : 4));
 
 				graphicsDevice.GLDevice.BindIndexBuffer(this);
-				GL.BufferData(
-					BufferTarget.ElementArrayBuffer,
+				graphicsDevice.GLDevice.glBufferData(
+					GLenum.GL_ELEMENT_ARRAY_BUFFER,
 					BufferSize,
 					IntPtr.Zero,
 					Dynamic
@@ -218,9 +219,9 @@ namespace Microsoft.Xna.Framework.Graphics
 			public int Divisor;
 
 			// Checked in VertexAttribPointer
-			public int CurrentBuffer;
+			public uint CurrentBuffer;
 			public int CurrentSize;
-			public VertexAttribPointerType CurrentType;
+			public VertexElementFormat CurrentType;
 			public bool CurrentNormalized;
 			public int CurrentStride;
 			public IntPtr CurrentPointer;
@@ -230,7 +231,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				Divisor = 0;
 				CurrentBuffer = 0;
 				CurrentSize = 4;
-				CurrentType = VertexAttribPointerType.Float;
+				CurrentType = VertexElementFormat.Single;
 				CurrentNormalized = false;
 				CurrentStride = 0;
 				CurrentPointer = IntPtr.Zero;
@@ -345,18 +346,36 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Buffer Binding Cache Variables
 
-		private int currentVertexBuffer = 0;
-		private int currentIndexBuffer = 0;
+		private uint currentVertexBuffer = 0;
+		private uint currentIndexBuffer = 0;
 
 		#endregion
 
 		#region Render Target Cache Variables
 
-		private int targetFramebuffer = 0;
-		private int[] currentAttachments;
-		private TextureTarget[] currentAttachmentFaces;
+		private uint currentReadFramebuffer = 0;
+		public uint CurrentReadFramebuffer
+		{
+			get
+			{
+				return currentReadFramebuffer;
+			}
+		}
+
+		private uint currentDrawFramebuffer = 0;
+		public uint CurrentDrawFramebuffer
+		{
+			get
+			{
+				return currentDrawFramebuffer;
+			}
+		}
+
+		private uint targetFramebuffer = 0;
+		private uint[] currentAttachments;
+		private GLenum[] currentAttachmentFaces;
 		private int currentDrawBuffers;
-		private DrawBuffersEnum[] drawBuffersArray;
+		private GLenum[] drawBuffersArray;
 		private uint currentRenderbuffer;
 		private DepthFormat currentDepthStencilFormat;
 
@@ -446,20 +465,16 @@ namespace Microsoft.Xna.Framework.Graphics
 			SDL.SDL_GL_MakeCurrent(presentationParameters.DeviceWindowHandle, glContext);
 #endif
 
-			// Load OpenGL entry points
-			GL.LoadAll();
-
-			// Initialize ARB_debug_output callback
-			DebugOutput.Initialize();
+			// Initialize entry points
+			LoadGLEntryPoints();
 
 			// Print GL information
-			System.Console.WriteLine("OpenGL Device: " + GL.GetString(StringName.Renderer));
-			System.Console.WriteLine("OpenGL Driver: " + GL.GetString(StringName.Version));
-			System.Console.WriteLine("OpenGL Vendor: " + GL.GetString(StringName.Vendor));
+			System.Console.WriteLine("OpenGL Device: " + glGetString(GLenum.GL_RENDERER));
+			System.Console.WriteLine("OpenGL Driver: " + glGetString(GLenum.GL_VERSION));
+			System.Console.WriteLine("OpenGL Vendor: " + glGetString(GLenum.GL_VENDOR));
 			
 			// Load the extension list, initialize extension-dependent components
-			Extensions = GL.GetString(StringName.Extensions);
-			Framebuffer.Initialize();
+			Extensions = glGetString(GLenum.GL_EXTENSIONS);
 			SupportsS3tc = (
 				Extensions.Contains("GL_EXT_texture_compression_s3tc") ||
 				Extensions.Contains("GL_OES_texture_compression_S3TC") ||
@@ -486,6 +501,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			// Initialize the faux-backbuffer
 			Backbuffer = new FauxBackbuffer(
+				this,
 				GraphicsDeviceManager.DefaultBackBufferWidth,
 				GraphicsDeviceManager.DefaultBackBufferHeight,
 				DepthFormat.Depth16
@@ -493,7 +509,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			// Initialize texture collection array
 			int numSamplers;
-			GL.GetInteger(GetPName.MaxTextureImageUnits, out numSamplers);
+			glGetIntegerv(GLenum.GL_MAX_TEXTURE_UNITS, out numSamplers);
 			Textures = new OpenGLTexture[numSamplers];
 			for (int i = 0; i < numSamplers; i += 1)
 			{
@@ -503,7 +519,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			// Initialize vertex attribute state array
 			int numAttributes;
-			GL.GetInteger(GetPName.MaxVertexAttribs, out numAttributes);
+			glGetIntegerv(GLenum.GL_MAX_VERTEX_ATTRIBS, out numAttributes);
 			Attributes = new OpenGLVertexAttribute[numAttributes];
 			AttributeEnabled = new bool[numAttributes];
 			previousAttributeEnabled = new bool[numAttributes];
@@ -518,20 +534,20 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			// Initialize render target FBO and state arrays
 			int numAttachments;
-			GL.GetInteger(GetPName.MaxDrawBuffers, out numAttachments);
-			currentAttachments = new int[numAttachments];
-			currentAttachmentFaces = new TextureTarget[numAttachments];
-			drawBuffersArray = new DrawBuffersEnum[numAttachments];
+			glGetIntegerv(GLenum.GL_MAX_DRAW_BUFFERS, out numAttachments);
+			currentAttachments = new uint[numAttachments];
+			currentAttachmentFaces = new GLenum[numAttachments];
+			drawBuffersArray = new GLenum[numAttachments];
 			for (int i = 0; i < numAttachments; i += 1)
 			{
 				currentAttachments[i] = 0;
-				currentAttachmentFaces[i] = TextureTarget.Texture2D;
-				drawBuffersArray[i] = DrawBuffersEnum.ColorAttachment0 + i;
+				currentAttachmentFaces[i] = GLenum.GL_TEXTURE_2D;
+				drawBuffersArray[i] = GLenum.GL_COLOR_ATTACHMENT0 + i;
 			}
 			currentDrawBuffers = 0;
 			currentRenderbuffer = 0;
 			currentDepthStencilFormat = DepthFormat.None;
-			targetFramebuffer = Framebuffer.GenFramebuffer();
+			glGenFramebuffers((IntPtr) 1, out targetFramebuffer);
 		}
 
 		#endregion
@@ -540,11 +556,10 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public void Dispose()
 		{
-			Framebuffer.DeleteFramebuffer(targetFramebuffer);
+			glDeleteFramebuffers((IntPtr) 1, ref targetFramebuffer);
 			targetFramebuffer = 0;
 			Backbuffer.Dispose();
 			Backbuffer = null;
-			Framebuffer.Clear();
 
 #if THREADED_GL
 			SDL.SDL_GL_DeleteContext(Threading.BackgroundContext.context);
@@ -568,31 +583,31 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			if (scissorTestEnable)
 			{
-				GL.Disable(EnableCap.ScissorTest);
+				glDisable(GLenum.GL_SCISSOR_TEST);
 			}
 
-			Framebuffer.BindReadFramebuffer(Backbuffer.Handle);
-			Framebuffer.BindDrawFramebuffer(0);
+			BindReadFramebuffer(Backbuffer.Handle);
+			BindDrawFramebuffer(0);
 
-			Framebuffer.BlitFramebuffer(
-				Backbuffer.Width,
-				Backbuffer.Height,
-				windowWidth,
-				windowHeight
+			glBlitFramebuffer(
+				0, 0, Backbuffer.Width, Backbuffer.Height,
+				0, 0, windowWidth, windowHeight,
+				GLenum.GL_COLOR_BUFFER_BIT,
+				GLenum.GL_LINEAR
 			);
 
-			Framebuffer.BindFramebuffer(0);
+			BindFramebuffer(0);
 
 			if (scissorTestEnable)
 			{
-				GL.Enable(EnableCap.ScissorTest);
+				glEnable(GLenum.GL_SCISSOR_TEST);
 			}
 #endif
 
 			SDL.SDL_GL_SwapWindow(
 				overrideWindowHandle
 			);
-			Framebuffer.BindFramebuffer(Backbuffer.Handle);
+			BindFramebuffer(Backbuffer.Handle);
 		}
 
 		#endregion
@@ -610,11 +625,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (vp.Bounds != viewport)
 			{
 				viewport = vp.Bounds;
-				GL.Viewport(
+				glViewport(
 					viewport.X,
 					viewport.Y,
-					viewport.Width,
-					viewport.Height
+					(IntPtr) viewport.Width,
+					(IntPtr) viewport.Height
 				);
 			}
 
@@ -622,7 +637,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				depthRangeMin = vp.MinDepth;
 				depthRangeMax = vp.MaxDepth;
-				GL.DepthRange((double) depthRangeMin, (double) depthRangeMax);
+				glDepthRange((double) depthRangeMin, (double) depthRangeMax);
 			}
 		}
 
@@ -639,11 +654,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (scissorRect != scissorRectangle)
 			{
 				scissorRectangle = scissorRect;
-				GL.Scissor(
+				glScissor(
 					scissorRectangle.X,
 					scissorRectangle.Y,
-					scissorRectangle.Width,
-					scissorRectangle.Height
+					(IntPtr) scissorRectangle.Width,
+					(IntPtr) scissorRectangle.Height
 				);
 			}
 		}
@@ -659,7 +674,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (newEnable != alphaBlendEnable)
 			{
 				alphaBlendEnable = newEnable;
-				ToggleGLState(EnableCap.Blend, alphaBlendEnable);
+				ToggleGLState(GLenum.GL_BLEND, alphaBlendEnable);
 			}
 
 			if (alphaBlendEnable)
@@ -667,7 +682,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				if (blendState.BlendFactor != blendColor)
 				{
 					blendColor = blendState.BlendFactor;
-					GL.BlendColor(
+					glBlendColor(
 						blendColor.R / 255.0f,
 						blendColor.G / 255.0f,
 						blendColor.B / 255.0f,
@@ -684,11 +699,11 @@ namespace Microsoft.Xna.Framework.Graphics
 					dstBlend = blendState.ColorDestinationBlend;
 					srcBlendAlpha = blendState.AlphaSourceBlend;
 					dstBlendAlpha = blendState.AlphaDestinationBlend;
-					GL.BlendFuncSeparate(
-						XNAToGL.BlendModeSrc[srcBlend],
-						XNAToGL.BlendModeDst[dstBlend],
-						XNAToGL.BlendModeSrc[srcBlendAlpha],
-						XNAToGL.BlendModeDst[dstBlendAlpha]
+					glBlendFuncSeparate(
+						XNAToGL.BlendMode[srcBlend],
+						XNAToGL.BlendMode[dstBlend],
+						XNAToGL.BlendMode[srcBlendAlpha],
+						XNAToGL.BlendMode[dstBlendAlpha]
 					);
 				}
 
@@ -697,7 +712,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				{
 					blendOp = blendState.ColorBlendFunction;
 					blendOpAlpha = blendState.AlphaBlendFunction;
-					GL.BlendEquationSeparate(
+					glBlendEquationSeparate(
 						XNAToGL.BlendEquation[blendOp],
 						XNAToGL.BlendEquation[blendOpAlpha]
 					);
@@ -706,7 +721,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				if (blendState.ColorWriteChannels != colorWriteEnable)
 				{
 					colorWriteEnable = blendState.ColorWriteChannels;
-					GL.ColorMask(
+					glColorMask(
 						(colorWriteEnable & ColorWriteChannels.Red) != 0,
 						(colorWriteEnable & ColorWriteChannels.Green) != 0,
 						(colorWriteEnable & ColorWriteChannels.Blue) != 0,
@@ -721,7 +736,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (depthStencilState.DepthBufferEnable != zEnable)
 			{
 				zEnable = depthStencilState.DepthBufferEnable;
-				ToggleGLState(EnableCap.DepthTest, zEnable);
+				ToggleGLState(GLenum.GL_DEPTH_TEST, zEnable);
 			}
 
 			if (zEnable)
@@ -729,20 +744,20 @@ namespace Microsoft.Xna.Framework.Graphics
 				if (depthStencilState.DepthBufferWriteEnable != zWriteEnable)
 				{
 					zWriteEnable = depthStencilState.DepthBufferWriteEnable;
-					GL.DepthMask(zWriteEnable);
+					glDepthMask(zWriteEnable);
 				}
 
 				if (depthStencilState.DepthBufferFunction != depthFunc)
 				{
 					depthFunc = depthStencilState.DepthBufferFunction;
-					GL.DepthFunc(XNAToGL.DepthFunc[depthFunc]);
+					glDepthFunc(XNAToGL.CompareFunc[depthFunc]);
 				}
 			}
 
 			if (depthStencilState.StencilEnable != stencilEnable)
 			{
 				stencilEnable = depthStencilState.StencilEnable;
-				ToggleGLState(EnableCap.StencilTest, stencilEnable);
+				ToggleGLState(GLenum.GL_STENCIL_TEST, stencilEnable);
 			}
 
 			if (stencilEnable)
@@ -750,7 +765,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				if (depthStencilState.StencilWriteMask != stencilWriteMask)
 				{
 					stencilWriteMask = depthStencilState.StencilWriteMask;
-					GL.StencilMask(stencilWriteMask);
+					glStencilMask(stencilWriteMask);
 				}
 
 				// TODO: Can we split StencilFunc/StencilOp up nicely? -flibit
@@ -779,26 +794,26 @@ namespace Microsoft.Xna.Framework.Graphics
 						ccwStencilFail = depthStencilState.CounterClockwiseStencilFail;
 						ccwStencilZFail = depthStencilState.CounterClockwiseStencilDepthBufferFail;
 						ccwStencilPass = depthStencilState.CounterClockwiseStencilPass;
-						GL.StencilFuncSeparate(
-							(Version20) CullFaceMode.Front,
-							XNAToGL.StencilFunc[stencilFunc],
+						glStencilFuncSeparate(
+							GLenum.GL_FRONT,
+							XNAToGL.CompareFunc[stencilFunc],
 							stencilRef,
 							stencilMask
 						);
-						GL.StencilFuncSeparate(
-							(Version20) CullFaceMode.Back,
-							XNAToGL.StencilFunc[ccwStencilFunc],
+						glStencilFuncSeparate(
+							GLenum.GL_BACK,
+							XNAToGL.CompareFunc[ccwStencilFunc],
 							stencilRef,
 							stencilMask
 						);
-						GL.StencilOpSeparate(
-							StencilFace.Front,
+						glStencilOpSeparate(
+							GLenum.GL_FRONT,
 							XNAToGL.GLStencilOp[stencilFail],
 							XNAToGL.GLStencilOp[stencilZFail],
 							XNAToGL.GLStencilOp[stencilPass]
 						);
-						GL.StencilOpSeparate(
-							StencilFace.Back,
+						glStencilOpSeparate(
+							GLenum.GL_BACK,
 							XNAToGL.GLStencilOp[ccwStencilFail],
 							XNAToGL.GLStencilOp[ccwStencilZFail],
 							XNAToGL.GLStencilOp[ccwStencilPass]
@@ -806,12 +821,12 @@ namespace Microsoft.Xna.Framework.Graphics
 					}
 					else
 					{
-						GL.StencilFunc(
-							XNAToGL.StencilFunc[stencilFunc],
+						glStencilFunc(
+							XNAToGL.CompareFunc[stencilFunc],
 							stencilRef,
 							stencilMask
 						);
-						GL.StencilOp(
+						glStencilOp(
 							XNAToGL.GLStencilOp[stencilFail],
 							XNAToGL.GLStencilOp[stencilZFail],
 							XNAToGL.GLStencilOp[stencilPass]
@@ -828,7 +843,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (rasterizerState.ScissorTestEnable != scissorTestEnable)
 			{
 				scissorTestEnable = rasterizerState.ScissorTestEnable;
-				ToggleGLState(EnableCap.ScissorTest, scissorTestEnable);
+				ToggleGLState(GLenum.GL_SCISSOR_TEST, scissorTestEnable);
 			}
 
 			CullMode actualMode;
@@ -856,25 +871,25 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				if ((actualMode == CullMode.None) != (cullFrontFace == CullMode.None))
 				{
-					ToggleGLState(EnableCap.CullFace, actualMode != CullMode.None);
+					ToggleGLState(GLenum.GL_CULL_FACE, actualMode != CullMode.None);
 					if (actualMode != CullMode.None)
 					{
-						// FIXME: XNA/MonoGame-specific behavior? -flibit
-						GL.CullFace(CullFaceMode.Back);
+						// FIXME: XNA/FNA-specific behavior? -flibit
+						glCullFace(GLenum.GL_BACK);
 					}
 				}
 				cullFrontFace = actualMode;
 				if (cullFrontFace != CullMode.None)
 				{
-					GL.FrontFace(XNAToGL.FrontFace[cullFrontFace]);
+					glFrontFace(XNAToGL.FrontFace[cullFrontFace]);
 				}
 			}
 
 			if (rasterizerState.FillMode != fillMode)
 			{
 				fillMode = rasterizerState.FillMode;
-				GL.PolygonMode(
-					MaterialFace.FrontAndBack,
+				glPolygonMode(
+					GLenum.GL_FRONT_AND_BACK,
 					XNAToGL.GLFillMode[fillMode]
 				);
 			}
@@ -888,12 +903,12 @@ namespace Microsoft.Xna.Framework.Graphics
 					slopeScaleDepthBias = rasterizerState.SlopeScaleDepthBias;
 					if (depthBias == 0.0f && slopeScaleDepthBias == 0.0f)
 					{
-						ToggleGLState(EnableCap.PolygonOffsetFill, false);
+						glDisable(GLenum.GL_POLYGON_OFFSET_FILL);
 					}
 					else
 					{
-						ToggleGLState(EnableCap.PolygonOffsetFill, true);
-						GL.PolygonOffset(slopeScaleDepthBias, depthBias);
+						glEnable(GLenum.GL_POLYGON_OFFSET_FILL);
+						glPolygonOffset(slopeScaleDepthBias, depthBias);
 					}
 				}
 			}
@@ -907,13 +922,13 @@ namespace Microsoft.Xna.Framework.Graphics
 				{
 					if (index != 0)
 					{
-						GL.ActiveTexture(TextureUnit.Texture0 + index);
+						glActiveTexture(GLenum.GL_TEXTURE0 + index);
 					}
-					GL.BindTexture(Textures[index].Target, 0);
+					glBindTexture(Textures[index].Target, 0);
 					if (index != 0)
 					{
 						// Keep this state sane. -flibit
-						GL.ActiveTexture(TextureUnit.Texture0);
+						glActiveTexture(GLenum.GL_TEXTURE0);
 					}
 					Textures[index] = OpenGLTexture.NullTexture;
 				}
@@ -936,7 +951,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Set the active texture slot
 			if (index != 0)
 			{
-				GL.ActiveTexture(TextureUnit.Texture0 + index);
+				glActiveTexture(GLenum.GL_TEXTURE0 + index);
 			}
 
 			// Bind the correct texture
@@ -945,9 +960,9 @@ namespace Microsoft.Xna.Framework.Graphics
 				if (texture.texture.Target != Textures[index].Target)
 				{
 					// If we're changing targets, unbind the old texture first!
-					GL.BindTexture(Textures[index].Target, 0);
+					glBindTexture(Textures[index].Target, 0);
 				}
-				GL.BindTexture(texture.texture.Target, texture.texture.Handle);
+				glBindTexture(texture.texture.Target, texture.texture.Handle);
 				Textures[index] = texture.texture;
 			}
 
@@ -955,27 +970,27 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (sampler.AddressU != texture.texture.WrapS)
 			{
 				texture.texture.WrapS = sampler.AddressU;
-				GL.TexParameter(
+				glTexParameteri(
 					texture.texture.Target,
-					TextureParameterName.TextureWrapS,
+					GLenum.GL_TEXTURE_WRAP_S,
 					(int) XNAToGL.Wrap[texture.texture.WrapS]
 				);
 			}
 			if (sampler.AddressV != texture.texture.WrapT)
 			{
 				texture.texture.WrapT = sampler.AddressV;
-				GL.TexParameter(
+				glTexParameteri(
 					texture.texture.Target,
-					TextureParameterName.TextureWrapT,
+					GLenum.GL_TEXTURE_WRAP_T,
 					(int) XNAToGL.Wrap[texture.texture.WrapT]
 				);
 			}
 			if (sampler.AddressW != texture.texture.WrapR)
 			{
 				texture.texture.WrapR = sampler.AddressW;
-				GL.TexParameter(
+				glTexParameteri(
 					texture.texture.Target,
-					TextureParameterName.TextureWrapR,
+					GLenum.GL_TEXTURE_WRAP_R,
 					(int) XNAToGL.Wrap[texture.texture.WrapR]
 				);
 			}
@@ -984,23 +999,23 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				texture.texture.Filter = sampler.Filter;
 				texture.texture.Anistropy = sampler.MaxAnisotropy;
-				GL.TexParameter(
+				glTexParameteri(
 					texture.texture.Target,
-					TextureParameterName.TextureMagFilter,
+					GLenum.GL_TEXTURE_MAG_FILTER,
 					(int) XNAToGL.MagFilter[texture.texture.Filter]
 				);
-				GL.TexParameter(
+				glTexParameteri(
 					texture.texture.Target,
-					TextureParameterName.TextureMinFilter,
+					GLenum.GL_TEXTURE_MIN_FILTER,
 					(int) (
 						texture.texture.HasMipmaps ?
 							XNAToGL.MinMipFilter[texture.texture.Filter] :
 							XNAToGL.MinFilter[texture.texture.Filter]
 					)
 				);
-				GL.TexParameter(
+				glTexParameterf(
 					texture.texture.Target,
-					(TextureParameterName) ExtTextureFilterAnisotropic.TextureMaxAnisotropyExt,
+					GLenum.GL_TEXTURE_MAX_ANISOTROPY_EXT,
 					(texture.texture.Filter == TextureFilter.Anisotropic) ?
 						Math.Max(texture.texture.Anistropy, 1.0f) :
 						1.0f
@@ -1009,18 +1024,18 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (sampler.MaxMipLevel != texture.texture.MaxMipmapLevel)
 			{
 				texture.texture.MaxMipmapLevel = sampler.MaxMipLevel;
-				GL.TexParameter(
+				glTexParameteri(
 					texture.texture.Target,
-					TextureParameterName.TextureBaseLevel,
+					GLenum.GL_TEXTURE_BASE_LEVEL,
 					texture.texture.MaxMipmapLevel
 				);
 			}
 			if (sampler.MipMapLevelOfDetailBias != texture.texture.LODBias)
 			{
 				texture.texture.LODBias = sampler.MipMapLevelOfDetailBias;
-				GL.TexParameter(
+				glTexParameterf(
 					texture.texture.Target,
-					TextureParameterName.TextureLodBias,
+					GLenum.GL_TEXTURE_LOD_BIAS,
 					texture.texture.LODBias
 				);
 			}
@@ -1028,7 +1043,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			if (index != 0)
 			{
 				// Keep this state sane. -flibit
-				GL.ActiveTexture(TextureUnit.Texture0);
+				glActiveTexture(GLenum.GL_TEXTURE0);
 			}
 		}
 
@@ -1045,19 +1060,19 @@ namespace Microsoft.Xna.Framework.Graphics
 					AttributeEnabled[i] = false;
 					if (!previousAttributeEnabled[i])
 					{
-						GL.EnableVertexAttribArray(i);
+						glEnableVertexAttribArray(i);
 						previousAttributeEnabled[i] = true;
 					}
 				}
 				else if (previousAttributeEnabled[i])
 				{
-					GL.DisableVertexAttribArray(i);
+					glDisableVertexAttribArray(i);
 					previousAttributeEnabled[i] = false;
 				}
 
 				if (Attributes[i].Divisor != previousAttributeDivisor[i])
 				{
-					GL.VertexAttribDivisor(i, Attributes[i].Divisor);
+					glVertexAttribDivisor(i, Attributes[i].Divisor);
 					previousAttributeDivisor[i] = Attributes[i].Divisor;
 				}
 			}
@@ -1070,7 +1085,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		public void VertexAttribPointer(
 			int location,
 			int size,
-			VertexAttribPointerType type,
+			VertexElementFormat type,
 			bool normalized,
 			int stride,
 			IntPtr pointer
@@ -1082,12 +1097,12 @@ namespace Microsoft.Xna.Framework.Graphics
 				Attributes[location].CurrentNormalized != normalized ||
 				Attributes[location].CurrentStride != stride	)
 			{
-				GL.VertexAttribPointer(
+				glVertexAttribPointer(
 					location,
 					size,
-					type,
+					XNAToGL.PointerType[type],
 					normalized,
-					stride,
+					(IntPtr) stride,
 					pointer
 				);
 				Attributes[location].CurrentBuffer = currentVertexBuffer;
@@ -1107,7 +1122,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (buffer.Handle != currentVertexBuffer)
 			{
-				GL.BindBuffer(BufferTarget.ArrayBuffer, buffer.Handle);
+				glBindBuffer(GLenum.GL_ARRAY_BUFFER, buffer.Handle);
 				currentVertexBuffer = buffer.Handle;
 			}
 		}
@@ -1116,7 +1131,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (buffer.Handle != currentIndexBuffer)
 			{
-				GL.BindBuffer(BufferTarget.ElementArrayBuffer, buffer.Handle);
+				glBindBuffer(GLenum.GL_ELEMENT_ARRAY_BUFFER, buffer.Handle);
 				currentIndexBuffer = buffer.Handle;
 			}
 		}
@@ -1140,8 +1155,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			if (options == SetDataOptions.Discard)
 			{
-				GL.BufferData(
-					BufferTarget.ArrayBuffer,
+				glBufferData(
+					GLenum.GL_ARRAY_BUFFER,
 					(IntPtr) bufferSize,
 					IntPtr.Zero,
 					handle.Dynamic
@@ -1150,8 +1165,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			GCHandle dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 
-			GL.BufferSubData(
-				BufferTarget.ArrayBuffer,
+			glBufferSubData(
+				GLenum.GL_ARRAY_BUFFER,
 				(IntPtr) offsetInBytes,
 				(IntPtr) (elementSizeInBytes * elementCount),
 				(IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startIndex * elementSizeInBytes)
@@ -1172,8 +1187,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			if (options == SetDataOptions.Discard)
 			{
-				GL.BufferData(
-					BufferTarget.ElementArrayBuffer,
+				glBufferData(
+					GLenum.GL_ELEMENT_ARRAY_BUFFER,
 					handle.BufferSize,
 					IntPtr.Zero,
 					handle.Dynamic
@@ -1183,8 +1198,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			GCHandle dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 
 			int elementSizeInBytes = Marshal.SizeOf(typeof(T));
-			GL.BufferSubData(
-				BufferTarget.ElementArrayBuffer,
+			glBufferSubData(
+				GLenum.GL_ELEMENT_ARRAY_BUFFER,
 				(IntPtr) offsetInBytes,
 				(IntPtr) (elementSizeInBytes * elementCount),
 				(IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startIndex * elementSizeInBytes)
@@ -1207,7 +1222,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		) where T : struct {
 			BindVertexBuffer(handle);
 
-			IntPtr ptr = GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.ReadOnly);
+			IntPtr ptr = glMapBuffer(GLenum.GL_ARRAY_BUFFER, GLenum.GL_READ_ONLY);
 
 			// Pointer to the start of data to read in the index buffer
 			ptr = new IntPtr(ptr.ToInt64() + offsetInBytes);
@@ -1250,7 +1265,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				dataHandle.Free();
 			}
 
-			GL.UnmapBuffer(BufferTarget.ArrayBuffer);
+			glUnmapBuffer(GLenum.GL_ARRAY_BUFFER);
 		}
 
 		public void GetIndexBufferData<T>(
@@ -1262,7 +1277,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		) where T : struct {
 			BindIndexBuffer(handle);
 
-			IntPtr ptr = GL.MapBuffer(BufferTarget.ElementArrayBuffer, BufferAccess.ReadOnly);
+			IntPtr ptr = glMapBuffer(GLenum.GL_ELEMENT_ARRAY_BUFFER, GLenum.GL_READ_ONLY);
 
 			// Pointer to the start of data to read in the index buffer
 			ptr = new IntPtr(ptr.ToInt64() + offsetInBytes);
@@ -1283,7 +1298,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				Buffer.BlockCopy(buffer, 0, data, startIndex * elementSizeInBytes, elementCount * elementSizeInBytes);
 			}
 
-			GL.UnmapBuffer(BufferTarget.ArrayBuffer);
+			glUnmapBuffer(GLenum.GL_ELEMENT_ARRAY_BUFFER);
 		}
 
 		#endregion
@@ -1294,20 +1309,22 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (buffer.Handle == currentVertexBuffer)
 			{
-				GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+				glBindBuffer(GLenum.GL_ARRAY_BUFFER, 0);
 				currentVertexBuffer = 0;
 			}
-			GL.DeleteBuffer(0);
+			uint handle = buffer.Handle;
+			glDeleteBuffers((IntPtr) 1, ref handle);
 		}
 
 		public void DeleteIndexBuffer(OpenGLIndexBuffer buffer)
 		{
 			if (buffer.Handle == currentIndexBuffer)
 			{
-				GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+				glBindBuffer(GLenum.GL_ELEMENT_ARRAY_BUFFER, 0);
 				currentIndexBuffer = 0;
 			}
-			GL.DeleteBuffer(0);
+			uint handle = buffer.Handle;
+			glDeleteBuffers((IntPtr) 1, ref handle);
 		}
 
 		#endregion
@@ -1316,50 +1333,53 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public OpenGLTexture CreateTexture(Type target, SurfaceFormat format, bool hasMipmaps)
 		{
+			uint handle;
+			glGenTextures((IntPtr) 1, out handle);
 			OpenGLTexture result = new OpenGLTexture(
-				XNAToGL.TextureType[target],
+				handle,
+				target,
 				format,
 				hasMipmaps
 			);
 			BindTexture(result);
-			GL.TexParameter(
+			glTexParameteri(
 				result.Target,
-				TextureParameterName.TextureWrapS,
+				GLenum.GL_TEXTURE_WRAP_S,
 				(int) XNAToGL.Wrap[result.WrapS]
 			);
-			GL.TexParameter(
+			glTexParameteri(
 				result.Target,
-				TextureParameterName.TextureWrapT,
+				GLenum.GL_TEXTURE_WRAP_T,
 				(int) XNAToGL.Wrap[result.WrapT]
 			);
-			GL.TexParameter(
+			glTexParameteri(
 				result.Target,
-				TextureParameterName.TextureWrapR,
+				GLenum.GL_TEXTURE_WRAP_R,
 				(int) XNAToGL.Wrap[result.WrapR]
 			);
-			GL.TexParameter(
+			glTexParameteri(
 				result.Target,
-				TextureParameterName.TextureMagFilter,
+				GLenum.GL_TEXTURE_MAG_FILTER,
 				(int) XNAToGL.MagFilter[result.Filter]
 			);
-			GL.TexParameter(
+			glTexParameteri(
 				result.Target,
-				TextureParameterName.TextureMinFilter,
+				GLenum.GL_TEXTURE_MIN_FILTER,
 				(int) (result.HasMipmaps ? XNAToGL.MinMipFilter[result.Filter] : XNAToGL.MinFilter[result.Filter])
 			);
-			GL.TexParameter(
+			glTexParameterf(
 				result.Target,
-				(TextureParameterName) ExtTextureFilterAnisotropic.TextureMaxAnisotropyExt,
+				GLenum.GL_TEXTURE_MAX_ANISOTROPY_EXT,
 				(result.Filter == TextureFilter.Anisotropic) ? Math.Max(result.Anistropy, 1.0f) : 1.0f
 			);
-			GL.TexParameter(
+			glTexParameteri(
 				result.Target,
-				TextureParameterName.TextureBaseLevel,
+				GLenum.GL_TEXTURE_BASE_LEVEL,
 				result.MaxMipmapLevel
 			);
-			GL.TexParameter(
+			glTexParameterf(
 				result.Target,
-				TextureParameterName.TextureLodBias,
+				GLenum.GL_TEXTURE_LOD_BIAS,
 				result.LODBias
 			);
 			return result;
@@ -1373,11 +1393,11 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (texture.Target != Textures[0].Target)
 			{
-				GL.BindTexture(Textures[0].Target, 0);
+				glBindTexture(Textures[0].Target, 0);
 			}
 			if (texture != Textures[0])
 			{
-				GL.BindTexture(
+				glBindTexture(
 					texture.Target,
 					texture.Handle
 				);
@@ -1396,10 +1416,11 @@ namespace Microsoft.Xna.Framework.Graphics
 				if (texture.Handle == currentAttachments[i])
 				{
 					// Force an attachment update, this no longer exists!
-					currentAttachments[i] = -1;
+					currentAttachments[i] = uint.MaxValue;
 				}
 			}
-			texture.Dispose();
+			uint handle = texture.Handle;
+			glDeleteTextures((IntPtr) 1, ref handle);
 		}
 
 		#endregion
@@ -1407,7 +1428,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		#region glReadPixels Method
 
 		/// <summary>
-		/// Attempts to read the texture data directly from the FBO using GL.ReadPixels
+		/// Attempts to read the texture data directly from the FBO using glReadPixels
 		/// </summary>
 		/// <typeparam name="T">Texture data type</typeparam>
 		/// <param name="texture">The texture to read from</param>
@@ -1425,25 +1446,27 @@ namespace Microsoft.Xna.Framework.Graphics
 				currentAttachments != null &&				
 				currentAttachments[0] == texture.Handle	)
 			{
-				int oldReadFramebuffer = Framebuffer.CurrentReadFramebuffer;
+				uint oldReadFramebuffer = CurrentReadFramebuffer;
 				if (oldReadFramebuffer != targetFramebuffer)
 				{
-					Framebuffer.BindReadFramebuffer(targetFramebuffer);
+					BindReadFramebuffer(targetFramebuffer);
 				}
 
 				/* glReadPixels should be faster than reading
 				 * back from the render target if we are already bound.
 				 */
+				GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+				// FIXME: Try/Catch with the GCHandle -flibit
 				if (rect.HasValue)
 				{
-					GL.ReadPixels(
+					glReadPixels(
 						rect.Value.Left,
 						rect.Value.Top,
-						rect.Value.Width,
-						rect.Value.Height,
-						PixelFormat.Rgba,
-						PixelType.UnsignedByte,
-						data
+						(IntPtr) rect.Value.Width,
+						(IntPtr) rect.Value.Height,
+						GLenum.GL_RGBA, // FIXME: Assumption!
+						GLenum.GL_UNSIGNED_BYTE,
+						handle.AddrOfPinnedObject()
 					);
 				}
 				else
@@ -1452,30 +1475,31 @@ namespace Microsoft.Xna.Framework.Graphics
 					int width = 0;
 					int height = 0;
 					BindTexture(texture);
-					GL.GetTexLevelParameter(
+					glGetTexLevelParameteriv(
 						texture.Target,
 						level,
-						GetTextureParameter.TextureWidth,
+						GLenum.GL_TEXTURE_WIDTH,
 						out width
 					);
-					GL.GetTexLevelParameter(
+					glGetTexLevelParameteriv(
 						texture.Target,
 						level,
-						GetTextureParameter.TextureHeight,
+						GLenum.GL_TEXTURE_HEIGHT,
 						out height
 					);
 
-					GL.ReadPixels(
+					glReadPixels(
 						0,
 						0,
-						width,
-						height,
-						PixelFormat.Rgba,
-						PixelType.UnsignedByte,
-						data
+						(IntPtr) width,
+						(IntPtr) height,
+						GLenum.GL_RGBA, // FIXME: Assumption
+						GLenum.GL_UNSIGNED_BYTE,
+						handle.AddrOfPinnedObject()
 					);
 				}
-				Framebuffer.BindReadFramebuffer(oldReadFramebuffer);
+				handle.Free();
+				BindReadFramebuffer(oldReadFramebuffer);
 				return true;
 			}
 			return false;
@@ -1483,7 +1507,84 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region glDeleteRenderbuffer Method
+		#region Framebuffer Methods
+
+		public void BindFramebuffer(uint handle)
+		{
+			if (	currentReadFramebuffer != handle &&
+				currentDrawFramebuffer != handle	)
+			{
+				glBindFramebuffer(
+					GLenum.GL_FRAMEBUFFER,
+					handle
+				);
+				currentReadFramebuffer = handle;
+				currentDrawFramebuffer = handle;
+			}
+			else if (currentReadFramebuffer != handle)
+			{
+				BindReadFramebuffer(handle);
+			}
+			else if (currentDrawFramebuffer != handle)
+			{
+				BindDrawFramebuffer(handle);
+			}
+		}
+
+		public void BindReadFramebuffer(uint handle)
+		{
+			if (handle == currentReadFramebuffer)
+			{
+				return;
+			}
+
+			glBindFramebuffer(
+				GLenum.GL_READ_FRAMEBUFFER,
+				handle
+			);
+
+			currentReadFramebuffer = handle;
+		}
+
+		public void BindDrawFramebuffer(uint handle)
+		{
+			if (handle == currentDrawFramebuffer)
+			{
+				return;
+			}
+
+			glBindFramebuffer(
+				GLenum.GL_DRAW_FRAMEBUFFER,
+				handle
+			);
+
+			currentDrawFramebuffer = handle;
+		}
+
+		#endregion
+
+		#region Renderbuffer Methods
+
+		public uint GenRenderbuffer(int width, int height, DepthFormat format)
+		{
+			uint handle;
+			glGenRenderbuffers((IntPtr) 1, out handle);
+			glBindRenderbuffer(
+				GLenum.GL_RENDERBUFFER,
+				handle
+			);
+			glRenderbufferStorage(
+				GLenum.GL_RENDERBUFFER,
+				XNAToGL.DepthStorage[format],
+				(IntPtr) width,
+				(IntPtr) height
+			);
+			glBindRenderbuffer(
+				GLenum.GL_RENDERBUFFER,
+				0
+			);
+			return handle;
+		}
 
 		public void DeleteRenderbuffer(uint renderbuffer)
 		{
@@ -1492,22 +1593,22 @@ namespace Microsoft.Xna.Framework.Graphics
 				// Force a renderbuffer update, this no longer exists!
 				currentRenderbuffer = uint.MaxValue;
 			}
-			Framebuffer.DeleteRenderbuffer(renderbuffer);
+			glDeleteRenderbuffers((IntPtr) 1, ref renderbuffer);
 		}
 
 		#endregion
 
 		#region glEnable/glDisable Method
 
-		private void ToggleGLState(EnableCap feature, bool enable)
+		private void ToggleGLState(GLenum feature, bool enable)
 		{
 			if (enable)
 			{
-				GL.Enable(feature);
+				glEnable(feature);
 			}
 			else
 			{
-				GL.Disable(feature);
+				glDisable(feature);
 			}
 		}
 
@@ -1520,26 +1621,26 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Move some stuff around so the glClear works...
 			if (scissorTestEnable)
 			{
-				GL.Disable(EnableCap.ScissorTest);
+				glDisable(GLenum.GL_SCISSOR_TEST);
 			}
 			if (!zWriteEnable)
 			{
-				GL.DepthMask(true);
+				glDepthMask(true);
 			}
 			if (stencilWriteMask != -1)
 			{
 				// AKA 0xFFFFFFFF, ugh -flibit
-				GL.StencilMask(-1);
+				glStencilMask(-1);
 			}
 
 			// Get the clear mask, set the clear properties if needed
-			ClearBufferMask clearMask = 0;
+			GLenum clearMask = GLenum.GL_ZERO;
 			if ((options & ClearOptions.Target) == ClearOptions.Target)
 			{
-				clearMask |= ClearBufferMask.ColorBufferBit;
+				clearMask |= GLenum.GL_COLOR_BUFFER_BIT;
 				if (!color.Equals(currentClearColor))
 				{
-					GL.ClearColor(
+					glClearColor(
 						color.X,
 						color.Y,
 						color.Z,
@@ -1550,38 +1651,38 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 			if ((options & ClearOptions.DepthBuffer) == ClearOptions.DepthBuffer)
 			{
-				clearMask |= ClearBufferMask.DepthBufferBit;
+				clearMask |= GLenum.GL_DEPTH_BUFFER_BIT;
 				if (depth != currentClearDepth)
 				{
-					GL.ClearDepth((double) depth);
+					glClearDepth((double) depth);
 					currentClearDepth = depth;
 				}
 			}
 			if ((options & ClearOptions.Stencil) == ClearOptions.Stencil)
 			{
-				clearMask |= ClearBufferMask.StencilBufferBit;
+				clearMask |= GLenum.GL_STENCIL_BUFFER_BIT;
 				if (stencil != currentClearStencil)
 				{
-					GL.ClearStencil(stencil);
+					glClearStencil(stencil);
 					currentClearStencil = stencil;
 				}
 			}
 
 			// CLEAR!
-			GL.Clear(clearMask);
+			glClear(clearMask);
 
 			// Clean up after ourselves.
 			if (scissorTestEnable)
 			{
-				GL.Enable(EnableCap.ScissorTest);
+				glEnable(GLenum.GL_SCISSOR_TEST);
 			}
 			if (!zWriteEnable)
 			{
-				GL.DepthMask(false);
+				glDepthMask(false);
 			}
 			if (stencilWriteMask != -1) // AKA 0xFFFFFFFF, ugh -flibit
 			{
-				GL.StencilMask(stencilWriteMask);
+				glStencilMask(stencilWriteMask);
 			}
 		}
 
@@ -1590,20 +1691,20 @@ namespace Microsoft.Xna.Framework.Graphics
 		#region SetRenderTargets Method
 
 		public void SetRenderTargets(
-			int[] attachments,
-			TextureTarget[] textureTargets,
+			uint[] attachments,
+			GLenum[] textureTargets,
 			uint renderbuffer,
 			DepthFormat depthFormat
 		) {
 			// Bind the right framebuffer, if needed
 			if (attachments == null)
 			{
-				Framebuffer.BindFramebuffer(Backbuffer.Handle);
+				BindFramebuffer(Backbuffer.Handle);
 				return;
 			}
 			else
 			{
-				Framebuffer.BindFramebuffer(targetFramebuffer);
+				BindFramebuffer(targetFramebuffer);
 			}
 
 			// Update the color attachments, DrawBuffers state
@@ -1613,7 +1714,13 @@ namespace Microsoft.Xna.Framework.Graphics
 				if (	attachments[i] != currentAttachments[i] ||
 					textureTargets[i] != currentAttachmentFaces[i]	)
 				{
-					Framebuffer.AttachColor(attachments[i], i, textureTargets[i]);
+					glFramebufferTexture2D(
+						GLenum.GL_FRAMEBUFFER,
+						GLenum.GL_COLOR_ATTACHMENT0 + i,
+						textureTargets[i],
+						attachments[i],
+						0
+					);
 					currentAttachments[i] = attachments[i];
 					currentAttachmentFaces[i] = textureTargets[i];
 				}
@@ -1622,15 +1729,21 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				if (currentAttachments[i] != 0)
 				{
-					Framebuffer.AttachColor(0, i, TextureTarget.Texture2D);
+					glFramebufferTexture2D(
+						GLenum.GL_FRAMEBUFFER,
+						GLenum.GL_COLOR_ATTACHMENT0 + i,
+						GLenum.GL_TEXTURE_2D,
+						0,
+						0
+					);
 					currentAttachments[i] = 0;
-					currentAttachmentFaces[i] = TextureTarget.Texture2D;
+					currentAttachmentFaces[i] = GLenum.GL_TEXTURE_2D;
 				}
 				i += 1;
 			}
 			if (attachments.Length != currentDrawBuffers)
 			{
-				GL.DrawBuffers(attachments.Length, drawBuffersArray);
+				glDrawBuffers((IntPtr) attachments.Length, drawBuffersArray);
 				currentDrawBuffers = attachments.Length;
 			}
 
@@ -1645,21 +1758,27 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				if (currentDepthStencilFormat == DepthFormat.Depth24Stencil8)
 				{
-					Framebuffer.AttachDepthRenderbuffer(
-						0,
-						FramebufferAttachment.StencilAttachment
+					glFramebufferRenderbuffer(
+						GLenum.GL_FRAMEBUFFER,
+						GLenum.GL_STENCIL_ATTACHMENT,
+						GLenum.GL_RENDERBUFFER,
+						renderbuffer
 					);
 				}
 				currentDepthStencilFormat = depthFormat;
-				Framebuffer.AttachDepthRenderbuffer(
-					renderbuffer,
-					FramebufferAttachment.DepthAttachment
+				glFramebufferRenderbuffer(
+					GLenum.GL_FRAMEBUFFER,
+					GLenum.GL_DEPTH_ATTACHMENT,
+					GLenum.GL_RENDERBUFFER,
+					renderbuffer
 				);
 				if (currentDepthStencilFormat == DepthFormat.Depth24Stencil8)
 				{
-					Framebuffer.AttachDepthRenderbuffer(
-						renderbuffer,
-						FramebufferAttachment.StencilAttachment
+					glFramebufferRenderbuffer(
+						GLenum.GL_FRAMEBUFFER,
+						GLenum.GL_STENCIL_ATTACHMENT,
+						GLenum.GL_RENDERBUFFER,
+						renderbuffer
 					);
 				}
 				currentRenderbuffer = renderbuffer;
@@ -1678,454 +1797,145 @@ namespace Microsoft.Xna.Framework.Graphics
 			 * -flibit
 			 */
 
-			public static readonly Dictionary<Type, TextureTarget> TextureType = new Dictionary<Type, TextureTarget>()
+			public static readonly Dictionary<Type, GLenum> TextureType = new Dictionary<Type, GLenum>()
 			{
-				{ typeof(Texture2D), TextureTarget.Texture2D },
-				{ typeof(Texture3D), TextureTarget.Texture3D },
-				{ typeof(TextureCube), TextureTarget.TextureCubeMap }
+				{ typeof(Texture2D), GLenum.GL_TEXTURE_2D },
+				{ typeof(Texture3D), GLenum.GL_TEXTURE_3D },
+				{ typeof(TextureCube), GLenum.GL_TEXTURE_CUBE_MAP }
 			};
 
-			public static readonly Dictionary<Blend, BlendingFactorSrc> BlendModeSrc = new Dictionary<Blend, BlendingFactorSrc>()
+			public static readonly Dictionary<Blend, GLenum> BlendMode = new Dictionary<Blend, GLenum>()
 			{
-				{ Blend.DestinationAlpha,		BlendingFactorSrc.DstAlpha },
-				{ Blend.DestinationColor,		BlendingFactorSrc.DstColor },
-				{ Blend.InverseDestinationAlpha,	BlendingFactorSrc.OneMinusDstAlpha },
-				{ Blend.InverseDestinationColor,	BlendingFactorSrc.OneMinusDstColor },
-				{ Blend.InverseSourceAlpha,		BlendingFactorSrc.OneMinusSrcAlpha },
-				{ Blend.InverseSourceColor,		(BlendingFactorSrc) All.OneMinusSrcColor }, // Why -flibit
-				{ Blend.One,				BlendingFactorSrc.One },
-				{ Blend.SourceAlpha,			BlendingFactorSrc.SrcAlpha },
-				{ Blend.SourceAlphaSaturation,		BlendingFactorSrc.SrcAlphaSaturate },
-				{ Blend.SourceColor,			(BlendingFactorSrc) All.SrcColor }, // Why -flibit
-				{ Blend.Zero,				BlendingFactorSrc.Zero }
+				{ Blend.DestinationAlpha,		GLenum.GL_DST_ALPHA },
+				{ Blend.DestinationColor,		GLenum.GL_DST_COLOR },
+				{ Blend.InverseDestinationAlpha,	GLenum.GL_ONE_MINUS_DST_ALPHA },
+				{ Blend.InverseDestinationColor,	GLenum.GL_ONE_MINUS_DST_COLOR },
+				{ Blend.InverseSourceAlpha,		GLenum.GL_ONE_MINUS_SRC_ALPHA },
+				{ Blend.InverseSourceColor,		GLenum.GL_ONE_MINUS_SRC_COLOR },
+				{ Blend.One,				GLenum.GL_ONE },
+				{ Blend.SourceAlpha,			GLenum.GL_SRC_ALPHA },
+				{ Blend.SourceAlphaSaturation,		GLenum.GL_SRC_ALPHA_SATURATE },
+				{ Blend.SourceColor,			GLenum.GL_SRC_COLOR },
+				{ Blend.Zero,				GLenum.GL_ZERO }
 			};
 
-			public static readonly Dictionary<Blend, BlendingFactorDest> BlendModeDst = new Dictionary<Blend, BlendingFactorDest>()
+			public static readonly Dictionary<BlendFunction, GLenum> BlendEquation = new Dictionary<BlendFunction, GLenum>()
 			{
-				{ Blend.DestinationAlpha,		BlendingFactorDest.DstAlpha },
-				{ Blend.InverseDestinationAlpha,	BlendingFactorDest.OneMinusDstAlpha },
-				{ Blend.InverseSourceAlpha,		BlendingFactorDest.OneMinusSrcAlpha },
-				{ Blend.InverseSourceColor,		BlendingFactorDest.OneMinusSrcColor },
-				{ Blend.One,				BlendingFactorDest.One },
-				{ Blend.SourceAlpha,			BlendingFactorDest.SrcAlpha },
-				{ Blend.SourceColor,			BlendingFactorDest.SrcColor },
-				{ Blend.Zero,				BlendingFactorDest.Zero }
+				{ BlendFunction.Add,			GLenum.GL_FUNC_ADD },
+				{ BlendFunction.Max,			GLenum.GL_MAX },
+				{ BlendFunction.Min,			GLenum.GL_MIN },
+				{ BlendFunction.ReverseSubtract,	GLenum.GL_FUNC_REVERSE_SUBTRACT },
+				{ BlendFunction.Subtract,		GLenum.GL_FUNC_SUBTRACT }
 			};
 
-			public static readonly Dictionary<BlendFunction, BlendEquationMode> BlendEquation = new Dictionary<BlendFunction, BlendEquationMode>()
+			public static readonly Dictionary<CompareFunction, GLenum> CompareFunc = new Dictionary<CompareFunction, GLenum>()
 			{
-				{ BlendFunction.Add,			BlendEquationMode.FuncAdd },
-				{ BlendFunction.Max,			BlendEquationMode.Max },
-				{ BlendFunction.Min,			BlendEquationMode.Min },
-				{ BlendFunction.ReverseSubtract,	BlendEquationMode.FuncReverseSubtract },
-				{ BlendFunction.Subtract,		BlendEquationMode.FuncSubtract }
+				{ CompareFunction.Always,	GLenum.GL_ALWAYS },
+				{ CompareFunction.Equal,	GLenum.GL_EQUAL },
+				{ CompareFunction.Greater,	GLenum.GL_GREATER },
+				{ CompareFunction.GreaterEqual,	GLenum.GL_GEQUAL },
+				{ CompareFunction.Less,		GLenum.GL_LESS },
+				{ CompareFunction.LessEqual,	GLenum.GL_LEQUAL },
+				{ CompareFunction.Never,	GLenum.GL_NEVER },
+				{ CompareFunction.NotEqual,	GLenum.GL_NOTEQUAL }
 			};
 
-			public static readonly Dictionary<CompareFunction, DepthFunction> DepthFunc = new Dictionary<CompareFunction, DepthFunction>()
+			public static readonly Dictionary<StencilOperation, GLenum> GLStencilOp = new Dictionary<StencilOperation, GLenum>()
 			{
-				{ CompareFunction.Always,	DepthFunction.Always },
-				{ CompareFunction.Equal,	DepthFunction.Equal },
-				{ CompareFunction.Greater,	DepthFunction.Greater },
-				{ CompareFunction.GreaterEqual,	DepthFunction.Gequal },
-				{ CompareFunction.Less,		DepthFunction.Less },
-				{ CompareFunction.LessEqual,	DepthFunction.Lequal },
-				{ CompareFunction.Never,	DepthFunction.Never },
-				{ CompareFunction.NotEqual,	DepthFunction.Notequal }
+				{ StencilOperation.Decrement,		GLenum.GL_DECR_WRAP },
+				{ StencilOperation.DecrementSaturation,	GLenum.GL_DECR },
+				{ StencilOperation.Increment,		GLenum.GL_INCR_WRAP },
+				{ StencilOperation.IncrementSaturation,	GLenum.GL_INCR },
+				{ StencilOperation.Invert,		GLenum.GL_INVERT },
+				{ StencilOperation.Keep,		GLenum.GL_KEEP },
+				{ StencilOperation.Replace,		GLenum.GL_REPLACE },
+				{ StencilOperation.Zero,		GLenum.GL_ZERO }
 			};
 
-			public static readonly Dictionary<CompareFunction, StencilFunction> StencilFunc = new Dictionary<CompareFunction, StencilFunction>()
+			public static readonly Dictionary<CullMode, GLenum> FrontFace = new Dictionary<CullMode, GLenum>()
 			{
-				{ CompareFunction.Always,	StencilFunction.Always },
-				{ CompareFunction.Equal,	StencilFunction.Equal },
-				{ CompareFunction.Greater,	StencilFunction.Greater },
-				{ CompareFunction.GreaterEqual,	StencilFunction.Gequal },
-				{ CompareFunction.Less,		StencilFunction.Less },
-				{ CompareFunction.LessEqual,	StencilFunction.Lequal },
-				{ CompareFunction.Never,	StencilFunction.Never },
-				{ CompareFunction.NotEqual,	StencilFunction.Notequal }
+				{ CullMode.CullClockwiseFace,		GLenum.GL_CW },
+				{ CullMode.CullCounterClockwiseFace,	GLenum.GL_CCW }
 			};
 
-			public static readonly Dictionary<StencilOperation, StencilOp> GLStencilOp = new Dictionary<StencilOperation, StencilOp>()
+			public static readonly Dictionary<FillMode, GLenum> GLFillMode = new Dictionary<FillMode, GLenum>()
 			{
-				{ StencilOperation.Decrement,		StencilOp.DecrWrap },
-				{ StencilOperation.DecrementSaturation,	StencilOp.Decr },
-				{ StencilOperation.Increment,		StencilOp.IncrWrap },
-				{ StencilOperation.IncrementSaturation,	StencilOp.Incr },
-				{ StencilOperation.Invert,		StencilOp.Invert },
-				{ StencilOperation.Keep,		StencilOp.Keep },
-				{ StencilOperation.Replace,		StencilOp.Replace },
-				{ StencilOperation.Zero,		StencilOp.Zero }
+				{ FillMode.Solid,	GLenum.GL_FILL },
+				{ FillMode.WireFrame,	GLenum.GL_LINE }
 			};
 
-			public static readonly Dictionary<CullMode, FrontFaceDirection> FrontFace = new Dictionary<CullMode, FrontFaceDirection>()
+			public static readonly Dictionary<TextureAddressMode, GLenum> Wrap = new Dictionary<TextureAddressMode, GLenum>()
 			{
-				{ CullMode.CullClockwiseFace,		FrontFaceDirection.Cw },
-				{ CullMode.CullCounterClockwiseFace,	FrontFaceDirection.Ccw }
+				{ TextureAddressMode.Clamp,	GLenum.GL_CLAMP_TO_EDGE },
+				{ TextureAddressMode.Mirror,	GLenum.GL_MIRRORED_REPEAT },
+				{ TextureAddressMode.Wrap,	GLenum.GL_REPEAT }
 			};
 
-			public static readonly Dictionary<FillMode, PolygonMode> GLFillMode = new Dictionary<FillMode, PolygonMode>()
+			public static readonly Dictionary<TextureFilter, GLenum> MagFilter = new Dictionary<TextureFilter, GLenum>()
 			{
-				{ FillMode.Solid,	PolygonMode.Fill },
-				{ FillMode.WireFrame,	PolygonMode.Line }
+				{ TextureFilter.Point,				GLenum.GL_NEAREST },
+				{ TextureFilter.Linear,				GLenum.GL_LINEAR },
+				{ TextureFilter.Anisotropic,			GLenum.GL_LINEAR },
+				{ TextureFilter.LinearMipPoint,			GLenum.GL_LINEAR },
+				{ TextureFilter.MinPointMagLinearMipPoint,	GLenum.GL_LINEAR },
+				{ TextureFilter.MinPointMagLinearMipLinear,	GLenum.GL_LINEAR },
+				{ TextureFilter.MinLinearMagPointMipPoint,	GLenum.GL_NEAREST },
+				{ TextureFilter.MinLinearMagPointMipLinear,	GLenum.GL_NEAREST }
 			};
 
-			public static readonly Dictionary<TextureAddressMode, TextureWrapMode> Wrap = new Dictionary<TextureAddressMode, TextureWrapMode>()
+			public static readonly Dictionary<TextureFilter, GLenum> MinMipFilter = new Dictionary<TextureFilter, GLenum>()
 			{
-				{ TextureAddressMode.Clamp,	TextureWrapMode.ClampToEdge },
-				{ TextureAddressMode.Mirror,	TextureWrapMode.MirroredRepeat },
-				{ TextureAddressMode.Wrap,	TextureWrapMode.Repeat }
+				{ TextureFilter.Point,				GLenum.GL_NEAREST_MIPMAP_NEAREST },
+				{ TextureFilter.Linear,				GLenum.GL_LINEAR_MIPMAP_LINEAR },
+				{ TextureFilter.Anisotropic,			GLenum.GL_LINEAR_MIPMAP_LINEAR },
+				{ TextureFilter.LinearMipPoint,			GLenum.GL_LINEAR_MIPMAP_NEAREST },
+				{ TextureFilter.MinPointMagLinearMipPoint,	GLenum.GL_NEAREST_MIPMAP_NEAREST },
+				{ TextureFilter.MinPointMagLinearMipLinear,	GLenum.GL_NEAREST_MIPMAP_LINEAR },
+				{ TextureFilter.MinLinearMagPointMipPoint,	GLenum.GL_LINEAR_MIPMAP_NEAREST },
+				{ TextureFilter.MinLinearMagPointMipLinear,	GLenum.GL_LINEAR_MIPMAP_LINEAR }
 			};
 
-			public static readonly Dictionary<TextureFilter, TextureMagFilter> MagFilter = new Dictionary<TextureFilter, TextureMagFilter>()
+			public static readonly Dictionary<TextureFilter, GLenum> MinFilter = new Dictionary<TextureFilter, GLenum>()
 			{
-				{ TextureFilter.Point,				TextureMagFilter.Nearest },
-				{ TextureFilter.Linear,				TextureMagFilter.Linear },
-				{ TextureFilter.Anisotropic,			TextureMagFilter.Linear },
-				{ TextureFilter.LinearMipPoint,			TextureMagFilter.Linear },
-				{ TextureFilter.MinPointMagLinearMipPoint,	TextureMagFilter.Linear },
-				{ TextureFilter.MinPointMagLinearMipLinear,	TextureMagFilter.Linear },
-				{ TextureFilter.MinLinearMagPointMipPoint,	TextureMagFilter.Nearest },
-				{ TextureFilter.MinLinearMagPointMipLinear,	TextureMagFilter.Nearest }
+				{ TextureFilter.Point,				GLenum.GL_NEAREST },
+				{ TextureFilter.Linear,				GLenum.GL_LINEAR },
+				{ TextureFilter.Anisotropic,			GLenum.GL_LINEAR },
+				{ TextureFilter.LinearMipPoint,			GLenum.GL_LINEAR },
+				{ TextureFilter.MinPointMagLinearMipPoint,	GLenum.GL_NEAREST },
+				{ TextureFilter.MinPointMagLinearMipLinear,	GLenum.GL_NEAREST },
+				{ TextureFilter.MinLinearMagPointMipPoint,	GLenum.GL_LINEAR },
+				{ TextureFilter.MinLinearMagPointMipLinear,	GLenum.GL_LINEAR }
 			};
 
-			public static readonly Dictionary<TextureFilter, TextureMinFilter> MinMipFilter = new Dictionary<TextureFilter, TextureMinFilter>()
+			public static readonly Dictionary<DepthFormat, GLenum> DepthStencilAttachment = new Dictionary<DepthFormat, GLenum>()
 			{
-				{ TextureFilter.Point,				TextureMinFilter.NearestMipmapNearest },
-				{ TextureFilter.Linear,				TextureMinFilter.LinearMipmapLinear },
-				{ TextureFilter.Anisotropic,			TextureMinFilter.LinearMipmapLinear },
-				{ TextureFilter.LinearMipPoint,			TextureMinFilter.LinearMipmapNearest },
-				{ TextureFilter.MinPointMagLinearMipPoint,	TextureMinFilter.NearestMipmapNearest },
-				{ TextureFilter.MinPointMagLinearMipLinear,	TextureMinFilter.NearestMipmapLinear },
-				{ TextureFilter.MinLinearMagPointMipPoint,	TextureMinFilter.LinearMipmapNearest },
-				{ TextureFilter.MinLinearMagPointMipLinear,	TextureMinFilter.LinearMipmapLinear }
+				{ DepthFormat.Depth16,		GLenum.GL_DEPTH_ATTACHMENT },
+				{ DepthFormat.Depth24,		GLenum.GL_DEPTH_ATTACHMENT },
+				{ DepthFormat.Depth24Stencil8,	GLenum.GL_DEPTH_STENCIL_ATTACHMENT }
 			};
 
-			public static readonly Dictionary<TextureFilter, TextureMinFilter> MinFilter = new Dictionary<TextureFilter, TextureMinFilter>()
+			public static readonly Dictionary<DepthFormat, GLenum> DepthStorage = new Dictionary<DepthFormat, GLenum>()
 			{
-				{ TextureFilter.Point,				TextureMinFilter.Nearest },
-				{ TextureFilter.Linear,				TextureMinFilter.Linear },
-				{ TextureFilter.Anisotropic,			TextureMinFilter.Linear },
-				{ TextureFilter.LinearMipPoint,			TextureMinFilter.Linear },
-				{ TextureFilter.MinPointMagLinearMipPoint,	TextureMinFilter.Nearest },
-				{ TextureFilter.MinPointMagLinearMipLinear,	TextureMinFilter.Nearest },
-				{ TextureFilter.MinLinearMagPointMipPoint,	TextureMinFilter.Linear },
-				{ TextureFilter.MinLinearMagPointMipLinear,	TextureMinFilter.Linear }
+				{ DepthFormat.Depth16,		GLenum.GL_DEPTH_COMPONENT16 },
+				{ DepthFormat.Depth24,		GLenum.GL_DEPTH_COMPONENT24 },
+				{ DepthFormat.Depth24Stencil8,	GLenum.GL_DEPTH24_STENCIL8 }
 			};
 
-			public static readonly Dictionary<DepthFormat, FramebufferAttachment> DepthStencilAttachment = new Dictionary<DepthFormat, FramebufferAttachment>()
+			public static readonly Dictionary<VertexElementFormat, GLenum> PointerType = new Dictionary<VertexElementFormat, GLenum>()
 			{
-				{ DepthFormat.Depth16,		FramebufferAttachment.DepthAttachment },
-				{ DepthFormat.Depth24,		FramebufferAttachment.DepthAttachment },
-				{ DepthFormat.Depth24Stencil8,	FramebufferAttachment.DepthStencilAttachment }
+				{ VertexElementFormat.Single,		GLenum.GL_FLOAT },
+				{ VertexElementFormat.Vector2,		GLenum.GL_FLOAT },
+				{ VertexElementFormat.Vector3,		GLenum.GL_FLOAT },
+				{ VertexElementFormat.Vector4,		GLenum.GL_FLOAT },
+				{ VertexElementFormat.Color,		GLenum.GL_UNSIGNED_BYTE },
+				{ VertexElementFormat.Byte4,		GLenum.GL_UNSIGNED_BYTE },
+				{ VertexElementFormat.Short2,		GLenum.GL_SHORT },
+				{ VertexElementFormat.Short4,		GLenum.GL_SHORT },
+				{ VertexElementFormat.NormalizedShort2,	GLenum.GL_SHORT },
+				{ VertexElementFormat.NormalizedShort4,	GLenum.GL_SHORT },
+				{ VertexElementFormat.HalfVector2,	GLenum.GL_HALF_FLOAT },
+				{ VertexElementFormat.HalfVector4,	GLenum.GL_HALF_FLOAT }
 			};
-
-			public static readonly Dictionary<DepthFormat, RenderbufferStorage> DepthStorage = new Dictionary<DepthFormat, RenderbufferStorage>()
-			{
-				{ DepthFormat.Depth16,		RenderbufferStorage.DepthComponent16 },
-				{ DepthFormat.Depth24,		RenderbufferStorage.DepthComponent24 },
-				{ DepthFormat.Depth24Stencil8,	RenderbufferStorage.Depth24Stencil8 }
-			};
-		}
-
-		#endregion
-
-		#region Framebuffer ARB/EXT Wrapper Class
-
-		public static class Framebuffer
-		{
-			private static int currentReadFramebuffer = 0;
-			public static int CurrentReadFramebuffer
-			{
-				get
-				{
-					return currentReadFramebuffer;
-				}
-			}
-
-			private static int currentDrawFramebuffer = 0;
-			public static int CurrentDrawFramebuffer
-			{
-				get
-				{
-					return currentDrawFramebuffer;
-				}
-			}
-
-			private static bool hasARB = false;
-
-			public static void Initialize()
-			{
-				hasARB = (	SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffers") != IntPtr.Zero &&
-						SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebuffer") != IntPtr.Zero	);
-
-				// If we don't have ARB_framebuffer_object, check for EXT as a fallback.
-				if (!hasARB)
-				{
-					System.Console.WriteLine("ARB_framebuffer_object not found, falling back to EXT.");
-					if (	SDL2.SDL.SDL_GL_GetProcAddress("glGenFramebuffersEXT") == IntPtr.Zero ||
-						SDL2.SDL.SDL_GL_GetProcAddress("glBlitFramebufferEXT") == IntPtr.Zero	)
-					{
-						throw new NoSuitableGraphicsDeviceException("The graphics device does not support framebuffer objects.");
-					}
-				}
-			}
-
-			public static void Clear()
-			{
-				currentReadFramebuffer = 0;
-				currentDrawFramebuffer = 0;
-				hasARB = false;
-			}
-
-			public static int GenFramebuffer()
-			{
-				int handle;
-				if (hasARB)
-				{
-					GL.GenFramebuffers(1, out handle);
-				}
-				else
-				{
-					GL.Ext.GenFramebuffers(1, out handle);
-				}
-				return handle;
-			}
-
-			public static void DeleteFramebuffer(int handle)
-			{
-				if (hasARB)
-				{
-					GL.DeleteFramebuffers(1, ref handle);
-				}
-				else
-				{
-					GL.Ext.DeleteFramebuffers(1, ref handle);
-				}
-			}
-
-			public static void BindFramebuffer(int handle)
-			{
-				if (currentReadFramebuffer != handle && currentDrawFramebuffer != handle)
-				{
-					if (hasARB)
-					{
-						GL.BindFramebuffer(
-							FramebufferTarget.Framebuffer,
-							handle
-						);
-					}
-					else
-					{
-						GL.Ext.BindFramebuffer(
-							FramebufferTarget.FramebufferExt,
-							handle
-						);
-					}
-
-					currentReadFramebuffer = handle;
-					currentDrawFramebuffer = handle;
-				}
-				else if (currentReadFramebuffer != handle)
-				{
-					BindReadFramebuffer(handle);
-				}
-				else if (currentDrawFramebuffer != handle)
-				{
-					BindDrawFramebuffer(handle);
-				}
-			}
-
-			public static void BindReadFramebuffer(int handle)
-			{
-				if (handle == currentReadFramebuffer)
-				{
-					return;
-				}
-
-				if (hasARB)
-				{
-					GL.BindFramebuffer(
-						FramebufferTarget.ReadFramebuffer,
-						handle
-					);
-				}
-				else
-				{
-					GL.Ext.BindFramebuffer(
-						FramebufferTarget.ReadFramebuffer,
-						handle
-					);
-				}
-
-				currentReadFramebuffer = handle;
-			}
-
-			public static void BindDrawFramebuffer(int handle)
-			{
-				if (handle == currentDrawFramebuffer)
-				{
-					return;
-				}
-
-				if (hasARB)
-				{
-					GL.BindFramebuffer(
-						FramebufferTarget.DrawFramebuffer,
-						handle
-					);
-				}
-				else
-				{
-					GL.Ext.BindFramebuffer(
-						FramebufferTarget.DrawFramebuffer,
-						handle
-					);
-				}
-
-				currentDrawFramebuffer = handle;
-			}
-
-			public static uint GenRenderbuffer(int width, int height, DepthFormat format)
-			{
-				uint handle;
-				if (hasARB)
-				{
-					GL.GenRenderbuffers(1, out handle);
-					GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, handle);
-					GL.RenderbufferStorage(
-						RenderbufferTarget.Renderbuffer,
-						XNAToGL.DepthStorage[format],
-						width,
-						height
-					);
-					GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
-				}
-				else
-				{
-					GL.Ext.GenRenderbuffers(1, out handle);
-					GL.Ext.BindRenderbuffer(RenderbufferTarget.RenderbufferExt, handle);
-					GL.Ext.RenderbufferStorage(
-						RenderbufferTarget.RenderbufferExt,
-						XNAToGL.DepthStorage[format],
-						width,
-						height
-					);
-					GL.Ext.BindRenderbuffer(RenderbufferTarget.RenderbufferExt, 0);
-				}
-				return handle;
-			}
-
-			public static void DeleteRenderbuffer(uint handle)
-			{
-				if (hasARB)
-				{
-					GL.DeleteRenderbuffers(1, ref handle);
-				}
-				else
-				{
-					GL.Ext.DeleteRenderbuffers(1, ref handle);
-				}
-			}
-
-			public static void AttachColor(int colorAttachment, int index, TextureTarget target)
-			{
-				if (hasARB)
-				{
-					GL.FramebufferTexture2D(
-						FramebufferTarget.Framebuffer,
-						FramebufferAttachment.ColorAttachment0 + index,
-						target,
-						colorAttachment,
-						0
-					);
-				}
-				else
-				{
-					GL.Ext.FramebufferTexture2D(
-						FramebufferTarget.FramebufferExt,
-						FramebufferAttachment.ColorAttachment0Ext + index,
-						target,
-						colorAttachment,
-						0
-					);
-				}
-			}
-
-			public static void AttachDepthTexture(
-				int depthAttachment,
-				FramebufferAttachment depthFormat
-			) {
-				if (hasARB)
-				{
-					GL.FramebufferTexture2D(
-						FramebufferTarget.Framebuffer,
-						depthFormat,
-						TextureTarget.Texture2D,
-						depthAttachment,
-						0
-					);
-				}
-				else
-				{
-					GL.Ext.FramebufferTexture2D(
-						FramebufferTarget.FramebufferExt,
-						depthFormat,
-						TextureTarget.Texture2D,
-						depthAttachment,
-						0
-					);
-				}
-			}
-
-			public static void AttachDepthRenderbuffer(
-				uint renderbuffer,
-				FramebufferAttachment depthFormat
-			) {
-				if (hasARB)
-				{
-					GL.FramebufferRenderbuffer(
-						FramebufferTarget.Framebuffer,
-						depthFormat,
-						RenderbufferTarget.Renderbuffer,
-						renderbuffer
-					);
-				}
-				else
-				{
-					GL.Ext.FramebufferRenderbuffer(
-						FramebufferTarget.FramebufferExt,
-						depthFormat,
-						RenderbufferTarget.RenderbufferExt,
-						renderbuffer
-					);
-				}
-			}
-
-			public static void BlitFramebuffer(
-				int srcWidth,
-				int srcHeight,
-				int dstWidth,
-				int dstHeight
-			) {
-				if (hasARB)
-				{
-					GL.BlitFramebuffer(
-						0, 0, srcWidth, srcHeight,
-						0, 0, dstWidth, dstHeight,
-						ClearBufferMask.ColorBufferBit,
-						BlitFramebufferFilter.Linear
-					);
-				}
-				else
-				{
-					GL.Ext.BlitFramebuffer(
-						0, 0, srcWidth, srcHeight,
-						0, 0, dstWidth, dstHeight,
-						ClearBufferMask.ColorBufferBit,
-						BlitFramebufferFilter.Linear
-					);
-				}
-			}
 		}
 
 		#endregion
@@ -2134,7 +1944,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public class FauxBackbuffer
 		{
-			public int Handle
+			public uint Handle
 			{
 				get;
 				private set;
@@ -2152,56 +1962,72 @@ namespace Microsoft.Xna.Framework.Graphics
 				private set;
 			}
 
-			private int colorAttachment;
-			private int depthStencilAttachment;
+			private uint colorAttachment;
+			private uint depthStencilAttachment;
 			private DepthFormat depthStencilFormat;
+			private OpenGLDevice glDevice;
 
-			public FauxBackbuffer(int width, int height, DepthFormat depthFormat)
-			{
+			public FauxBackbuffer(
+				OpenGLDevice device,
+				int width,
+				int height,
+				DepthFormat depthFormat
+			) {
 #if DISABLE_FAUXBACKBUFFER
 				Handle = 0;
 				Width = width;
 				Height = height;
 #else
-				Handle = Framebuffer.GenFramebuffer();
-				colorAttachment = GL.GenTexture();
-				depthStencilAttachment = GL.GenTexture();
+				glDevice = device;
+				uint handle;
+				glDevice.glGenFramebuffers((IntPtr) 1, out handle);
+				Handle = handle;
+				glDevice.glGenTextures((IntPtr) 1, out colorAttachment);
+				glDevice.glGenTextures((IntPtr) 1, out depthStencilAttachment);
 
-				GL.BindTexture(TextureTarget.Texture2D, colorAttachment);
-				GL.TexImage2D(
-					TextureTarget.Texture2D,
+				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, colorAttachment);
+				glDevice.glTexImage2D(
+					GLenum.GL_TEXTURE_2D,
 					0,
-					PixelInternalFormat.Rgba,
-					width,
-					height,
+					(int) GLenum.GL_RGBA,
+					(IntPtr) width,
+					(IntPtr) height,
 					0,
-					PixelFormat.Rgba,
-					PixelType.UnsignedByte,
+					GLenum.GL_RGBA,
+					GLenum.GL_UNSIGNED_BYTE,
 					IntPtr.Zero
 				);
-				GL.BindTexture(TextureTarget.Texture2D, depthStencilAttachment);
-				GL.TexImage2D(
-					TextureTarget.Texture2D,
+				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, depthStencilAttachment);
+				glDevice.glTexImage2D(
+					GLenum.GL_TEXTURE_2D,
 					0,
-					PixelInternalFormat.DepthComponent16,
-					width,
-					height,
+					(int) GLenum.GL_DEPTH_COMPONENT16,
+					(IntPtr) width,
+					(IntPtr) height,
 					0,
-					PixelFormat.DepthComponent,
-					PixelType.UnsignedByte,
+					GLenum.GL_DEPTH_COMPONENT,
+					GLenum.GL_UNSIGNED_BYTE,
 					IntPtr.Zero
 				);
-				Framebuffer.BindFramebuffer(Handle);
-				Framebuffer.AttachColor(
+				glDevice.glBindFramebuffer(
+					GLenum.GL_FRAMEBUFFER,
+					Handle
+				);
+				glDevice.glFramebufferTexture2D(
+					GLenum.GL_FRAMEBUFFER,
+					GLenum.GL_COLOR_ATTACHMENT0,
+					GLenum.GL_TEXTURE_2D,
 					colorAttachment,
-					0,
-					TextureTarget.Texture2D
+					0
 				);
-				Framebuffer.AttachDepthTexture(
+				glDevice.glFramebufferTexture2D(
+					GLenum.GL_FRAMEBUFFER,
+					GLenum.GL_DEPTH_ATTACHMENT,
+					GLenum.GL_TEXTURE_2D,
 					depthStencilAttachment,
-					FramebufferAttachment.DepthAttachment
+					0
 				);
-				GL.BindTexture(TextureTarget.Texture2D, 0);
+				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, 0);
 
 				Width = width;
 				Height = height;
@@ -2211,9 +2037,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			public void Dispose()
 			{
 #if !DISABLE_FAUXBACKBUFFER
-				Framebuffer.DeleteFramebuffer(Handle);
-				GL.DeleteTexture(colorAttachment);
-				GL.DeleteTexture(depthStencilAttachment);
+				uint handle = Handle;
+				glDevice.glDeleteFramebuffers((IntPtr) 1, ref handle);
+				glDevice.glDeleteTextures((IntPtr) 1, ref colorAttachment);
+				glDevice.glDeleteTextures((IntPtr) 1, ref depthStencilAttachment);
+				glDevice = null;
 				Handle = 0;
 #endif
 			}
@@ -2229,53 +2057,53 @@ namespace Microsoft.Xna.Framework.Graphics
 				Height = height;
 #else
 				// Update our color attachment to the new resolution.
-				GL.BindTexture(TextureTarget.Texture2D, colorAttachment);
-				GL.TexImage2D(
-					TextureTarget.Texture2D,
+				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, colorAttachment);
+				glDevice.glTexImage2D(
+					GLenum.GL_TEXTURE_2D,
 					0,
-					PixelInternalFormat.Rgba,
-					width,
-					height,
+					(int) GLenum.GL_RGBA,
+					(IntPtr) width,
+					(IntPtr) height,
 					0,
-					PixelFormat.Rgba,
-					PixelType.UnsignedByte,
+					GLenum.GL_RGBA,
+					GLenum.GL_UNSIGNED_BYTE,
 					IntPtr.Zero
 				);
 
 				// Update the depth attachment based on the desired DepthFormat.
-				PixelFormat depthPixelFormat;
-				PixelInternalFormat depthPixelInternalFormat;
-				PixelType depthPixelType;
-				FramebufferAttachment depthAttachmentType;
+				GLenum depthPixelFormat;
+				GLenum depthPixelInternalFormat;
+				GLenum depthPixelType;
+				GLenum depthAttachmentType;
 				if (depthFormat == DepthFormat.Depth16)
 				{
-					depthPixelFormat = PixelFormat.DepthComponent;
-					depthPixelInternalFormat = PixelInternalFormat.DepthComponent16;
-					depthPixelType = PixelType.UnsignedByte;
-					depthAttachmentType = FramebufferAttachment.DepthAttachment;
+					depthPixelFormat = GLenum.GL_DEPTH_COMPONENT;
+					depthPixelInternalFormat = GLenum.GL_DEPTH_COMPONENT16;
+					depthPixelType = GLenum.GL_UNSIGNED_BYTE;
+					depthAttachmentType = GLenum.GL_DEPTH_ATTACHMENT;
 				}
 				else if (depthFormat == DepthFormat.Depth24)
 				{
-					depthPixelFormat = PixelFormat.DepthComponent;
-					depthPixelInternalFormat = PixelInternalFormat.DepthComponent24;
-					depthPixelType = PixelType.UnsignedByte;
-					depthAttachmentType = FramebufferAttachment.DepthAttachment;
+					depthPixelFormat = GLenum.GL_DEPTH_COMPONENT;
+					depthPixelInternalFormat = GLenum.GL_DEPTH_COMPONENT24;
+					depthPixelType = GLenum.GL_UNSIGNED_BYTE;
+					depthAttachmentType = GLenum.GL_DEPTH_ATTACHMENT;
 				}
 				else
 				{
-					depthPixelFormat = PixelFormat.DepthStencil;
-					depthPixelInternalFormat = PixelInternalFormat.Depth24Stencil8;
-					depthPixelType = PixelType.UnsignedInt248;
-					depthAttachmentType = FramebufferAttachment.DepthStencilAttachment;
+					depthPixelFormat = GLenum.GL_DEPTH_STENCIL;
+					depthPixelInternalFormat = GLenum.GL_DEPTH24_STENCIL8;
+					depthPixelType = GLenum.GL_UNSIGNED_INT_24_8;
+					depthAttachmentType = GLenum.GL_DEPTH_STENCIL_ATTACHMENT;
 				}
 
-				GL.BindTexture(TextureTarget.Texture2D, depthStencilAttachment);
-				GL.TexImage2D(
-					TextureTarget.Texture2D,
+				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, depthStencilAttachment);
+				glDevice.glTexImage2D(
+					GLenum.GL_TEXTURE_2D,
 					0,
-					depthPixelInternalFormat,
-					width,
-					height,
+					(int) depthPixelInternalFormat,
+					(IntPtr) width,
+					(IntPtr) height,
 					0,
 					depthPixelFormat,
 					depthPixelType,
@@ -2285,30 +2113,40 @@ namespace Microsoft.Xna.Framework.Graphics
 				// If the depth format changes, detach before reattaching!
 				if (depthFormat != depthStencilFormat)
 				{
-					FramebufferAttachment attach;
+					GLenum attach;
 					if (depthStencilFormat == DepthFormat.Depth24Stencil8)
 					{
-						attach = FramebufferAttachment.DepthStencilAttachment;
+						attach = GLenum.GL_DEPTH_STENCIL_ATTACHMENT;
 					}
 					else
 					{
-						attach = FramebufferAttachment.DepthAttachment;
+						attach = GLenum.GL_DEPTH_ATTACHMENT;
 					}
 
-					Framebuffer.BindFramebuffer(Handle);
-
-					Framebuffer.AttachDepthTexture(
-						0,
-						attach
+					glDevice.glBindFramebuffer(
+						GLenum.GL_FRAMEBUFFER,
+						Handle
 					);
-					Framebuffer.AttachDepthTexture(
+
+					glDevice.glFramebufferTexture2D(
+						GLenum.GL_FRAMEBUFFER,
+						attach,
+						GLenum.GL_TEXTURE_2D,
+						0,
+						0
+					);
+					glDevice.glFramebufferTexture2D(
+						GLenum.GL_FRAMEBUFFER,
+						depthAttachmentType,
+						GLenum.GL_TEXTURE_2D,
 						depthStencilAttachment,
-						depthAttachmentType
+						0
 					);
 
 					if (graphicsDevice.RenderTargetCount > 0)
 					{
-						Framebuffer.BindFramebuffer(
+						glDevice.glBindFramebuffer(
+							GLenum.GL_FRAMEBUFFER,
 							graphicsDevice.GLDevice.targetFramebuffer
 						);
 					}
@@ -2316,8 +2154,8 @@ namespace Microsoft.Xna.Framework.Graphics
 					depthStencilFormat = depthFormat;
 				}
 
-				GL.BindTexture(
-					TextureTarget.Texture2D,
+				glDevice.glBindTexture(
+					GLenum.GL_TEXTURE_2D,
 					graphicsDevice.GLDevice.Textures[0].Handle
 				);
 
@@ -2329,121 +2167,706 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region Private ARB_debug_output Wrapper
+		#region Private OpenGL Entry Points
 
-		private static class DebugOutput
+		public enum GLenum : int
 		{
-			private enum GLenum : uint
+			// Hint Enum Value
+			GL_DONT_CARE =				0x1100,
+			// 0/1
+			GL_ZERO =				0x0000,
+			GL_ONE =				0x0001,
+			// Types
+			GL_UNSIGNED_BYTE =			0x1401,
+			GL_SHORT =				0x1402,
+			GL_FLOAT =				0x1406,
+			GL_HALF_FLOAT =				0x140B,
+			GL_UNSIGNED_INT_24_8 =			0x84FA,
+			// Strings
+			GL_VENDOR =				0x1F00,
+			GL_RENDERER =				0x1F01,
+			GL_VERSION =				0x1F02,
+			GL_EXTENSIONS =				0x1F03,
+			// Clear Mask
+			GL_COLOR_BUFFER_BIT =			0x4000,
+			GL_DEPTH_BUFFER_BIT =			0x0100,
+			GL_STENCIL_BUFFER_BIT =			0x0400,
+			// Enable Caps
+			GL_SCISSOR_TEST =			0x0C10,
+			GL_DEPTH_TEST =				0x0B71,
+			GL_STENCIL_TEST =			0x0B90,
+			// Polygons
+			GL_LINE =				0x1B01,
+			GL_FILL =				0x1B02,
+			GL_CW =					0x0900,
+			GL_CCW =				0x0901,
+			GL_FRONT =				0x0404,
+			GL_BACK =				0x0405,
+			GL_FRONT_AND_BACK =			0x0408,
+			GL_CULL_FACE =				0x0B44,
+			GL_POLYGON_OFFSET_FILL =		0x8037,
+			// Texture Type
+			GL_TEXTURE_2D =				0x0DE1,
+			GL_TEXTURE_3D =				0x806F,
+			GL_TEXTURE_CUBE_MAP =			0x8513,
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X =	0x8515,
+			// Blend Mode
+			GL_BLEND =				0x0BE2,
+			GL_SRC_COLOR =				0x0300,
+			GL_ONE_MINUS_SRC_COLOR =		0x0301,
+			GL_SRC_ALPHA =				0x0302,
+			GL_ONE_MINUS_SRC_ALPHA =		0x0303,
+			GL_DST_ALPHA =				0x0304,
+			GL_ONE_MINUS_DST_ALPHA =		0x0305,
+			GL_DST_COLOR =				0x0306,
+			GL_ONE_MINUS_DST_COLOR =		0x0307,
+			GL_SRC_ALPHA_SATURATE =			0x0308,
+			// Equations
+			GL_MIN =				0x8007,
+			GL_MAX =				0x8008,
+			GL_FUNC_ADD =				0x8006,
+			GL_FUNC_SUBTRACT =			0x800A,
+			GL_FUNC_REVERSE_SUBTRACT =		0x800B,
+			// Comparisons
+			GL_NEVER =				0x0200,
+			GL_LESS =				0x0201,
+			GL_EQUAL =				0x0202,
+			GL_LEQUAL =				0x0203,
+			GL_GREATER =				0x0204,
+			GL_NOTEQUAL =				0x0205,
+			GL_GEQUAL =				0x0206,
+			GL_ALWAYS =				0x0207,
+			// Stencil Operations
+			GL_INVERT =				0x150A,
+			GL_KEEP =				0x1E00,
+			GL_REPLACE =				0x1E01,
+			GL_INCR =				0x1E02,
+			GL_DECR =				0x1E03,
+			GL_INCR_WRAP =				0x8507,
+			GL_DECR_WRAP =				0x8508,
+			// Wrap Modes
+			GL_REPEAT =				0x2901,
+			GL_CLAMP_TO_EDGE =			0x812F,
+			GL_MIRRORED_REPEAT =			0x8370,
+			// Filters
+			GL_NEAREST =				0x2600,
+			GL_LINEAR =				0x2601,
+			GL_NEAREST_MIPMAP_NEAREST =		0x2700,
+			GL_NEAREST_MIPMAP_LINEAR =		0x2702,
+			GL_LINEAR_MIPMAP_NEAREST =		0x2701,
+			GL_LINEAR_MIPMAP_LINEAR =		0x2702,
+			// Attachments
+			GL_COLOR_ATTACHMENT0 =			0x8CE0,
+			GL_DEPTH_ATTACHMENT =			0x8D00,
+			GL_STENCIL_ATTACHMENT =			0x8D20,
+			GL_DEPTH_STENCIL_ATTACHMENT =		0x821A,
+			// Texture Formats
+			GL_RGBA =				0x1908,
+			GL_LUMINANCE =				0x1909,
+			GL_DEPTH_COMPONENT16 =			0x81A5,
+			GL_DEPTH_COMPONENT24 =			0x81A6,
+			GL_DEPTH24_STENCIL8 =			0x88F0,
+			// Texture Internal Formats
+			GL_DEPTH_COMPONENT =			0x1902,
+			GL_DEPTH_STENCIL =			0x8F49,
+			// Textures
+			GL_TEXTURE_WRAP_S =			0x2802,
+			GL_TEXTURE_WRAP_T =			0x2803,
+			GL_TEXTURE_WRAP_R =			0x8072,
+			GL_TEXTURE_MAG_FILTER =			0x2800,
+			GL_TEXTURE_MIN_FILTER =			0x2801,
+			GL_TEXTURE_MAX_ANISOTROPY_EXT =		0x84FE,
+			GL_TEXTURE_BASE_LEVEL =			0x813C,
+			GL_TEXTURE_MAX_LEVEL =			0x813D,
+			GL_TEXTURE_LOD_BIAS =			0x8501,
+			// Multitexture
+			GL_TEXTURE0 =				0x84C0,
+			GL_MAX_TEXTURE_UNITS =			0x84E2,
+			// Texture Queries
+			GL_TEXTURE_WIDTH =			0x1000,
+			GL_TEXTURE_HEIGHT =			0x1001,
+			// Buffer objects
+			GL_ARRAY_BUFFER =			0x8892,
+			GL_ELEMENT_ARRAY_BUFFER =		0x8893,
+			GL_STREAM_DRAW =			0x88E0,
+			GL_STATIC_DRAW =			0x88E4,
+			GL_READ_ONLY =				0x88B8,
+			GL_MAX_VERTEX_ATTRIBS =			0x8869,
+			// Render targets
+			GL_FRAMEBUFFER =			0x8D40,
+			GL_READ_FRAMEBUFFER =			0x8CA8,
+			GL_DRAW_FRAMEBUFFER =			0x8CA9,
+			GL_RENDERBUFFER =			0x8D41,
+			GL_MAX_DRAW_BUFFERS =			0x8824,
+			// Draw Primitives
+			GL_TRIANGLE_STRIP =			0x0005,
+			// Source Enum Values
+			GL_DEBUG_SOURCE_API_ARB =		0x8246,
+			GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB =	0x8247,
+			GL_DEBUG_SOURCE_SHADER_COMPILER_ARB =	0x8248,
+			GL_DEBUG_SOURCE_THIRD_PARTY_ARB =	0x8249,
+			GL_DEBUG_SOURCE_APPLICATION_ARB =	0x824A,
+			GL_DEBUG_SOURCE_OTHER_ARB =		0x824B,
+			// Type Enum Values
+			GL_DEBUG_TYPE_ERROR_ARB =		0x824C,
+			GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB =	0x824D,
+			GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB =	0x824E,
+			GL_DEBUG_TYPE_PORTABILITY_ARB =		0x824F,
+			GL_DEBUG_TYPE_PERFORMANCE_ARB =		0x8250,
+			GL_DEBUG_TYPE_OTHER_ARB =		0x8251,
+			// Severity Enum Values
+			GL_DEBUG_SEVERITY_HIGH_ARB =		0x9146,
+			GL_DEBUG_SEVERITY_MEDIUM_ARB =		0x9147,
+			GL_DEBUG_SEVERITY_LOW_ARB =		0x9148,
+			// Stupid dumk stuff that's stupid
+			GL_CURRENT_PROGRAM =			0x8B8D,
+			GL_FRAGMENT_SHADER =			0x8B30,
+			GL_VERTEX_SHADER =			0x8B31
+		}
+
+		// Entry Points
+
+		/* BEGIN GET FUNCTIONS */
+
+		private delegate string GetString(GLenum pname);
+		private GetString glGetString;
+
+		public delegate void GetIntegerv(GLenum pname, out int param);
+		public GetIntegerv glGetIntegerv;
+
+		/* END GET FUNCTIONS */
+
+		/* BEGIN ENABLE/DISABLE FUNCTIONS */
+
+		public delegate void Enable(GLenum cap);
+		public Enable glEnable;
+
+		public delegate void Disable(GLenum cap);
+		public Disable glDisable;
+
+		/* END ENABLE/DISABLE FUNCTIONS */
+
+		/* BEGIN VIEWPORT/SCISSOR FUNCTIONS */
+
+		public delegate void G_Viewport(
+			int x,
+			int y,
+			IntPtr width,
+			IntPtr height
+		);
+		public G_Viewport glViewport;
+
+		private delegate void DepthRange(
+			double near_val,
+			double far_val
+		);
+		private DepthRange glDepthRange;
+
+		private delegate void Scissor(
+			int x,
+			int y,
+			IntPtr width,
+			IntPtr height
+		);
+		private Scissor glScissor;
+
+		/* END VIEWPORT/SCISSOR FUNCTIONS */
+
+		/* BEGIN BLEND STATE FUNCTIONS */
+
+		private delegate void BlendColor(
+			double red,
+			double green,
+			double blue,
+			double alpha
+		);
+		private BlendColor glBlendColor;
+
+		private delegate void BlendFuncSeparate(
+			GLenum srcRGB,
+			GLenum dstRGB,
+			GLenum srcAlpha,
+			GLenum dstAlpha
+		);
+		private BlendFuncSeparate glBlendFuncSeparate;
+
+		private delegate void BlendEquationSeparate(
+			GLenum modeRGB,
+			GLenum modeAlpha
+		);
+		private BlendEquationSeparate glBlendEquationSeparate;
+
+		private delegate void ColorMask(
+			bool red,
+			bool green,
+			bool blue,
+			bool alpha
+		);
+		private ColorMask glColorMask;
+
+		/* END BLEND STATE FUNCTIONS */
+
+		/* BEGIN DEPTH/STENCIL STATE FUNCTIONS */
+
+		private delegate void DepthMask(bool flag);
+		private DepthMask glDepthMask;
+
+		private delegate void DepthFunc(GLenum func);
+		private DepthFunc glDepthFunc;
+
+		private delegate void StencilMask(int mask);
+		private StencilMask glStencilMask;
+
+		private delegate void StencilFuncSeparate(
+			GLenum face,
+			GLenum func,
+			int reference,
+			int mask
+		);
+		private StencilFuncSeparate glStencilFuncSeparate;
+
+		private delegate void StencilOpSeparate(
+			GLenum face,
+			GLenum sfail,
+			GLenum dpfail,
+			GLenum dppass
+		);
+		private StencilOpSeparate glStencilOpSeparate;
+
+		private delegate void StencilFunc(
+			GLenum fail,
+			int reference,
+			int mask
+		);
+		private StencilFunc glStencilFunc;
+
+		private delegate void StencilOp(
+			GLenum fail,
+			GLenum zfail,
+			GLenum zpass
+		);
+		private StencilOp glStencilOp;
+
+		/* END DEPTH/STENCIL STATE FUNCTIONS */
+
+		/* BEGIN RASTERIZER STATE FUNCTIONS */
+
+		private delegate void CullFace(GLenum mode);
+		private CullFace glCullFace;
+
+		private delegate void FrontFace(GLenum mode);
+		private FrontFace glFrontFace;
+
+		private delegate void PolygonMode(GLenum face, GLenum mode);
+		private PolygonMode glPolygonMode;
+
+		private delegate void PolygonOffset(float factor, float units);
+		private PolygonOffset glPolygonOffset;
+
+		/* END RASTERIZER STATE FUNCTIONS */
+
+		/* BEGIN TEXTURE FUNCTIONS */
+
+		public delegate void GenTextures(IntPtr n, out uint textures);
+		public GenTextures glGenTextures;
+
+		public delegate void DeleteTextures(
+			IntPtr n,
+			ref uint textures
+		);
+		public DeleteTextures glDeleteTextures;
+
+		public delegate void G_BindTexture(GLenum target, uint texture);
+		public G_BindTexture glBindTexture;
+
+		public delegate void TexImage2D(
+			GLenum target,
+			int level,
+			int internalFormat,
+			IntPtr width,
+			IntPtr height,
+			int border,
+			GLenum format,
+			GLenum type,
+			IntPtr pixels
+		);
+		public TexImage2D glTexImage2D;
+
+		public delegate void TexSubImage2D(
+			GLenum target,
+			int level,
+			int xoffset,
+			int yoffset,
+			IntPtr width,
+			IntPtr height,
+			GLenum format,
+			GLenum type,
+			IntPtr pixels
+		);
+		public TexSubImage2D glTexSubImage2D;
+
+		public delegate void TexParameteri(
+			GLenum target,
+			GLenum pname,
+			int param
+		);
+		public TexParameteri glTexParameteri;
+
+		private delegate void TexParameterf(
+			GLenum target,
+			GLenum pname,
+			float param
+		);
+		private TexParameterf glTexParameterf;
+
+		public delegate void ActiveTexture(GLenum texture);
+		public ActiveTexture glActiveTexture;
+
+		private delegate void GetTexLevelParameteriv(
+			GLenum target,
+			int level,
+			GLenum pname,
+			out int param
+		);
+		private GetTexLevelParameteriv glGetTexLevelParameteriv;
+
+		/* END TEXTURE FUNCTIONS */
+
+		/* BEGIN BUFFER FUNCTIONS */
+
+		public delegate void GenBuffers(IntPtr n, out uint buffers);
+		public GenBuffers glGenBuffers;
+
+		private delegate void DeleteBuffers(
+			IntPtr n,
+			ref uint buffers
+		);
+		private DeleteBuffers glDeleteBuffers;
+
+		private delegate void BindBuffer(GLenum target, uint buffer);
+		private BindBuffer glBindBuffer;
+
+		public delegate void BufferData(
+			GLenum target,
+			IntPtr size,
+			IntPtr data,
+			GLenum usage
+		);
+		public BufferData glBufferData;
+
+		private delegate void BufferSubData(
+			GLenum target,
+			IntPtr offset,
+			IntPtr size,
+			IntPtr data
+		);
+		private BufferSubData glBufferSubData;
+
+		private delegate IntPtr MapBuffer(GLenum target, GLenum access);
+		private MapBuffer glMapBuffer;
+
+		private delegate void UnmapBuffer(GLenum target);
+		private UnmapBuffer glUnmapBuffer;
+
+		/* END BUFFER FUNCTIONS */
+
+		/* BEGIN VERTEX ATTRIBUTE FUNCTIONS */
+
+		private delegate void EnableVertexAttribArray(int index);
+		private EnableVertexAttribArray glEnableVertexAttribArray;
+
+		private delegate void DisableVertexAttribArray(int index);
+		private DisableVertexAttribArray glDisableVertexAttribArray;
+
+		private delegate void VertexAttribDivisor(
+			int index,
+			int divisor
+		);
+		private VertexAttribDivisor glVertexAttribDivisor;
+
+		private delegate void G_VertexAttribPointer(
+			int index,
+			int size,
+			GLenum type,
+			bool normalized,
+			IntPtr stride,
+			IntPtr pointer
+		);
+		private G_VertexAttribPointer glVertexAttribPointer;
+
+		/* END VERTEX ATTRIBUTE FUNCTIONS */
+
+		/* BEGIN CLEAR FUNCTIONS */
+
+		private delegate void ClearColor(
+			double red,
+			double green,
+			double blue,
+			double alpha
+		);
+		private ClearColor glClearColor;
+
+		private delegate void ClearDepth(double depth);
+		private ClearDepth glClearDepth;
+
+		private delegate void ClearStencil(int s);
+		private ClearStencil glClearStencil;
+
+		private delegate void G_Clear(GLenum mask);
+		private G_Clear glClear;
+
+		/* END CLEAR FUNCTIONS */
+
+		/* BEGIN FRAMEBUFFER FUNCTIONS */
+
+		private delegate void DrawBuffers(IntPtr n, GLenum[] bufs);
+		private DrawBuffers glDrawBuffers;
+
+		private delegate void ReadPixels(
+			int x,
+			int y,
+			IntPtr width,
+			IntPtr height,
+			GLenum format,
+			GLenum type,
+			IntPtr pixels
+		);
+		private ReadPixels glReadPixels;
+
+		public delegate void GenFramebuffers(
+			IntPtr n,
+			out uint framebuffers
+		);
+		public GenFramebuffers glGenFramebuffers;
+
+		public delegate void DeleteFramebuffers(
+			IntPtr n,
+			ref uint framebuffers
+		);
+		public DeleteFramebuffers glDeleteFramebuffers;
+
+		public delegate void G_BindFramebuffer(
+			GLenum target,
+			uint framebuffer
+		);
+		public G_BindFramebuffer glBindFramebuffer;
+
+		public delegate void FramebufferTexture2D(
+			GLenum target,
+			GLenum attachment,
+			GLenum textarget,
+			uint texture,
+			int level
+		);
+		public FramebufferTexture2D glFramebufferTexture2D;
+
+		public delegate void FramebufferRenderbuffer(
+			GLenum target,
+			GLenum attachment,
+			GLenum renderbuffertarget,
+			uint renderbuffer
+		);
+		public FramebufferRenderbuffer glFramebufferRenderbuffer;
+
+		public delegate void BlitFramebuffer(
+			int srcX0,
+			int srcY0,
+			int srcX1,
+			int srcY1,
+			int dstX0,
+			int dstY0,
+			int dstX1,
+			int dstY1,
+			GLenum mask,
+			GLenum filter
+		);
+		public BlitFramebuffer glBlitFramebuffer;
+
+		public delegate void GenRenderbuffers(
+			IntPtr n,
+			out uint renderbuffers
+		);
+		public GenRenderbuffers glGenRenderbuffers;
+
+		public delegate void DeleteRenderbuffers(
+			IntPtr n,
+			ref uint renderbuffers
+		);
+		public DeleteRenderbuffers glDeleteRenderbuffers;
+
+		public delegate void BindRenderbuffer(
+			GLenum target,
+			uint renderbuffer
+		);
+		public BindRenderbuffer glBindRenderbuffer;
+
+		public delegate void RenderbufferStorage(
+			GLenum target,
+			GLenum internalformat,
+			IntPtr width,
+			IntPtr height
+		);
+		public RenderbufferStorage glRenderbufferStorage;
+
+		/* END FRAMEBUFFER FUNCTIONS */
+
+		/* BEGIN DRAWING FUNCTIONS */
+
+		public delegate void DrawArrays(
+			GLenum mode,
+			int first,
+			IntPtr count
+		);
+		public DrawArrays glDrawArrays;
+
+		/* END DRAWING FUNCTIONS */
+
+		/* BEGIN SHADER FUNCTIONS */
+
+		public delegate uint CreateShader(GLenum type);
+		public CreateShader glCreateShader;
+
+		public delegate void DeleteShader(uint shader);
+		public DeleteShader glDeleteShader;
+
+		public delegate void ShaderSource(
+			uint shader,
+			IntPtr count,
+			ref string source,
+			ref int length
+		);
+		public ShaderSource glShaderSource;
+
+		public delegate void CompileShader(uint shader);
+		public CompileShader glCompileShader;
+
+		public delegate uint CreateProgram();
+		public CreateProgram glCreateProgram;
+
+		public delegate void DeleteProgram(uint program);
+		public DeleteProgram glDeleteProgram;
+
+		public delegate void AttachShader(uint program, uint shader);
+		public AttachShader glAttachShader;
+
+		public delegate void LinkProgram(uint program);
+		public LinkProgram glLinkProgram;
+
+		public delegate void UseProgram(uint program);
+		public UseProgram glUseProgram;
+
+		public delegate void Uniform1i(int location, int v0);
+		public Uniform1i glUniform1i;
+
+		public delegate int GetUniformLocation(
+			uint program,
+			string name
+		);
+		public GetUniformLocation glGetUniformLocation;
+
+		public delegate void BindAttribLocation(
+			uint program,
+			uint index,
+			string name
+		);
+		public BindAttribLocation glBindAttribLocation;
+
+		/* END SHADER FUNCTIONS */
+
+		/* BEGIN STUPID THREADED GL FUNCTIONS */
+
+		public delegate void Flush();
+		public Flush glFlush;
+
+		/* END STUPID THREADED GL FUNCTIONS */
+
+		/* BEGIN DEBUG OUTPUT FUNCTIONS */
+
+		private delegate void DebugMessageCallback(
+			DebugProc callback,
+			IntPtr userParam
+		);
+		private DebugMessageCallback glDebugMessageCallbackARB;
+
+		private delegate void DebugMessageControl(
+			GLenum source,
+			GLenum type,
+			GLenum severity,
+			IntPtr count, // GLsizei
+			IntPtr ids, // const GLuint*
+			bool enabled
+		);
+		private DebugMessageControl glDebugMessageControlARB;
+
+		// ARB_debug_output callback
+		private delegate void DebugProc(
+			GLenum source,
+			GLenum type,
+			uint id,
+			GLenum severity,
+			IntPtr length, // GLsizei
+			IntPtr message, // const GLchar*
+			IntPtr userParam // const GLvoid*
+		);
+		private DebugProc DebugCall = DebugCallback;
+		private static void DebugCallback(
+			GLenum source,
+			GLenum type,
+			uint id,
+			GLenum severity,
+			IntPtr length, // GLsizei
+			IntPtr message, // const GLchar*
+			IntPtr userParam // const GLvoid*
+		) {
+			System.Console.WriteLine(
+				"{0}\n\tSource: {1}\n\tType: {2}\n\tSeverity: {3}",
+				Marshal.PtrToStringAnsi(message),
+				source.ToString(),
+				type.ToString(),
+				severity.ToString()
+			);
+			if (type == GLenum.GL_DEBUG_TYPE_ERROR_ARB)
 			{
-				// Hint Enum Value
-				GL_DONT_CARE =				0x1100,
-				// Source Enum Values
-				GL_DEBUG_SOURCE_API_ARB =		0x8246,
-				GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB =	0x8247,
-				GL_DEBUG_SOURCE_SHADER_COMPILER_ARB =	0x8248,
-				GL_DEBUG_SOURCE_THIRD_PARTY_ARB =	0x8249,
-				GL_DEBUG_SOURCE_APPLICATION_ARB =	0x824A,
-				GL_DEBUG_SOURCE_OTHER_ARB =		0x824B,
-				// Type Enum Values
-				GL_DEBUG_TYPE_ERROR_ARB =		0x824C,
-				GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB =	0x824D,
-				GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB =	0x824E,
-				GL_DEBUG_TYPE_PORTABILITY_ARB =		0x824F,
-				GL_DEBUG_TYPE_PERFORMANCE_ARB =		0x8250,
-				GL_DEBUG_TYPE_OTHER_ARB =		0x8251,
-				// Severity Enum Values
-				GL_DEBUG_SEVERITY_HIGH_ARB =		0x9146,
-				GL_DEBUG_SEVERITY_MEDIUM_ARB =		0x9147,
-				GL_DEBUG_SEVERITY_LOW_ARB =		0x9148,
+				throw new Exception("ARB_debug_output found an error.");
 			}
+		}
 
-			// Entry Points
-			private delegate void DebugMessageCallback(
-				DebugProc callback,
-				IntPtr userParam
-			);
-			private delegate void DebugMessageControl(
-				GLenum source,
-				GLenum type,
-				GLenum severity,
-				IntPtr count, // GLsizei
-				IntPtr ids, // const GLuint*
-				bool enabled
-			);
-			private static DebugMessageCallback glDebugMessageCallbackARB;
-			private static DebugMessageControl glDebugMessageControlARB;
+		/* END DEBUG OUTPUT FUNCTIONS */
 
-			// Function pointer
-			private delegate void DebugProc(
-				GLenum source,
-				GLenum type,
-				uint id,
-				GLenum severity,
-				IntPtr length, // GLsizei
-				IntPtr message, // const GLchar*
-				IntPtr userParam // const GLvoid*
-			);
-			private static DebugProc DebugCall = DebugCallback;
-
-			// Debug callback
-			private static void DebugCallback(
-				GLenum source,
-				GLenum type,
-				uint id,
-				GLenum severity,
-				IntPtr length, // GLsizei
-				IntPtr message, // const GLchar*
-				IntPtr userParam // const GLvoid*
-			) {
-				System.Console.WriteLine(
-					"{0}\n\tSource: {1}\n\tType: {2}\n\tSeverity: {3}",
-					Marshal.PtrToStringAnsi(message),
-					source.ToString(),
-					type.ToString(),
-					severity.ToString()
-				);
-				if (type == GLenum.GL_DEBUG_TYPE_ERROR_ARB)
-				{
-					throw new Exception("ARB_debug_output found an error.");
-				}
-			}
-
-			[System.Diagnostics.ConditionalAttribute("DEBUG")]
-			public static void Initialize()
+		public void LoadGLEntryPoints()
+		{
+			IntPtr messageCallback = SDL2.SDL.SDL_GL_GetProcAddress("glDebugMessageCallbackARB");
+			IntPtr messageControl = SDL2.SDL.SDL_GL_GetProcAddress("glDebugMessageControlARB");
+			if (messageCallback == IntPtr.Zero || messageControl == IntPtr.Zero)
 			{
-				IntPtr messageCallback = SDL2.SDL.SDL_GL_GetProcAddress("glDebugMessageCallbackARB");
-				IntPtr messageControl = SDL2.SDL.SDL_GL_GetProcAddress("glDebugMessageControlARB");
-				if (messageCallback == IntPtr.Zero || messageControl == IntPtr.Zero)
-				{
-					System.Console.WriteLine("ARB_debug_output not supported!");
-					return;
-				}
-				glDebugMessageCallbackARB = (DebugMessageCallback) Marshal.GetDelegateForFunctionPointer(
-					messageCallback,
-					typeof(DebugMessageCallback)
-				);
-				glDebugMessageControlARB = (DebugMessageControl) Marshal.GetDelegateForFunctionPointer(
-					messageControl,
-					typeof(DebugMessageControl)
-				);
-				glDebugMessageCallbackARB(DebugCall, IntPtr.Zero);
-				glDebugMessageControlARB(
-					GLenum.GL_DONT_CARE,
-					GLenum.GL_DONT_CARE,
-					GLenum.GL_DONT_CARE,
-					IntPtr.Zero,
-					IntPtr.Zero,
-					true
-				);
-				glDebugMessageControlARB(
-					GLenum.GL_DONT_CARE,
-					GLenum.GL_DEBUG_TYPE_OTHER_ARB,
-					GLenum.GL_DEBUG_SEVERITY_LOW_ARB,
-					IntPtr.Zero,
-					IntPtr.Zero,
-					false
-				);
+				System.Console.WriteLine("ARB_debug_output not supported!");
+				return;
 			}
+			glDebugMessageCallbackARB = (DebugMessageCallback) Marshal.GetDelegateForFunctionPointer(
+				messageCallback,
+				typeof(DebugMessageCallback)
+			);
+			glDebugMessageControlARB = (DebugMessageControl) Marshal.GetDelegateForFunctionPointer(
+				messageControl,
+				typeof(DebugMessageControl)
+			);
+			glDebugMessageCallbackARB(DebugCall, IntPtr.Zero);
+			glDebugMessageControlARB(
+				GLenum.GL_DONT_CARE,
+				GLenum.GL_DONT_CARE,
+				GLenum.GL_DONT_CARE,
+				IntPtr.Zero,
+				IntPtr.Zero,
+				true
+			);
+			glDebugMessageControlARB(
+				GLenum.GL_DONT_CARE,
+				GLenum.GL_DEBUG_TYPE_OTHER_ARB,
+				GLenum.GL_DEBUG_SEVERITY_LOW_ARB,
+				IntPtr.Zero,
+				IntPtr.Zero,
+				false
+			);
 		}
 
 		#endregion

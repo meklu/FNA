@@ -10,8 +10,6 @@
 #region Using Statements
 using System;
 using System.Collections.Generic;
-
-using OpenTK.Graphics.OpenGL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics
@@ -89,9 +87,9 @@ namespace Microsoft.Xna.Framework.Graphics
 						{
 							Offset = ve.Offset,
 							AttributeLocation = attributeLocation,
-							NumberOfElements = OpenGLNumberOfElements(ve.VertexElementFormat),
-							VertexAttribPointerType = OpenGLVertexAttribPointerType(ve.VertexElementFormat),
-							Normalized = OpenGLVertexAttribNormalized(ve),
+							NumberOfElements = GetNumberOfElements(ve.VertexElementFormat),
+							VertexAttribPointerType = ve.VertexElementFormat,
+							Normalized = GetVertexAttribNormalized(ve),
 						});
 					}
 				}
@@ -207,11 +205,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			return 0;
 		}
 
-		#endregion
-
-		#region Private Static OpenGL VertexElement Info Methods
-
-		private static int OpenGLNumberOfElements(VertexElementFormat elementFormat)
+		private static int GetNumberOfElements(VertexElementFormat elementFormat)
 		{
 			switch (elementFormat)
 			{
@@ -244,40 +238,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			throw new ArgumentException("Should be a value defined in VertexElementFormat", "elementFormat");
 		}
 
-		private static VertexAttribPointerType OpenGLVertexAttribPointerType(VertexElementFormat elementFormat)
-		{
-			switch (elementFormat)
-			{
-				case VertexElementFormat.Single:
-					return VertexAttribPointerType.Float;
-				case VertexElementFormat.Vector2:
-					return VertexAttribPointerType.Float;
-				case VertexElementFormat.Vector3:
-					return VertexAttribPointerType.Float;
-				case VertexElementFormat.Vector4:
-					return VertexAttribPointerType.Float;
-				case VertexElementFormat.Color:
-					return VertexAttribPointerType.UnsignedByte;
-				case VertexElementFormat.Byte4:
-					return VertexAttribPointerType.UnsignedByte;
-				case VertexElementFormat.Short2:
-					return VertexAttribPointerType.Short;
-				case VertexElementFormat.Short4:
-					return VertexAttribPointerType.Short;
-				case VertexElementFormat.NormalizedShort2:
-					return VertexAttribPointerType.Short;
-				case VertexElementFormat.NormalizedShort4:
-					return VertexAttribPointerType.Short;
-				case VertexElementFormat.HalfVector2:
-					return VertexAttribPointerType.HalfFloat;
-				case VertexElementFormat.HalfVector4:
-					return VertexAttribPointerType.HalfFloat;
-			}
-
-			throw new ArgumentException("Should be a value defined in VertexElementFormat", "elementFormat");
-		}
-
-		private static bool OpenGLVertexAttribNormalized(VertexElement element)
+		private static bool GetVertexAttribNormalized(VertexElement element)
 		{
 			/* TODO: This may or may not be the right behavior.
 			 *
@@ -305,14 +266,14 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
-		#region Private OpenGL Vertex Attribute Element Class
+		#region Private Vertex Attribute Element Class
 
 		private class Element
 		{
 			public int Offset;
 			public int AttributeLocation;
 			public int NumberOfElements;
-			public VertexAttribPointerType VertexAttribPointerType;
+			public VertexElementFormat VertexAttribPointerType;
 			public bool Normalized;
 		}
 

@@ -33,7 +33,6 @@ using System.Threading;
 
 #if THREADED_GL
 using SDL2;
-using OpenTK.Graphics.OpenGL;
 #endif
 #endregion
 
@@ -114,7 +113,7 @@ namespace Microsoft.Xna.Framework
 				action();
 
 				// Must flush the GL calls now before we release the context.
-				GL.Flush();
+				Game.Instance.GraphicsDevice.GLDevice.glFlush();
 
 				// Free the threaded context for the next threaded call...
 				SDL.SDL_GL_MakeCurrent(WindowInfo, IntPtr.Zero);

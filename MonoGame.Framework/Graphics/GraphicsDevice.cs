@@ -595,9 +595,9 @@ namespace Microsoft.Xna.Framework.Graphics
 		public void GetBackBufferData<T>(T[] data) where T : struct
 		{
 			// Store off the old frame buffer components
-			int prevReadBuffer = OpenGLDevice.Framebuffer.CurrentReadFramebuffer;
+			uint prevReadBuffer = GLDevice.CurrentReadFramebuffer;
 
-			OpenGLDevice.Framebuffer.BindReadFramebuffer(GLDevice.Backbuffer.Handle);
+			GLDevice.BindReadFramebuffer(GLDevice.Backbuffer.Handle);
 			GL.ReadPixels(
 				0, 0,
 				GLDevice.Backbuffer.Width,
@@ -608,7 +608,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			);
 
 			// Restore old buffer components
-			OpenGLDevice.Framebuffer.BindReadFramebuffer(prevReadBuffer);
+			GLDevice.BindReadFramebuffer(prevReadBuffer);
 
 			// Now we get to do a software-based flip! Yes, really! -flibit
 			int width = GLDevice.Backbuffer.Width;
@@ -695,18 +695,18 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 			else
 			{
-				int[] glTarget = new int[renderTargets.Length];
-				TextureTarget[] glTargetFace = new TextureTarget[renderTargets.Length];
+				uint[] glTarget = new uint[renderTargets.Length];
+				OpenGLDevice.GLenum[] glTargetFace = new OpenGLDevice.GLenum[renderTargets.Length];
 				for (int i = 0; i < renderTargets.Length; i += 1)
 				{
 					glTarget[i] = renderTargets[i].RenderTarget.texture.Handle;
 					if (renderTargets[i].RenderTarget is RenderTarget2D)
 					{
-						glTargetFace[i] = TextureTarget.Texture2D;
+						glTargetFace[i] = OpenGLDevice.GLenum.GL_TEXTURE_2D;
 					}
 					else
 					{
-						glTargetFace[i] = TextureTarget.TextureCubeMapPositiveX + (int) renderTargets[i].CubeMapFace;
+						glTargetFace[i] = OpenGLDevice.GLenum.GL_TEXTURE_CUBE_MAP_POSITIVE_X + (int) renderTargets[i].CubeMapFace;
 					}
 				}
 				IRenderTarget target = renderTargets[0].RenderTarget as IRenderTarget;

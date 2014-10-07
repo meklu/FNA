@@ -173,7 +173,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			Threading.ForceToMainThread(() =>
 			{
-				glDepthStencilBuffer = OpenGLDevice.Framebuffer.GenRenderbuffer(
+				glDepthStencilBuffer = graphicsDevice.GLDevice.GenRenderbuffer(
 					size,
 					size,
 					preferredDepthFormat

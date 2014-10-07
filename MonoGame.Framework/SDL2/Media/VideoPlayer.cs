@@ -23,8 +23,6 @@ using System.Diagnostics;
 
 #if VIDEOPLAYER_OPENGL
 using System.Runtime.InteropServices;
-
-using OpenTK.Graphics.OpenGL;
 #endif
 
 using Microsoft.Xna.Framework.Audio;
@@ -38,7 +36,7 @@ namespace Microsoft.Xna.Framework.Media
 		#region Hardware-accelerated YUV -> RGBA
 
 #if VIDEOPLAYER_OPENGL
-		private const string shader_vertex =
+		private static string shader_vertex =
 			"#version 110\n" +
 			"attribute vec2 pos;\n" +
 			"attribute vec2 tex;\n" +
@@ -46,7 +44,7 @@ namespace Microsoft.Xna.Framework.Media
 			"   gl_Position = vec4(pos.xy, 0.0, 1.0);\n" +
 			"   gl_TexCoord[0].xy = tex;\n" +
 			"}\n";
-		private const string shader_fragment =
+		private static string shader_fragment =
 			"#version 110\n" +
 			"uniform sampler2D samp0;\n" +
 			"uniform sampler2D samp1;\n" +
@@ -69,9 +67,9 @@ namespace Microsoft.Xna.Framework.Media
 			"   gl_FragColor = vec4(rgb, 1.0);\n" +
 			"}\n";
 
-		private int shaderProgram;
-		private int[] yuvTextures;
-		private int rgbaFramebuffer;
+		private uint shaderProgram;
+		private uint[] yuvTextures;
+		private uint rgbaFramebuffer;
 
 		private static float[] vert_pos = new float[]
 		{
@@ -95,7 +93,7 @@ namespace Microsoft.Xna.Framework.Media
 		// Used to restore our previous GL state.
 		private OpenGLDevice.OpenGLTexture[] oldTextures;
 		private int oldShader;
-		private int oldFramebuffer;
+		private uint oldFramebuffer;
 
 		private void GL_initialize()
 		{
@@ -103,117 +101,148 @@ namespace Microsoft.Xna.Framework.Media
 			oldTextures = new OpenGLDevice.OpenGLTexture[3];
 
 			// Create the YUV textures.
-			yuvTextures = new int[3];
-			GL.GenTextures(3, yuvTextures);
+			yuvTextures = new uint[3];
+			// FIXME: lol at my glGenTextures func -flibit
+			currentDevice.GLDevice.glGenTextures((IntPtr) 1, out yuvTextures[0]);
+			currentDevice.GLDevice.glGenTextures((IntPtr) 1, out yuvTextures[1]);
+			currentDevice.GLDevice.glGenTextures((IntPtr) 1, out yuvTextures[2]);
 
 			// Create the RGBA framebuffer target.
-			rgbaFramebuffer = OpenGLDevice.Framebuffer.GenFramebuffer();
+			currentDevice.GLDevice.glGenFramebuffers(
+				(IntPtr) 1,
+				out rgbaFramebuffer
+			);
 
 			// Create our pile of vertices.
 			vert_pos = new float[2 * 4]; // 2 dimensions * 4 vertices
 			vert_tex = new float[2 * 4];
 
 			// Create the vertex/fragment shaders.
-			int vshader_id = GL.CreateShader(ShaderType.VertexShader);
-			GL.ShaderSource(vshader_id, shader_vertex);
-			GL.CompileShader(vshader_id);
-			int fshader_id = GL.CreateShader(ShaderType.FragmentShader);
-			GL.ShaderSource(fshader_id, shader_fragment);
-			GL.CompileShader(fshader_id);
+			uint vshader_id = currentDevice.GLDevice.glCreateShader(
+				OpenGLDevice.GLenum.GL_VERTEX_SHADER
+			);
+			int len = shader_vertex.Length;
+			currentDevice.GLDevice.glShaderSource(
+				vshader_id,
+				(IntPtr) 1,
+				ref shader_vertex,
+				ref len
+			);
+			currentDevice.GLDevice.glCompileShader(vshader_id);
+			uint fshader_id = currentDevice.GLDevice.glCreateShader(
+				OpenGLDevice.GLenum.GL_FRAGMENT_SHADER
+			);
+			len = shader_fragment.Length;
+			currentDevice.GLDevice.glShaderSource(
+				fshader_id,
+				(IntPtr) 1,
+				ref shader_fragment,
+				ref len
+			);
+			currentDevice.GLDevice.glCompileShader(fshader_id);
 
 			// Create the shader program.
-			shaderProgram = GL.CreateProgram();
-			GL.AttachShader(shaderProgram, vshader_id);
-			GL.AttachShader(shaderProgram, fshader_id);
-			GL.BindAttribLocation(shaderProgram, 0, "pos");
-			GL.BindAttribLocation(shaderProgram, 1, "tex");
-			GL.LinkProgram(shaderProgram);
-			GL.DeleteShader(vshader_id);
-			GL.DeleteShader(fshader_id);
+			shaderProgram = currentDevice.GLDevice.glCreateProgram();
+			currentDevice.GLDevice.glAttachShader(shaderProgram, vshader_id);
+			currentDevice.GLDevice.glAttachShader(shaderProgram, fshader_id);
+			currentDevice.GLDevice.glBindAttribLocation(shaderProgram, 0, "pos");
+			currentDevice.GLDevice.glBindAttribLocation(shaderProgram, 1, "tex");
+			currentDevice.GLDevice.glLinkProgram(shaderProgram);
+			currentDevice.GLDevice.glDeleteShader(vshader_id);
+			currentDevice.GLDevice.glDeleteShader(fshader_id);
 
 			// Set uniform values now. They won't change, promise!
-			GL.GetInteger(GetPName.CurrentProgram, out oldShader);
-			GL.UseProgram(shaderProgram);
-			GL.Uniform1(
-				GL.GetUniformLocation(shaderProgram, "samp0"),
+			currentDevice.GLDevice.glGetIntegerv(
+				OpenGLDevice.GLenum.GL_CURRENT_PROGRAM,
+				out oldShader
+			);
+			currentDevice.GLDevice.glUseProgram(shaderProgram);
+			currentDevice.GLDevice.glUniform1i(
+				currentDevice.GLDevice.glGetUniformLocation(shaderProgram, "samp0"),
 				0
 			);
-			GL.Uniform1(
-				GL.GetUniformLocation(shaderProgram, "samp1"),
+			currentDevice.GLDevice.glUniform1i(
+				currentDevice.GLDevice.glGetUniformLocation(shaderProgram, "samp1"),
 				1
 			);
-			GL.Uniform1(
-				GL.GetUniformLocation(shaderProgram, "samp2"),
+			currentDevice.GLDevice.glUniform1i(
+				currentDevice.GLDevice.glGetUniformLocation(shaderProgram, "samp2"),
 				2
 			);
-			GL.UseProgram(oldShader);
+			currentDevice.GLDevice.glUseProgram((uint) oldShader);
 		}
 
 		private void GL_dispose()
 		{
 			// Delete the shader program.
-			GL.DeleteProgram(shaderProgram);
+			currentDevice.GLDevice.glDeleteProgram(shaderProgram);
 
 			// Delete the RGBA framebuffer target.
-			OpenGLDevice.Framebuffer.DeleteFramebuffer(rgbaFramebuffer);
+			currentDevice.GLDevice.glDeleteFramebuffers(
+				(IntPtr) 1,
+				ref rgbaFramebuffer
+			);
 
 			// Delete the YUV textures.
-			GL.DeleteTextures(3, yuvTextures);
+			// FIXME: lol at my glGenTextures func -flibit
+			currentDevice.GLDevice.glDeleteTextures((IntPtr) 1, ref yuvTextures[0]);
+			currentDevice.GLDevice.glDeleteTextures((IntPtr) 1, ref yuvTextures[1]);
+			currentDevice.GLDevice.glDeleteTextures((IntPtr) 1, ref yuvTextures[2]);
 		}
 
 		private void GL_internal_genTexture(
-			int texID,
+			uint texID,
 			int width,
-			int height,
-			PixelInternalFormat internalFormat,
-			PixelFormat format,
-			PixelType type
+			int height
 		) {
 			// Bind the desired texture.
-			GL.BindTexture(TextureTarget.Texture2D, texID);
+			currentDevice.GLDevice.glBindTexture(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				texID
+			);
 
 			// Set the texture parameters, for completion/consistency's sake.
-			GL.TexParameter(
-				TextureTarget.Texture2D,
-				TextureParameterName.TextureWrapS,
-				(int) TextureWrapMode.ClampToEdge
+			currentDevice.GLDevice.glTexParameteri(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				OpenGLDevice.GLenum.GL_TEXTURE_WRAP_S,
+				(int) OpenGLDevice.GLenum.GL_CLAMP_TO_EDGE
 			);
-			GL.TexParameter(
-				TextureTarget.Texture2D,
-				TextureParameterName.TextureWrapT,
-				(int) TextureWrapMode.ClampToEdge
+			currentDevice.GLDevice.glTexParameteri(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				OpenGLDevice.GLenum.GL_TEXTURE_WRAP_T,
+				(int) OpenGLDevice.GLenum.GL_CLAMP_TO_EDGE
 			);
-			GL.TexParameter(
-				TextureTarget.Texture2D,
-				TextureParameterName.TextureMinFilter,
-				(int) TextureMinFilter.Linear
+			currentDevice.GLDevice.glTexParameteri(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				OpenGLDevice.GLenum.GL_TEXTURE_MIN_FILTER,
+				(int) OpenGLDevice.GLenum.GL_LINEAR
 			);
-			GL.TexParameter(
-				TextureTarget.Texture2D,
-				TextureParameterName.TextureMagFilter,
-				(int) TextureMagFilter.Linear
+			currentDevice.GLDevice.glTexParameteri(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				OpenGLDevice.GLenum.GL_TEXTURE_MAG_FILTER,
+				(int) OpenGLDevice.GLenum.GL_LINEAR
 			);
-			GL.TexParameter(
-				TextureTarget.Texture2D,
-				TextureParameterName.TextureBaseLevel,
+			currentDevice.GLDevice.glTexParameteri(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				OpenGLDevice.GLenum.GL_TEXTURE_BASE_LEVEL,
 				0
 			);
-			GL.TexParameter(
-				TextureTarget.Texture2D,
-				TextureParameterName.TextureMaxLevel,
+			currentDevice.GLDevice.glTexParameteri(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				OpenGLDevice.GLenum.GL_TEXTURE_MAX_LEVEL,
 				0
 			);
 
 			// Allocate the texture data.
-			GL.TexImage2D(
-				TextureTarget.Texture2D,
+			currentDevice.GLDevice.glTexImage2D(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
 				0,
-				internalFormat,
-				width,
-				height,
+				(int) OpenGLDevice.GLenum.GL_LUMINANCE,
+				(IntPtr) width,
+				(IntPtr) height,
 				0,
-				format,
-				type,
+				OpenGLDevice.GLenum.GL_LUMINANCE,
+				OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
 				IntPtr.Zero
 			);
 		}
@@ -224,51 +253,51 @@ namespace Microsoft.Xna.Framework.Media
 			OpenGLDevice.OpenGLTexture prevTexture = currentDevice.GLDevice.Textures[0];
 
 			// Attach the Texture2D to the framebuffer.
-			int prevReadFramebuffer = OpenGLDevice.Framebuffer.CurrentReadFramebuffer;
-			int prevDrawFramebuffer = OpenGLDevice.Framebuffer.CurrentDrawFramebuffer;
-			OpenGLDevice.Framebuffer.BindFramebuffer(rgbaFramebuffer);
-			OpenGLDevice.Framebuffer.AttachColor(videoTexture.texture.Handle, 0, TextureTarget.Texture2D);
-			OpenGLDevice.Framebuffer.BindReadFramebuffer(prevReadFramebuffer);
-			OpenGLDevice.Framebuffer.BindDrawFramebuffer(prevDrawFramebuffer);
+			uint prevReadFramebuffer = currentDevice.GLDevice.CurrentReadFramebuffer;
+			uint prevDrawFramebuffer = currentDevice.GLDevice.CurrentDrawFramebuffer;
+			currentDevice.GLDevice.BindFramebuffer(rgbaFramebuffer);
+			currentDevice.GLDevice.glFramebufferTexture2D(
+				OpenGLDevice.GLenum.GL_FRAMEBUFFER,
+				OpenGLDevice.GLenum.GL_COLOR_ATTACHMENT0,
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				videoTexture.texture.Handle,
+				0
+			);
+			currentDevice.GLDevice.BindReadFramebuffer(prevReadFramebuffer);
+			currentDevice.GLDevice.BindDrawFramebuffer(prevDrawFramebuffer);
 
 			// Be careful about non-2D textures currently bound...
-			if (prevTexture.Target != TextureTarget.Texture2D)
+			if (prevTexture.Target != OpenGLDevice.GLenum.GL_TEXTURE_2D)
 			{
-				GL.BindTexture(prevTexture.Target, 0);
+				currentDevice.GLDevice.glBindTexture(prevTexture.Target, 0);
 			}
 
 			// Allocate YUV GL textures
 			GL_internal_genTexture(
 				yuvTextures[0],
 				width,
-				height,
-				PixelInternalFormat.Luminance,
-				PixelFormat.Luminance,
-				PixelType.UnsignedByte
+				height
 			);
 			GL_internal_genTexture(
 				yuvTextures[1],
 				width / 2,
-				height / 2,
-				PixelInternalFormat.Luminance,
-				PixelFormat.Luminance,
-				PixelType.UnsignedByte
+				height / 2
 			);
 			GL_internal_genTexture(
 				yuvTextures[2],
 				width / 2,
-				height / 2,
-				PixelInternalFormat.Luminance,
-				PixelFormat.Luminance,
-				PixelType.UnsignedByte
+				height / 2
 			);
 
 			// Aaand we should be set now.
-			if (prevTexture.Target != TextureTarget.Texture2D)
+			if (prevTexture.Target != OpenGLDevice.GLenum.GL_TEXTURE_2D)
 			{
-				GL.BindTexture(TextureTarget.Texture2D, 0);
+				currentDevice.GLDevice.glBindTexture(
+					OpenGLDevice.GLenum.GL_TEXTURE_2D,
+					0
+				);
 			}
-			GL.BindTexture(prevTexture.Target, prevTexture.Handle);
+			currentDevice.GLDevice.glBindTexture(prevTexture.Target, prevTexture.Handle);
 		}
 
 		private void GL_pushState()
@@ -279,38 +308,51 @@ namespace Microsoft.Xna.Framework.Media
 			 * this one time!
 			 * -flibit
 			 */
-			GL.GetInteger(GetPName.CurrentProgram, out oldShader);
+			currentDevice.GLDevice.glGetIntegerv(
+				OpenGLDevice.GLenum.GL_CURRENT_PROGRAM,
+				out oldShader
+			);
 
 			// Prep our samplers
 			for (int i = 0; i < 3; i += 1)
 			{
 				oldTextures[i] = currentDevice.GLDevice.Textures[i];
-				if (oldTextures[i].Target != TextureTarget.Texture2D)
+				if (oldTextures[i].Target != OpenGLDevice.GLenum.GL_TEXTURE_2D)
 				{
-					GL.ActiveTexture(TextureUnit.Texture0 + i);
-					GL.BindTexture(oldTextures[i].Target, 0);
+					currentDevice.GLDevice.glActiveTexture(
+						OpenGLDevice.GLenum.GL_TEXTURE0 + i
+					);
+					currentDevice.GLDevice.glBindTexture(oldTextures[i].Target, 0);
 				}
 			}
 
 			// Store the current framebuffer, may be backbuffer or target FBO
-			oldFramebuffer = OpenGLDevice.Framebuffer.CurrentDrawFramebuffer;
+			oldFramebuffer = currentDevice.GLDevice.CurrentDrawFramebuffer;
 
 			// Disable various GL options
 			if (currentDevice.GLDevice.alphaBlendEnable)
 			{
-				GL.Disable(EnableCap.Blend);
+				currentDevice.GLDevice.glDisable(
+					OpenGLDevice.GLenum.GL_BLEND
+				);
 			}
 			if (currentDevice.GLDevice.zEnable)
 			{
-				GL.Disable(EnableCap.DepthTest);
+				currentDevice.GLDevice.glDisable(
+					OpenGLDevice.GLenum.GL_DEPTH_TEST
+				);
 			}
 			if (currentDevice.GLDevice.cullFrontFace != CullMode.None)
 			{
-				GL.Disable(EnableCap.CullFace);
+				currentDevice.GLDevice.glDisable(
+					OpenGLDevice.GLenum.GL_CULL_FACE
+				);
 			}
 			if (currentDevice.GLDevice.scissorTestEnable)
 			{
-				GL.Disable(EnableCap.ScissorTest);
+				currentDevice.GLDevice.glDisable(
+					OpenGLDevice.GLenum.GL_SCISSOR_TEST
+				);
 			}
 		}
 
@@ -318,49 +360,64 @@ namespace Microsoft.Xna.Framework.Media
 		{
 			// Flush the viewport, reset.
 			Rectangle oldViewport = currentDevice.Viewport.Bounds;
-			GL.Viewport(
+			currentDevice.GLDevice.glViewport(
 				oldViewport.X,
 				oldViewport.Y,
-				oldViewport.Width,
-				oldViewport.Height
+				(IntPtr) oldViewport.Width,
+				(IntPtr) oldViewport.Height
 			);
 
 			// Restore the program we got from glGet :(
-			GL.UseProgram(oldShader);
+			currentDevice.GLDevice.glUseProgram((uint) oldShader);
 
 			// Restore the sampler bindings
 			for (int i = 0; i < 3; i += 1)
 			{
-				GL.ActiveTexture(TextureUnit.Texture0 + i);
-				if (oldTextures[i].Target != TextureTarget.Texture2D)
+				currentDevice.GLDevice.glActiveTexture(
+					OpenGLDevice.GLenum.GL_TEXTURE0 + i
+				);
+				if (oldTextures[i].Target != OpenGLDevice.GLenum.GL_TEXTURE_2D)
 				{
-					GL.BindTexture(TextureTarget.Texture2D, 0);
+					currentDevice.GLDevice.glBindTexture(
+						OpenGLDevice.GLenum.GL_TEXTURE_2D,
+						0
+					);
 				}
-				GL.BindTexture(oldTextures[i].Target, oldTextures[i].Handle);
+				currentDevice.GLDevice.glBindTexture(oldTextures[i].Target, oldTextures[i].Handle);
 			}
 
 			// Keep this state sane.
-			GL.ActiveTexture(TextureUnit.Texture0);
+			currentDevice.GLDevice.glActiveTexture(
+				OpenGLDevice.GLenum.GL_TEXTURE0
+			);
 
 			// Restore the active framebuffer
-			OpenGLDevice.Framebuffer.BindDrawFramebuffer(oldFramebuffer);
+			currentDevice.GLDevice.BindDrawFramebuffer(oldFramebuffer);
 
 			// Flush various GL states, if applicable
 			if (currentDevice.GLDevice.scissorTestEnable)
 			{
-				GL.Enable(EnableCap.ScissorTest);
+				currentDevice.GLDevice.glEnable(
+					OpenGLDevice.GLenum.GL_SCISSOR_TEST
+				);
 			}
 			if (currentDevice.GLDevice.cullFrontFace != CullMode.None)
 			{
-				GL.Enable(EnableCap.CullFace);
+				currentDevice.GLDevice.glEnable(
+					OpenGLDevice.GLenum.GL_CULL_FACE
+				);
 			}
 			if (currentDevice.GLDevice.zEnable)
 			{
-				GL.Enable(EnableCap.DepthTest);
+				currentDevice.GLDevice.glEnable(
+					OpenGLDevice.GLenum.GL_DEPTH_TEST
+				);
 			}
 			if (currentDevice.GLDevice.alphaBlendEnable)
 			{
-				GL.Enable(EnableCap.Blend);
+				currentDevice.GLDevice.glEnable(
+					OpenGLDevice.GLenum.GL_BLEND
+				);
 			}
 		}
 #endif
@@ -668,7 +725,7 @@ namespace Microsoft.Xna.Framework.Media
 			GL_pushState();
 
 			// Bind our shader program.
-			GL.UseProgram(shaderProgram);
+			currentDevice.GLDevice.glUseProgram(shaderProgram);
 
 			// We're using client-side arrays like CAVEMEN
 			currentDevice.GLDevice.BindVertexBuffer(OpenGLDevice.OpenGLVertexBuffer.NullBuffer);
@@ -684,7 +741,7 @@ namespace Microsoft.Xna.Framework.Media
 			currentDevice.GLDevice.VertexAttribPointer(
 				0,
 				2,
-				VertexAttribPointerType.Float,
+				VertexElementFormat.Single,
 				false,
 				2 * sizeof(float),
 				vertPosPtr
@@ -692,56 +749,71 @@ namespace Microsoft.Xna.Framework.Media
 			currentDevice.GLDevice.VertexAttribPointer(
 				1,
 				2,
-				VertexAttribPointerType.Float,
+				VertexElementFormat.Single,
 				false,
 				2 * sizeof(float),
 				vertTexPtr
 			);
 
 			// Bind our target framebuffer.
-			OpenGLDevice.Framebuffer.BindDrawFramebuffer(rgbaFramebuffer);
+			currentDevice.GLDevice.BindDrawFramebuffer(rgbaFramebuffer);
 
 			// Prepare YUV GL textures with our current frame data
-			GL.ActiveTexture(TextureUnit.Texture0);
-			GL.BindTexture(TextureTarget.Texture2D, yuvTextures[0]);
-			GL.TexSubImage2D(
-				TextureTarget.Texture2D,
+			currentDevice.GLDevice.glActiveTexture(
+				OpenGLDevice.GLenum.GL_TEXTURE0
+			);
+			currentDevice.GLDevice.glBindTexture(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				yuvTextures[0]
+			);
+			currentDevice.GLDevice.glTexSubImage2D(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
 				0,
 				0,
 				0,
-				(int) currentVideo.width,
-				(int) currentVideo.height,
-				PixelFormat.Luminance,
-				PixelType.UnsignedByte,
+				(IntPtr) currentVideo.width,
+				(IntPtr) currentVideo.height,
+				OpenGLDevice.GLenum.GL_LUMINANCE,
+				OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
 				currentVideo.pixels
 			);
-			GL.ActiveTexture(TextureUnit.Texture1);
-			GL.BindTexture(TextureTarget.Texture2D, yuvTextures[1]);
-			GL.TexSubImage2D(
-				TextureTarget.Texture2D,
+			currentDevice.GLDevice.glActiveTexture(
+				OpenGLDevice.GLenum.GL_TEXTURE0 + 1
+			);
+			currentDevice.GLDevice.glBindTexture(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				yuvTextures[1]
+			);
+			currentDevice.GLDevice.glTexSubImage2D(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
 				0,
 				0,
 				0,
-				(int) currentVideo.width / 2,
-				(int) currentVideo.height / 2,
-				PixelFormat.Luminance,
-				PixelType.UnsignedByte,
+				(IntPtr) (currentVideo.width / 2),
+				(IntPtr) (currentVideo.height / 2),
+				OpenGLDevice.GLenum.GL_LUMINANCE,
+				OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
 				new IntPtr(
 					currentVideo.pixels.ToInt64() +
 					(currentVideo.width * currentVideo.height)
 				)
 			);
-			GL.ActiveTexture(TextureUnit.Texture2);
-			GL.BindTexture(TextureTarget.Texture2D, yuvTextures[2]);
-			GL.TexSubImage2D(
-				TextureTarget.Texture2D,
+			currentDevice.GLDevice.glActiveTexture(
+				OpenGLDevice.GLenum.GL_TEXTURE0 + 2
+			);
+			currentDevice.GLDevice.glBindTexture(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
+				yuvTextures[2]
+			);
+			currentDevice.GLDevice.glTexSubImage2D(
+				OpenGLDevice.GLenum.GL_TEXTURE_2D,
 				0,
 				0,
 				0,
-				(int) currentVideo.width / 2,
-				(int) currentVideo.height / 2,
-				PixelFormat.Luminance,
-				PixelType.UnsignedByte,
+				(IntPtr) (currentVideo.width / 2),
+				(IntPtr) (currentVideo.height / 2),
+				OpenGLDevice.GLenum.GL_LUMINANCE,
+				OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
 				new IntPtr(
 					currentVideo.pixels.ToInt64() +
 					(currentVideo.width * currentVideo.height) +
@@ -750,15 +822,19 @@ namespace Microsoft.Xna.Framework.Media
 			);
 
 			// Flip the viewport, because loldirectx
-			GL.Viewport(
+			currentDevice.GLDevice.glViewport(
 				0,
 				0,
-				(int) currentVideo.width,
-				(int) currentVideo.height
+				(IntPtr) currentVideo.width,
+				(IntPtr) currentVideo.height
 			);
 
 			// Draw the YUV textures to the framebuffer with our shader.
-			GL.DrawArrays(BeginMode.TriangleStrip, 0, 4);
+			currentDevice.GLDevice.glDrawArrays(
+				OpenGLDevice.GLenum.GL_TRIANGLE_STRIP,
+				0,
+				(IntPtr) 4
+			);
 
 			// Clean up after ourselves.
 			GL_popState();
