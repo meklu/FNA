@@ -4,14 +4,6 @@
 
 using System;
 
-#if MONOMAC
-using MonoMac.OpenGL;
-#elif WINDOWS || LINUX || SDL2
-using OpenTK.Graphics.OpenGL;
-#elif GLES
-using OpenTK.Graphics.ES20;
-#endif
-
 namespace Microsoft.Xna.Framework.Graphics
 {
     internal partial class ConstantBuffer
@@ -79,7 +71,15 @@ namespace Microsoft.Xna.Framework.Graphics
                 // and cast this correctly... else it doesn't work as i guess
                 // GL is checking the type of the uniform.
 
+#if SDL2
+                device.GLDevice.glUniform4fv(
+                    _location,
+                    (IntPtr) (_buffer.Length / 16),
+                    (IntPtr) bytePtr
+                );
+#else
                 GL.Uniform4(_location, _buffer.Length / 16, (float*)bytePtr);
+#endif
             }
 
             // Clear the dirty flag.

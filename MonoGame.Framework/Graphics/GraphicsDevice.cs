@@ -256,6 +256,9 @@ namespace Microsoft.Xna.Framework.Graphics
 		private readonly ConstantBufferCollection pixelConstantBuffers = new ConstantBufferCollection(ShaderStage.Pixel, 16);
 
 		private static readonly float[] posFixup = new float[4];
+		// FIXME: Leak!
+		private static GCHandle posFixupHandle = GCHandle.Alloc(posFixup, GCHandleType.Pinned);
+		private static IntPtr posFixupPtr = posFixupHandle.AddrOfPinnedObject();
 
 		private Shader INTERNAL_vertexShader;
 		internal Shader VertexShader
@@ -1272,7 +1275,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			// Lookup the shader program.
 			ShaderProgram program = programCache.GetProgram(VertexShader, PixelShader);
-			if (program.Program == -1)
+			if (program.Program == 0)
 			{
 				return;
 			}
@@ -1280,7 +1283,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Set the new program if it has changed.
 			if (shaderProgram != program)
 			{
-				GLDevice.glUseProgram((uint) program.Program);
+				GLDevice.glUseProgram(program.Program);
 				shaderProgram = program;
 			}
 
@@ -1331,7 +1334,11 @@ namespace Microsoft.Xna.Framework.Graphics
 				posFixup[3] *= -1.0f;
 			}
 
-			GLDevice.glUniform4fv(posFixupLoc, (IntPtr) 1, posFixup);
+			GLDevice.glUniform4fv(
+				posFixupLoc,
+				(IntPtr) 1,
+				posFixupPtr
+			);
 		}
 
 		#endregion

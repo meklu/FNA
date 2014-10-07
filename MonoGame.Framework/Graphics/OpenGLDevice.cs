@@ -2356,7 +2356,9 @@ namespace Microsoft.Xna.Framework.Graphics
 			// Stupid dumk stuff that's stupid
 			GL_CURRENT_PROGRAM =			0x8B8D,
 			GL_FRAGMENT_SHADER =			0x8B30,
-			GL_VERTEX_SHADER =			0x8B31
+			GL_VERTEX_SHADER =			0x8B31,
+			GL_COMPILE_STATUS =			0x8B81,
+			GL_LINK_STATUS =			0x8B82
 		}
 
 		// Entry Points
@@ -2892,6 +2894,9 @@ namespace Microsoft.Xna.Framework.Graphics
 		public delegate void AttachShader(uint program, uint shader);
 		public AttachShader glAttachShader;
 
+		public delegate void DetachShader(uint program, uint shader);
+		public DetachShader glDetachShader;
+
 		public delegate void LinkProgram(uint program);
 		public LinkProgram glLinkProgram;
 
@@ -2904,9 +2909,23 @@ namespace Microsoft.Xna.Framework.Graphics
 		public delegate void Uniform4fv(
 			int location,
 			IntPtr count,
-			float[] value
+			IntPtr value
 		);
 		public Uniform4fv glUniform4fv;
+
+		public delegate void GetShaderiv(
+			uint shader,
+			GLenum pname,
+			out int param
+		);
+		public GetShaderiv glGetShaderiv;
+
+		public delegate void GetProgramiv(
+			uint program,
+			GLenum pname,
+			out int param
+		);
+		public GetProgramiv glGetProgramiv;
 
 		public delegate int GetUniformLocation(
 			uint program,
@@ -2914,12 +2933,30 @@ namespace Microsoft.Xna.Framework.Graphics
 		);
 		public GetUniformLocation glGetUniformLocation;
 
+		public delegate int GetAttribLocation(
+			uint program,
+			string name
+		);
+		public GetAttribLocation glGetAttribLocation;
+
 		public delegate void BindAttribLocation(
 			uint program,
 			uint index,
 			string name
 		);
 		public BindAttribLocation glBindAttribLocation;
+
+		public delegate bool IsShader(uint shader);
+		public IsProgram glIsShader;
+
+		public delegate bool IsProgram(uint program);
+		public IsProgram glIsProgram;
+
+		public delegate string GetShaderInfoLog(uint shader);
+		public GetProgramInfoLog glGetShaderInfoLog;
+
+		public delegate string GetProgramInfoLog(uint program);
+		public GetProgramInfoLog glGetProgramInfoLog;
 
 		/* END SHADER FUNCTIONS */
 

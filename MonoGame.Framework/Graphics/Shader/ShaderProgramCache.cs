@@ -3,35 +3,16 @@
 using System;
 using System.Collections.Generic;
 
-#if MONOMAC
-using MonoMac.OpenGL;
-using GetProgramParameterName = MonoMac.OpenGL.ProgramParameter;
-#elif SDL2
-using OpenTK.Graphics.OpenGL;
-using GetProgramParameterName = OpenTK.Graphics.OpenGL.ProgramParameter;
-#elif WINDOWS || LINUX
-using OpenTK.Graphics.OpenGL;
-#elif WINRT
-
-#else
-using OpenTK.Graphics.ES20;
-#if IOS || ANDROID
-using ActiveUniformType = OpenTK.Graphics.ES20.All;
-using ShaderType = OpenTK.Graphics.ES20.All;
-using GetProgramParameterName = OpenTK.Graphics.ES20.All;
-#endif
-#endif
-
 namespace Microsoft.Xna.Framework.Graphics
 {
 
     internal class ShaderProgram
     {
-        public readonly int Program;
+        public readonly uint Program;
 
         private readonly Dictionary<string, int> _uniformLocations = new Dictionary<string, int>();
 
-        public ShaderProgram(int program)
+        public ShaderProgram(uint program)
         {
             Program = program;
         }
@@ -41,7 +22,7 @@ namespace Microsoft.Xna.Framework.Graphics
             if (_uniformLocations.ContainsKey(name))
                 return _uniformLocations[name];
 
-            var location = GL.GetUniformLocation(Program, name);
+            var location = Game.Instance.GraphicsDevice.GLDevice.glGetUniformLocation(Program, name);
             _uniformLocations[name] = location;
             return location;
         }
@@ -69,13 +50,9 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             foreach (var pair in _programCache)
             {
-                if (GL.IsProgram(pair.Value.Program))
+                if (Game.Instance.GraphicsDevice.GLDevice.glIsProgram(pair.Value.Program))
                 {
-#if MONOMAC
-                    GL.DeleteProgram(pair.Value.Program, null);
-#else
-                    GL.DeleteProgram(pair.Value.Program);
-#endif
+                    Game.Instance.GraphicsDevice.GLDevice.glDeleteProgram(pair.Value.Program);
                 }
             }
             _programCache.Clear();
@@ -102,42 +79,36 @@ namespace Microsoft.Xna.Framework.Graphics
             // NOTE: No need to worry about background threads here
             // as this is only called at draw time when we're in the
             // main drawing thread.
-            var program = GL.CreateProgram();
+            var program = vertexShader.GraphicsDevice.GLDevice.glCreateProgram();
 
-            GL.AttachShader(program, vertexShader.GetShaderHandle());
+            vertexShader.GraphicsDevice.GLDevice.glAttachShader(program, vertexShader.GetShaderHandle());
 
-            GL.AttachShader(program, pixelShader.GetShaderHandle());
+            vertexShader.GraphicsDevice.GLDevice.glAttachShader(program, pixelShader.GetShaderHandle());
 
-            //vertexShader.BindVertexAttributes(program);
+            vertexShader.GraphicsDevice.GLDevice.glLinkProgram(program);
 
-            GL.LinkProgram(program);
-
-            GL.UseProgram(program);
+            vertexShader.GraphicsDevice.GLDevice.glUseProgram(program);
 
             vertexShader.GetVertexAttributeLocations(program);
 
             pixelShader.ApplySamplerTextureUnits(program);
 
             var linked = 0;
-
-#if GLES && !ANGLE
-            GL.GetProgram(program, GetProgramParameterName.LinkStatus, ref linked);
-#else
-            GL.GetProgram(program, GetProgramParameterName.LinkStatus, out linked);
-#endif
+            vertexShader.GraphicsDevice.GLDevice.glGetProgramiv(
+                program,
+                OpenGLDevice.GLenum.GL_LINK_STATUS,
+                out linked
+            );
             if (linked == 0)
             {
-#if !GLES
-                var log = GL.GetProgramInfoLog(program);
-                Console.WriteLine(log);
-#endif
-                GL.DetachShader(program, vertexShader.GetShaderHandle());
-                GL.DetachShader(program, pixelShader.GetShaderHandle());
-#if MONOMAC
-                GL.DeleteProgram(1, ref program);
-#else
-                GL.DeleteProgram(program);
-#endif
+                Console.WriteLine(
+                    vertexShader.GraphicsDevice.GLDevice.glGetProgramInfoLog(program)
+                );
+
+                vertexShader.GraphicsDevice.GLDevice.glDetachShader(program, vertexShader.GetShaderHandle());
+                vertexShader.GraphicsDevice.GLDevice.glDetachShader(program, pixelShader.GetShaderHandle());
+
+                vertexShader.GraphicsDevice.GLDevice.glDeleteProgram(program);
                 throw new InvalidOperationException("Unable to link effect program");
             }
 

@@ -5,25 +5,12 @@
 using System;
 using System.IO;
 
-#if MONOMAC
-using MonoMac.OpenGL;
-#elif WINDOWS || LINUX || SDL2
-using OpenTK.Graphics.OpenGL;
-#elif GLES
-using System.Text;
-using OpenTK.Graphics.ES20;
-using ShaderType = OpenTK.Graphics.ES20.All;
-using ShaderParameter = OpenTK.Graphics.ES20.All;
-using TextureUnit = OpenTK.Graphics.ES20.All;
-using TextureTarget = OpenTK.Graphics.ES20.All;
-#endif
-
 namespace Microsoft.Xna.Framework.Graphics
 {
     internal partial class Shader
     {
         // The shader handle.
-        private int _shaderHandle = -1;
+        private uint _shaderHandle = 0;
 
         // We keep this around for recompiling on context lost and debugging.
         private string _glslCode;
@@ -55,49 +42,31 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
-        internal int GetShaderHandle()
+        internal uint GetShaderHandle()
         {
             // If the shader has already been created then return it.
-            if (_shaderHandle != -1)
+            if (_shaderHandle != 0)
                 return _shaderHandle;
             
             //
-            _shaderHandle = GL.CreateShader(Stage == ShaderStage.Vertex ? ShaderType.VertexShader : ShaderType.FragmentShader);
-#if GLES
-			GL.ShaderSource(_shaderHandle, 1, new string[] { _glslCode }, (int[])null);
-#else
-            GL.ShaderSource(_shaderHandle, _glslCode);
-#endif
-            GL.CompileShader(_shaderHandle);
+            _shaderHandle = GraphicsDevice.GLDevice.glCreateShader(Stage == ShaderStage.Vertex ? OpenGLDevice.GLenum.GL_VERTEX_SHADER : OpenGLDevice.GLenum.GL_FRAGMENT_SHADER);
+            int len = _glslCode.Length;
+            GraphicsDevice.GLDevice.glShaderSource(_shaderHandle, (IntPtr) 1, ref _glslCode, ref len);
+            GraphicsDevice.GLDevice.glCompileShader(_shaderHandle);
 
             var compiled = 0;
-#if GLES && !ANGLE
-			GL.GetShader(_shaderHandle, ShaderParameter.CompileStatus, ref compiled);
-#else
-            GL.GetShader(_shaderHandle, ShaderParameter.CompileStatus, out compiled);
-#endif
-            if (compiled == (int)All.False)
+            GraphicsDevice.GLDevice.glGetShaderiv(_shaderHandle, OpenGLDevice.GLenum.GL_COMPILE_STATUS, out compiled);
+            if (compiled == 0)
             {
-#if GLES && !ANGLE
-                string log = "";
-                int length = 0;
-				GL.GetShader(_shaderHandle, ShaderParameter.InfoLogLength, ref length);
-                if (length > 0)
-                {
-                    var logBuilder = new StringBuilder(length);
-					GL.GetShaderInfoLog(_shaderHandle, length, ref length, logBuilder);
-                    log = logBuilder.ToString();
-                }
-#else
-                var log = GL.GetShaderInfoLog(_shaderHandle);
-#endif
-                Console.WriteLine(log);
+                Console.WriteLine(
+                    GraphicsDevice.GLDevice.glGetShaderInfoLog(_shaderHandle)
+                );
 
-                if (GL.IsShader(_shaderHandle))
+                if (GraphicsDevice.GLDevice.glIsShader(_shaderHandle))
                 {
-                    GL.DeleteShader(_shaderHandle);
+                    GraphicsDevice.GLDevice.glDeleteShader(_shaderHandle);
                 }
-                _shaderHandle = -1;
+                _shaderHandle = 0;
 
                 throw new InvalidOperationException("Shader Compilation Failed");
             }
@@ -105,11 +74,11 @@ namespace Microsoft.Xna.Framework.Graphics
             return _shaderHandle;
         }
 
-        internal void GetVertexAttributeLocations(int program)
+        internal void GetVertexAttributeLocations(uint program)
         {
             for (int i = 0; i < _attributes.Length; ++i)
             {
-                _attributes[i].location = GL.GetAttribLocation(program, _attributes[i].name);
+                _attributes[i].location = GraphicsDevice.GLDevice.glGetAttribLocation(program, _attributes[i].name);
             }
         }
 
@@ -123,28 +92,28 @@ namespace Microsoft.Xna.Framework.Graphics
             return -1;
         }
 
-        internal void ApplySamplerTextureUnits(int program)
+        internal void ApplySamplerTextureUnits(uint program)
         {
             // Assign the texture unit index to the sampler uniforms.
             foreach (var sampler in Samplers)
             {
-                var loc = GL.GetUniformLocation(program, sampler.name);
+                var loc = GraphicsDevice.GLDevice.glGetUniformLocation(program, sampler.name);
                 if (loc != -1)
                 {
-                    GL.Uniform1(loc, sampler.textureSlot);
+                    GraphicsDevice.GLDevice.glUniform1i(loc, sampler.textureSlot);
                 }
             }
         }
 
         private void PlatformGraphicsDeviceResetting()
         {
-            if (_shaderHandle != -1)
+            if (_shaderHandle != 0)
             {
-                if (GL.IsShader(_shaderHandle))
+                if (GraphicsDevice.GLDevice.glIsShader(_shaderHandle))
                 {
-                    GL.DeleteShader(_shaderHandle);
+                    GraphicsDevice.GLDevice.glDeleteShader(_shaderHandle);
                 }
-                _shaderHandle = -1;
+                _shaderHandle = 0;
             }
         }
 
@@ -154,13 +123,13 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 GraphicsDevice.AddDisposeAction(() =>
                 {
-                    if (_shaderHandle != -1)
+                    if (_shaderHandle != 0)
                     {
-                        if (GL.IsShader(_shaderHandle))
+                        if (GraphicsDevice.GLDevice.glIsShader(_shaderHandle))
                         {
-                            GL.DeleteShader(_shaderHandle);
+                            GraphicsDevice.GLDevice.glDeleteShader(_shaderHandle);
                         }
-                        _shaderHandle = -1;
+                        _shaderHandle = 0;
                     }
                 });
             }
