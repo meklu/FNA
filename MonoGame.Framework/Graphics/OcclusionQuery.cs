@@ -8,7 +8,7 @@
 #endregion
 
 #region Using Statements
-using OpenTK.Graphics.OpenGL;
+using System;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics
@@ -21,13 +21,13 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			get
 			{
-				int[] resultReady = {0};
-				GL.GetQueryObject(
+				int resultReady = 0;
+				GraphicsDevice.GLDevice.glGetQueryObjectiv(
 					glQueryId,
-					GetQueryObjectParam.QueryResultAvailable,
-					resultReady
+					OpenGLDevice.GLenum.GL_QUERY_RESULT_AVAILABLE,
+					out resultReady
 				);
-				return resultReady[0] != 0;
+				return resultReady != 0;
 			}
 		}
 
@@ -35,13 +35,13 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			get
 			{
-				int[] result = {0};
-				GL.GetQueryObject(
+				int result = 0;
+				GraphicsDevice.GLDevice.glGetQueryObjectiv(
 					glQueryId,
-					GetQueryObjectParam.QueryResultAvailable,
-					result
+					OpenGLDevice.GLenum.GL_QUERY_RESULT,
+					out result
 				);
-				return result[0];
+				return result;
 			}
 		}
 
@@ -58,7 +58,10 @@ namespace Microsoft.Xna.Framework.Graphics
 		public OcclusionQuery(GraphicsDevice graphicsDevice)
 		{
 			GraphicsDevice = graphicsDevice;
-			GL.GenQueries(1, out glQueryId);
+			GraphicsDevice.GLDevice.glGenQueries(
+				(IntPtr) 1,
+				out glQueryId
+			);
 		}
 
 		#endregion
@@ -71,7 +74,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				GraphicsDevice.AddDisposeAction(() =>
 				{
-					GL.DeleteQueries(1, ref glQueryId);
+					GraphicsDevice.GLDevice.glDeleteQueries(
+						(IntPtr) 1,
+						ref glQueryId
+					);
 				});
 			}
 			base.Dispose(disposing);
@@ -83,12 +89,17 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public void Begin()
 		{
-			GL.BeginQuery(QueryTarget.SamplesPassed, glQueryId);
+			GraphicsDevice.GLDevice.glBeginQuery(
+				OpenGLDevice.GLenum.GL_SAMPLES_PASSED,
+				glQueryId
+			);
 		}
 
 		public void End()
 		{
-			GL.EndQuery(QueryTarget.SamplesPassed);
+			GraphicsDevice.GLDevice.glEndQuery(
+				OpenGLDevice.GLenum.GL_SAMPLES_PASSED
+			);
 		}
 
 		#endregion

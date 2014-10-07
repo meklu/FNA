@@ -2327,6 +2327,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_MAX_DRAW_BUFFERS =			0x8824,
 			// Draw Primitives
 			GL_TRIANGLE_STRIP =			0x0005,
+			// Query Objects
+			GL_QUERY_RESULT =			0x8866,
+			GL_QUERY_RESULT_AVAILABLE =		0x8867,
+			GL_SAMPLES_PASSED =			0x8914,
 			// Source Enum Values
 			GL_DEBUG_SOURCE_API_ARB =		0x8246,
 			GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB =	0x8247,
@@ -2813,6 +2817,29 @@ namespace Microsoft.Xna.Framework.Graphics
 		public DrawArrays glDrawArrays;
 
 		/* END DRAWING FUNCTIONS */
+
+		/* BEGIN QUERY FUNCTIONS */
+
+		public delegate void GenQueries(IntPtr n, out uint ids);
+		public GenQueries glGenQueries;
+
+		public delegate void DeleteQueries(IntPtr n, ref uint ids);
+		public DeleteQueries glDeleteQueries;
+
+		public delegate void BeginQuery(GLenum target, uint id);
+		public BeginQuery glBeginQuery;
+
+		public delegate void EndQuery(GLenum target);
+		public EndQuery glEndQuery;
+
+		public delegate void GetQueryObjectiv(
+			uint id,
+			GLenum pname,
+			out int param
+		);
+		public GetQueryObjectiv glGetQueryObjectiv;
+
+		/* END QUERY FUNCTIONS */
 
 		/* BEGIN SHADER FUNCTIONS */
 
