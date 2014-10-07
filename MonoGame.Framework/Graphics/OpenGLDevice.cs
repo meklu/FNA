@@ -448,7 +448,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			glContext = SDL.SDL_GL_CreateContext(
 				presentationParameters.DeviceWindowHandle
 			);
-			OpenTK.Graphics.GraphicsContext.CurrentContext = glContext;
 
 #if THREADED_GL
 			// Create a background context
