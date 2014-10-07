@@ -10,8 +10,6 @@
 #region Using Statements
 using System;
 using System.Diagnostics;
-
-using OpenTK.Graphics.OpenGL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics
@@ -38,18 +36,9 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		internal OpenGLDevice.OpenGLTexture texture;
 
-		#endregion
-
-		#region Protected OpenGL Variables
-
-		[CLSCompliant(false)]
-		protected PixelInternalFormat glInternalFormat;
-
-		[CLSCompliant(false)]
-		protected PixelFormat glFormat;
-
-		[CLSCompliant(false)]
-		protected PixelType glType;
+		internal OpenGLDevice.GLenum glInternalFormat;
+		internal OpenGLDevice.GLenum glFormat;
+		internal OpenGLDevice.GLenum glType;
 
 		#endregion
 
@@ -102,97 +91,97 @@ namespace Microsoft.Xna.Framework.Graphics
 			switch (Format)
 			{
 				case SurfaceFormat.Color:
-					glInternalFormat = PixelInternalFormat.Rgba;
-					glFormat = PixelFormat.Rgba;
-					glType = PixelType.UnsignedByte;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RGBA;
+					glFormat = OpenGLDevice.GLenum.GL_RGBA;
+					glType = OpenGLDevice.GLenum.GL_UNSIGNED_BYTE;
 					break;
 				case SurfaceFormat.Bgr565:
-					glInternalFormat = PixelInternalFormat.Rgb;
-					glFormat = PixelFormat.Bgr;
-					glType = PixelType.UnsignedShort565;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RGB;
+					glFormat = OpenGLDevice.GLenum.GL_BGR;
+					glType = OpenGLDevice.GLenum.GL_UNSIGNED_SHORT_5_6_5;
 					break;
 				case SurfaceFormat.Bgra4444:
-					glInternalFormat = PixelInternalFormat.Rgba4;
-					glFormat = PixelFormat.Bgra;
-					glType = PixelType.UnsignedShort4444;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RGBA4;
+					glFormat = OpenGLDevice.GLenum.GL_BGRA;
+					glType = OpenGLDevice.GLenum.GL_UNSIGNED_SHORT_4_4_4_4;
 					break;
 				case SurfaceFormat.Bgra5551:
-					glInternalFormat = PixelInternalFormat.Rgba;
-					glFormat = PixelFormat.Bgra;
-					glType = PixelType.UnsignedShort5551;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RGBA;
+					glFormat = OpenGLDevice.GLenum.GL_BGRA;
+					glType = OpenGLDevice.GLenum.GL_UNSIGNED_SHORT_5_5_5_1;
 					break;
 				case SurfaceFormat.Alpha8:
-					glInternalFormat = PixelInternalFormat.Luminance;
-					glFormat = PixelFormat.Luminance;
-					glType = PixelType.UnsignedByte;
+					glInternalFormat = OpenGLDevice.GLenum.GL_LUMINANCE;
+					glFormat = OpenGLDevice.GLenum.GL_LUMINANCE;
+					glType = OpenGLDevice.GLenum.GL_UNSIGNED_BYTE;
 					break;
 				case SurfaceFormat.Dxt1:
-					glInternalFormat = PixelInternalFormat.CompressedRgbaS3tcDxt1Ext;
-					glFormat = (PixelFormat) All.CompressedTextureFormats;
+					glInternalFormat = OpenGLDevice.GLenum.GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+					glFormat = OpenGLDevice.GLenum.GL_COMPRESSED_TEXTURE_FORMATS;
 					break;
 				case SurfaceFormat.Dxt3:
-					glInternalFormat = PixelInternalFormat.CompressedRgbaS3tcDxt3Ext;
-					glFormat = (PixelFormat) All.CompressedTextureFormats;
+					glInternalFormat = OpenGLDevice.GLenum.GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+					glFormat = OpenGLDevice.GLenum.GL_COMPRESSED_TEXTURE_FORMATS;
 					break;
 				case SurfaceFormat.Dxt5:
-					glInternalFormat = PixelInternalFormat.CompressedRgbaS3tcDxt5Ext;
-					glFormat = (PixelFormat) All.CompressedTextureFormats;
+					glInternalFormat = OpenGLDevice.GLenum.GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+					glFormat = OpenGLDevice.GLenum.GL_COMPRESSED_TEXTURE_FORMATS;
 					break;
 				case SurfaceFormat.Single:
-					glInternalFormat = PixelInternalFormat.R32f;
-					glFormat = PixelFormat.Red;
-					glType = PixelType.Float;
+					glInternalFormat = OpenGLDevice.GLenum.GL_R32F;
+					glFormat = OpenGLDevice.GLenum.GL_RED;
+					glType = OpenGLDevice.GLenum.GL_FLOAT;
 					break;
 				case SurfaceFormat.HalfVector2:
-					glInternalFormat = PixelInternalFormat.Rg16f;
-					glFormat = PixelFormat.Rg;
-					glType = PixelType.HalfFloat;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RG16F;
+					glFormat = OpenGLDevice.GLenum.GL_RG;
+					glType = OpenGLDevice.GLenum.GL_HALF_FLOAT;
 					break;
 				case SurfaceFormat.HdrBlendable:
 				case SurfaceFormat.HalfVector4:
-					glInternalFormat = PixelInternalFormat.Rgba16f;
-					glFormat = PixelFormat.Rgba;
-					glType = PixelType.HalfFloat;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RGBA16F;
+					glFormat = OpenGLDevice.GLenum.GL_RGBA;
+					glType = OpenGLDevice.GLenum.GL_HALF_FLOAT;
 					break;
 				case SurfaceFormat.HalfSingle:
-					glInternalFormat = PixelInternalFormat.R16f;
-					glFormat = PixelFormat.Red;
-					glType = PixelType.HalfFloat;
+					glInternalFormat = OpenGLDevice.GLenum.GL_R16F;
+					glFormat = OpenGLDevice.GLenum.GL_RED;
+					glType = OpenGLDevice.GLenum.GL_HALF_FLOAT;
 					break;
 				case SurfaceFormat.Vector2:
-					glInternalFormat = PixelInternalFormat.Rg32f;
-					glFormat = PixelFormat.Rg;
-					glType = PixelType.Float;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RG32F;
+					glFormat = OpenGLDevice.GLenum.GL_RG;
+					glType = OpenGLDevice.GLenum.GL_FLOAT;
 					break;
 				case SurfaceFormat.Vector4:
-					glInternalFormat = PixelInternalFormat.Rgba32f;
-					glFormat = PixelFormat.Rgba;
-					glType = PixelType.Float;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RGBA32F;
+					glFormat = OpenGLDevice.GLenum.GL_RGBA;
+					glType = OpenGLDevice.GLenum.GL_FLOAT;
 					break;
 				case SurfaceFormat.NormalizedByte2:
-					glInternalFormat = PixelInternalFormat.Rg8i;
-					glFormat = PixelFormat.Rg;
-					glType = PixelType.Byte;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RG8I;
+					glFormat = OpenGLDevice.GLenum.GL_RG;
+					glType = OpenGLDevice.GLenum.GL_BYTE;
 					break;
 				case SurfaceFormat.NormalizedByte4:
-					glInternalFormat = PixelInternalFormat.Rgba8i;
-					glFormat = PixelFormat.Rgba;
-					glType = PixelType.Byte;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RGBA8I;
+					glFormat = OpenGLDevice.GLenum.GL_RGBA;
+					glType = OpenGLDevice.GLenum.GL_BYTE;
 					break;
 				case SurfaceFormat.Rg32:
-					glInternalFormat = PixelInternalFormat.Rg16ui;
-					glFormat = PixelFormat.Rg;
-					glType = PixelType.UnsignedShort;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RG16UI;
+					glFormat = OpenGLDevice.GLenum.GL_RG;
+					glType = OpenGLDevice.GLenum.GL_UNSIGNED_SHORT;
 					break;
 				case SurfaceFormat.Rgba64:
-					glInternalFormat = PixelInternalFormat.Rgba16ui;
-					glFormat = PixelFormat.Rgba;
-					glType = PixelType.UnsignedShort;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RGBA16UI;
+					glFormat = OpenGLDevice.GLenum.GL_RGBA;
+					glType = OpenGLDevice.GLenum.GL_UNSIGNED_SHORT;
 					break;
 				case SurfaceFormat.Rgba1010102:
-					glInternalFormat = PixelInternalFormat.Rgb10A2;
-					glFormat = PixelFormat.Rgba;
-					glType = PixelType.UnsignedInt1010102;
+					glInternalFormat = OpenGLDevice.GLenum.GL_RGB10_A2_EXT;
+					glFormat = OpenGLDevice.GLenum.GL_RGBA;
+					glType = OpenGLDevice.GLenum.GL_UNSIGNED_INT_10_10_10_2;
 					break;
 				default:
 					throw new NotSupportedException();
