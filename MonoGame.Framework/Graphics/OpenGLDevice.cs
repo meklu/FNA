@@ -2306,6 +2306,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_TEXTURE_BASE_LEVEL =			0x813C,
 			GL_TEXTURE_MAX_LEVEL =			0x813D,
 			GL_TEXTURE_LOD_BIAS =			0x8501,
+			GL_UNPACK_ALIGNMENT =			0x0CF5,
 			// Multitexture
 			GL_TEXTURE0 =				0x84C0,
 			GL_MAX_TEXTURE_UNITS =			0x84E2,
@@ -2532,6 +2533,69 @@ namespace Microsoft.Xna.Framework.Graphics
 		);
 		public TexSubImage2D glTexSubImage2D;
 
+		public delegate void CompressedTexImage2D(
+			GLenum target,
+			int level,
+			int internalFormat,
+			IntPtr width,
+			IntPtr height,
+			int border,
+			IntPtr imageSize,
+			IntPtr pixels
+		);
+		public CompressedTexImage2D glCompressedTexImage2D;
+
+		public delegate void CompressedTexSubImage2D(
+			GLenum target,
+			int level,
+			int xoffset,
+			int yoffset,
+			IntPtr width,
+			IntPtr height,
+			GLenum format,
+			IntPtr imageSize,
+			IntPtr pixels
+		);
+		public CompressedTexSubImage2D glCompressedTexSubImage2D;
+
+		public delegate void TexImage3D(
+			GLenum target,
+			int level,
+			int internalFormat,
+			IntPtr width,
+			IntPtr height,
+			IntPtr depth,
+			int border,
+			GLenum format,
+			GLenum type,
+			IntPtr pixels
+		);
+		public TexImage3D glTexImage3D;
+
+		public delegate void TexSubImage3D(
+			GLenum target,
+			int level,
+			int xoffset,
+			int yoffset,
+			int zoffset,
+			IntPtr width,
+			IntPtr height,
+			IntPtr depth,
+			GLenum format,
+			GLenum type,
+			IntPtr pixels
+		);
+		public TexSubImage3D glTexSubImage3D;
+
+		public delegate void GetTexImage(
+			GLenum target,
+			int level,
+			GLenum format,
+			GLenum type,
+			IntPtr pixels
+		);
+		public GetTexImage glGetTexImage;
+
 		public delegate void TexParameteri(
 			GLenum target,
 			GLenum pname,
@@ -2556,6 +2620,9 @@ namespace Microsoft.Xna.Framework.Graphics
 			out int param
 		);
 		private GetTexLevelParameteriv glGetTexLevelParameteriv;
+
+		public delegate void PixelStorei(GLenum pname, int param);
+		public PixelStorei glPixelStorei;
 
 		/* END TEXTURE FUNCTIONS */
 

@@ -10,8 +10,6 @@
 #region Using Statements
 using System;
 using System.Runtime.InteropServices;
-
-using OpenTK.Graphics.OpenGL;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics
@@ -75,13 +73,13 @@ namespace Microsoft.Xna.Framework.Graphics
 				mipMap
 			);
 
-			GL.TexImage3D(
-				TextureTarget.Texture3D,
+			GraphicsDevice.GLDevice.glTexImage3D(
+				OpenGLDevice.GLenum.GL_TEXTURE_3D,
 				0,
-				glInternalFormat,
-				width,
-				height,
-				depth,
+				(int) glInternalFormat,
+				(IntPtr) width,
+				(IntPtr) height,
+				(IntPtr) depth,
 				0,
 				glFormat,
 				glType,
@@ -141,15 +139,15 @@ namespace Microsoft.Xna.Framework.Graphics
 			GCHandle dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 
 			GraphicsDevice.GLDevice.BindTexture(texture);
-			GL.TexSubImage3D(
-				TextureTarget.Texture3D,
+			GraphicsDevice.GLDevice.glTexSubImage3D(
+				OpenGLDevice.GLenum.GL_TEXTURE_3D,
 				level,
 				left,
 				top,
 				front,
-				right - left,
-				bottom - top,
-				back - front,
+				(IntPtr) (right - left),
+				(IntPtr) (bottom - top),
+				(IntPtr) (back - front),
 				glFormat,
 				glType,
 				(IntPtr) (dataHandle.AddrOfPinnedObject().ToInt64() + startIndex * Marshal.SizeOf(typeof(T)))
