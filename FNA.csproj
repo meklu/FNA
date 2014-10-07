@@ -369,12 +369,24 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="src\Graphics\Effect\Resources\AlphaTestEffect.ogl.mgfxo" />
-    <EmbeddedResource Include="src\Graphics\Effect\Resources\BasicEffect.ogl.mgfxo" />
-    <EmbeddedResource Include="src\Graphics\Effect\Resources\DualTextureEffect.ogl.mgfxo" />
-    <EmbeddedResource Include="src\Graphics\Effect\Resources\EnvironmentMapEffect.ogl.mgfxo" />
-    <EmbeddedResource Include="src\Graphics\Effect\Resources\SkinnedEffect.ogl.mgfxo" />
-    <EmbeddedResource Include="src\Graphics\Effect\Resources\SpriteEffect.ogl.mgfxo" />
+    <EmbeddedResource Include="src\Graphics\Effect\Resources\AlphaTestEffect.ogl.mgfxo">
+      <LogicalName>Microsoft.Xna.Framework.Graphics.Effect.Resources.AlphaTestEffect.ogl.mgfxo</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Graphics\Effect\Resources\BasicEffect.ogl.mgfxo">
+      <LogicalName>Microsoft.Xna.Framework.Graphics.Effect.Resources.BasicEffect.ogl.mgfxo</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Graphics\Effect\Resources\DualTextureEffect.ogl.mgfxo">
+      <LogicalName>Microsoft.Xna.Framework.Graphics.Effect.Resources.DualTextureEffect.ogl.mgfxo</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Graphics\Effect\Resources\EnvironmentMapEffect.ogl.mgfxo">
+      <LogicalName>Microsoft.Xna.Framework.Graphics.Effect.Resources.EnvironmentMapEffect.ogl.mgfxo</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Graphics\Effect\Resources\SkinnedEffect.ogl.mgfxo">
+      <LogicalName>Microsoft.Xna.Framework.Graphics.Effect.Resources.SkinnedEffect.ogl.mgfxo</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\Graphics\Effect\Resources\SpriteEffect.ogl.mgfxo">
+      <LogicalName>Microsoft.Xna.Framework.Graphics.Effect.Resources.SpriteEffect.ogl.mgfxo</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
