@@ -79,7 +79,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_DEPTH_BUFFER_BIT =			0x0100,
 			GL_STENCIL_BUFFER_BIT =			0x0400,
 			// Enable Caps
-			GL_SCISSOR_TEST =			0x0C10,
+			GL_SCISSOR_TEST =			0x0C11,
 			GL_DEPTH_TEST =				0x0B71,
 			GL_STENCIL_TEST =			0x0B90,
 			// Polygons

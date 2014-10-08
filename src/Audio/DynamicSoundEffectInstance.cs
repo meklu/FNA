@@ -109,13 +109,13 @@ namespace Microsoft.Xna.Framework.Audio
 				queuedBuffers = null;
 				while (availableBuffers.Count > 0)
 				{
-					qBuffer = queuedBuffers.Dequeue();
+					qBuffer = availableBuffers.Dequeue();
 					AL10.alDeleteBuffers((IntPtr) 1, ref qBuffer);
 				}
 				availableBuffers = null;
 				while (buffersToQueue.Count > 0)
 				{
-					qBuffer = queuedBuffers.Dequeue();
+					qBuffer = buffersToQueue.Dequeue();
 					AL10.alDeleteBuffers((IntPtr) 1, ref qBuffer);
 				}
 				buffersToQueue = null;
