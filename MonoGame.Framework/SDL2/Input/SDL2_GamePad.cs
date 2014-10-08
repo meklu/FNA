@@ -332,7 +332,12 @@ namespace Microsoft.Xna.Framework.Input
 
 		internal static void INTERNAL_RemoveInstance(int which)
 		{
-			int output = INTERNAL_instanceList[which];
+			int output;
+			if (!INTERNAL_instanceList.TryGetValue(which, out output))
+			{
+				// Odds are, this is controller 5+ getting removed.
+				return;
+			}
 			INTERNAL_instanceList.Remove(which);
 			if (INTERNAL_haptics[output] != IntPtr.Zero)
 			{
