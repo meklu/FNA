@@ -22,11 +22,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			set
 			{
 				textures[index] = value;
-				graphicsDevice.GLDevice.VerifySampler(
-					index,
-					textures[index],
-					graphicsDevice.SamplerStates[index]
-				);
+				if (!graphicsDevice.ModifiedSamplers.Contains(index))
+				{
+					graphicsDevice.ModifiedSamplers.Enqueue(index);
+				}
 			}
 		}
 

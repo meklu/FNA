@@ -206,6 +206,12 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
+		#region Internal Sampler Change Queue
+
+		internal readonly Queue<int> ModifiedSamplers = new Queue<int>();
+
+		#endregion
+
 		#region Private Disposal Variables
 
 		private static List<Action> disposeActions = new List<Action>();
@@ -1246,6 +1252,16 @@ namespace Microsoft.Xna.Framework.Graphics
 				RasterizerState,
 				RenderTargetCount > 0
 			);
+
+			while (ModifiedSamplers.Count > 0)
+			{
+				int sampler = ModifiedSamplers.Dequeue();
+				GLDevice.VerifySampler(
+					sampler,
+					Textures[sampler],
+					SamplerStates[sampler]
+				);
+			}
 
 			// TODO: MSAA?
 
