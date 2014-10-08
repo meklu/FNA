@@ -30,7 +30,7 @@
 // #define WIIU_GAMEPAD
 /* This is something I added for myself, because I am a complete goof.
  * You should NEVER enable this in your shipping build.
- * Let your hacker customers self-build MG-SDL2, they'll know what to do.
+ * Let your hacker customers self-build FNA, they'll know what to do.
  * -flibit
  */
 #endregion
