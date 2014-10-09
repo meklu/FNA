@@ -18,6 +18,9 @@ using System.Diagnostics;
 
 namespace Microsoft.Xna.Framework
 {
+	/// <summary>
+	/// Describes a 2D-rectangle.
+	/// </summary>
 	[Serializable]
 	[DebuggerDisplay("{DebugDisplayString,nq}")]
 	public struct Rectangle : IEquatable<Rectangle>
@@ -25,7 +28,7 @@ namespace Microsoft.Xna.Framework
 		#region Public Properties
 
 		/// <summary>
-		/// Returns the x coordinate of the left edge of this <see>Rectangle</see>.
+		/// Returns the x coordinate of the left edge of this <see cref="Rectangle"/>.
 		/// </summary>
 		public int Left
 		{
@@ -36,7 +39,7 @@ namespace Microsoft.Xna.Framework
 		}
 
 		/// <summary>
-		/// Returns the x coordinate of the right edge of this <see>Rectangle</see>.
+		/// Returns the x coordinate of the right edge of this <see cref="Rectangle"/>.
 		/// </summary>
 		public int Right
 		{
@@ -47,7 +50,7 @@ namespace Microsoft.Xna.Framework
 		}
 
 		/// <summary>
-		/// Returns the y coordinate of the top edge of this <see>Rectangle</see>.
+		/// Returns the y coordinate of the top edge of this <see cref="Rectangle"/>.
 		/// </summary>
 		public int Top
 		{
@@ -58,7 +61,7 @@ namespace Microsoft.Xna.Framework
 		}
 
 		/// <summary>
-		/// Returns the y coordinate of the bottom edge of this <see>Rectangle</see>.
+		/// Returns the y coordinate of the bottom edge of this <see cref="Rectangle"/>.
 		/// </summary>
 		public int Bottom
 		{
@@ -122,7 +125,7 @@ namespace Microsoft.Xna.Framework
 		#region Public Static Properties
 
 		/// <summary>
-		/// Returns a <see>Rectangle</see> with X=0, Y=0, Width=0, and Height=0.
+		/// Returns a <see cref="Rectangle"/> with X=0, Y=0, Width=0, and Height=0.
 		/// </summary>
 		public static Rectangle Empty
 		{
@@ -154,22 +157,22 @@ namespace Microsoft.Xna.Framework
 		#region Public Fields
 
 		/// <summary>
-		/// The x coordinate of the top-left corner of this <see>Rectangle</see>.
+		/// The x coordinate of the top-left corner of this <see cref="Rectangle"/>.
 		/// </summary>
 		public int X;
 
 		/// <summary>
-		/// The y coordinate of the top-left corner of this <see>Rectangle</see>.
+		/// The y coordinate of the top-left corner of this <see cref="Rectangle"/>.
 		/// </summary>
 		public int Y;
 
 		/// <summary>
-		/// The width of this <see>Rectangle</see>.
+		/// The width of this <see cref="Rectangle"/>.
 		/// </summary>
 		public int Width;
 
 		/// <summary>
-		/// The height of this <see>Rectangle</see>.
+		/// The height of this <see cref="Rectangle"/>.
 		/// </summary>
 		public int Height;
 
@@ -208,7 +211,7 @@ namespace Microsoft.Xna.Framework
 		/// </summary>
 		/// <param name="x">The x coordinate of the point to check for containment.</param>
 		/// <param name="y">The y coordinate of the point to check for containment.</param>
-		/// <returns>True if the provided coordinates lie inside this <see cref="Rectangle"/>. False otherwise.</returns>
+		/// <returns><c>true</c> if the provided coordinates lie inside this <see cref="Rectangle"/>. <c>false</c> otherwise.</returns>
 		public bool Contains(int x, int y)
 		{
 			return (	(this.X <= x) &&
@@ -221,7 +224,7 @@ namespace Microsoft.Xna.Framework
 		/// Gets whether or not the provided <see cref="Point"/> lies within the bounds of this <see cref="Rectangle"/>.
 		/// </summary>
 		/// <param name="value">The coordinates to check for inclusion in this <see cref="Rectangle"/>.</param>
-		/// <returns>True if the provided <see cref="Point"/> lies inside this <see cref="Rectangle"/>. False otherwise.</returns>
+		/// <returns><c>true</c> if the provided <see cref="Point"/> lies inside this <see cref="Rectangle"/>. <c>false</c> otherwise.</returns>
 		public bool Contains(Point value)
 		{
 			return (	(this.X <= value.X) &&
@@ -234,7 +237,7 @@ namespace Microsoft.Xna.Framework
 		/// Gets whether or not the provided <see cref="Rectangle"/> lies within the bounds of this <see cref="Rectangle"/>.
 		/// </summary>
 		/// <param name="value">The <see cref="Rectangle"/> to check for inclusion in this <see cref="Rectangle"/>.</param>
-		/// <returns>True if the provided <see cref="Rectangle"/>'s bounds lie entirely inside this <see cref="Rectangle"/>. False otherwise.</returns>
+		/// <returns><c>true</c> if the provided <see cref="Rectangle"/>'s bounds lie entirely inside this <see cref="Rectangle"/>. <c>false</c> otherwise.</returns>
 		public bool Contains(Rectangle value)
 		{
 			return (	(this.X <= value.X) &&
@@ -296,8 +299,8 @@ namespace Microsoft.Xna.Framework
 		/// </summary>
 		/// <param name="obj">The <see cref="Rectangle"/> to test for equality.</param>
 		/// <returns>
-		/// True if this <see cref="Rectangle"/>'s x coordinate, y coordinate, width, and height
-		/// match the values for the provided <see cref="Rectangle"/>. False otherwise.
+		/// <c>true</c> if this <see cref="Rectangle"/>'s x coordinate, y coordinate, width, and height
+		/// match the values for the provided <see cref="Rectangle"/>. <c>false</c> otherwise.
 		/// </returns>
 		public bool Equals(Rectangle other)
 		{
@@ -310,9 +313,9 @@ namespace Microsoft.Xna.Framework
 		/// </summary>
 		/// <param name="obj">The <see cref="object"/> to test for equality.</param>
 		/// <returns>
-		/// True if the provided object is a <see cref="Rectangle"/>, and this
+		/// <c>true</c> if the provided object is a <see cref="Rectangle"/>, and this
 		/// <see cref="Rectangle"/>'s x coordinate, y coordinate, width, and height
-		/// match the values for the provided <see cref="Rectangle"/>. False otherwise.
+		/// match the values for the provided <see cref="Rectangle"/>. <c>false</c> otherwise.
 		/// </returns>
 		public override bool Equals(object obj)
 		{
