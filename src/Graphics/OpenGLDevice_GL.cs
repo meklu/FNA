@@ -141,7 +141,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_NEAREST_MIPMAP_NEAREST =		0x2700,
 			GL_NEAREST_MIPMAP_LINEAR =		0x2702,
 			GL_LINEAR_MIPMAP_NEAREST =		0x2701,
-			GL_LINEAR_MIPMAP_LINEAR =		0x2702,
+			GL_LINEAR_MIPMAP_LINEAR =		0x2703,
 			// Attachments
 			GL_COLOR_ATTACHMENT0 =			0x8CE0,
 			GL_DEPTH_ATTACHMENT =			0x8D00,
@@ -176,7 +176,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_COMPRESSED_RGBA_S3TC_DXT5_EXT =	0x83F3,
 			// Texture Internal Formats
 			GL_DEPTH_COMPONENT =			0x1902,
-			GL_DEPTH_STENCIL =			0x8F49,
+			GL_DEPTH_STENCIL =			0x84F9,
 			// Textures
 			GL_TEXTURE_WRAP_S =			0x2802,
 			GL_TEXTURE_WRAP_T =			0x2803,
