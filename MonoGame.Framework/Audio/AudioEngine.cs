@@ -478,18 +478,23 @@ namespace Microsoft.Xna.Framework.Audio
 		public void Update()
 		{
 			// Update Global RPCs
+			float globalVolume = 1.0f;
+			float globalPitch = 0.0f;
 			foreach (KeyValuePair<long, RPC> curRPC in INTERNAL_RPCs)
 			foreach (Variable curVar in INTERNAL_variables)
 			{
 				if (curVar.Name.Equals(curRPC.Value.Variable) && curVar.IsGlobal)
 				{
+					float result = curRPC.Value.CalculateRPC(
+						GetGlobalVariable(curVar.Name)
+					);
 					if (curRPC.Value.Parameter == RPCParameter.Volume)
 					{
-						// TODO: Global volume?
+						globalVolume *= XACTCalculator.CalculateAmplitudeRatio(result / 100.0);
 					}
 					else if (curRPC.Value.Parameter == RPCParameter.Pitch)
 					{
-						// TODO: Global pitch?
+						globalPitch += result / 1000.0f;
 					}
 					else if (curRPC.Value.Parameter == RPCParameter.FilterFrequency)
 					{
@@ -502,6 +507,7 @@ namespace Microsoft.Xna.Framework.Audio
 						{
 							if (curDSP.Value.Name.Equals("Reverb"))
 							{
+								// FIXME: Why don't we use the RPC calc here...?
 								curDSP.Value.SetParameter(
 									(int) curRPC.Value.Parameter - (int) RPCParameter.NUM_PARAMETERS,
 									GetGlobalVariable(curVar.Name)
@@ -519,7 +525,10 @@ namespace Microsoft.Xna.Framework.Audio
 			// Update Cues
 			foreach (AudioCategory curCategory in INTERNAL_categories)
 			{
-				curCategory.INTERNAL_update();
+				curCategory.INTERNAL_update(
+					globalVolume,
+					globalPitch
+				);
 			}
 		}
 
