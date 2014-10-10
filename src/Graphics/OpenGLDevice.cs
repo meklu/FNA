@@ -1979,6 +1979,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				Handle = 0;
 #else
 				glDevice = device;
+				depthStencilFormat = depthFormat;
 
 				// Generate and bind the FBO.
 				uint handle;
@@ -2141,13 +2142,16 @@ namespace Microsoft.Xna.Framework.Graphics
 					glDevice.BindFramebuffer(Handle);
 
 					// Detach and reattach the depth texture
-					glDevice.glFramebufferTexture2D(
-						GLenum.GL_FRAMEBUFFER,
-						XNAToGL.DepthStencilAttachment[depthStencilFormat],
-						GLenum.GL_TEXTURE_2D,
-						0,
-						0
-					);
+					if (depthStencilFormat != DepthFormat.None)
+					{
+						glDevice.glFramebufferTexture2D(
+							GLenum.GL_FRAMEBUFFER,
+							XNAToGL.DepthStencilAttachment[depthStencilFormat],
+							GLenum.GL_TEXTURE_2D,
+							0,
+							0
+						);
+					}
 					glDevice.glFramebufferTexture2D(
 						GLenum.GL_FRAMEBUFFER,
 						XNAToGL.DepthStencilAttachment[depthFormat],
