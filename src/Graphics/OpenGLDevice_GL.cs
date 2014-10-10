@@ -300,10 +300,10 @@ namespace Microsoft.Xna.Framework.Graphics
 		/* BEGIN BLEND STATE FUNCTIONS */
 
 		private delegate void BlendColor(
-			double red,
-			double green,
-			double blue,
-			double alpha
+			float red,
+			float green,
+			float blue,
+			float alpha
 		);
 		private BlendColor glBlendColor;
 
@@ -590,10 +590,10 @@ namespace Microsoft.Xna.Framework.Graphics
 		/* BEGIN CLEAR FUNCTIONS */
 
 		private delegate void ClearColor(
-			double red,
-			double green,
-			double blue,
-			double alpha
+			float red,
+			float green,
+			float blue,
+			float alpha
 		);
 		private ClearColor glClearColor;
 
