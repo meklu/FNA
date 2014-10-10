@@ -402,7 +402,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#region Internal Methods
 
-		internal bool INTERNAL_update()
+		internal bool INTERNAL_update(float globalVolume, float globalPitch)
 		{
 			// If this is our first update, time to play!
 			if (INTERNAL_queuedPlayback)
@@ -483,6 +483,7 @@ namespace Microsoft.Xna.Framework.Audio
 			}
 
 			float rpcVolume = 1.0f;
+			float rpcPitch = 0.0f;
 			foreach (uint curCode in INTERNAL_activeSound.RPCCodes)
 			{
 				RPC curRPC = INTERNAL_baseEngine.INTERNAL_getRPC(curCode);
@@ -506,7 +507,7 @@ namespace Microsoft.Xna.Framework.Audio
 				}
 				else if (curRPC.Parameter == RPCParameter.Pitch)
 				{
-					// TODO: Pitch
+					rpcPitch += result / 1000.0f;
 				}
 				else if (curRPC.Parameter == RPCParameter.FilterFrequency)
 				{
@@ -520,9 +521,14 @@ namespace Microsoft.Xna.Framework.Audio
 			for (int i = 0; i < INTERNAL_instancePool.Count; i += 1)
 			{
 				/* The final volume should be the combination of the
-				 * authored volume, Volume variable and RPC volume result.
+				 * authored volume, Volume variable and RPC volume results.
 				 */
-				INTERNAL_instancePool[i].Volume = INTERNAL_instanceVolumes[i] * GetVariable("Volume") * rpcVolume;
+				INTERNAL_instancePool[i].Volume = INTERNAL_instanceVolumes[i] * GetVariable("Volume") * rpcVolume * globalVolume;
+				/* The final pitch should be the combination of both the
+				 * global pitches and RPC pitches.
+				 * FIXME: Anything else?
+				 */
+				INTERNAL_instancePool[i].Pitch = rpcPitch + globalPitch;
 			}
 
 			// Finally, check if we're still active.
