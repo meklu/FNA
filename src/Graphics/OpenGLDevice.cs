@@ -490,7 +490,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				this,
 				GraphicsDeviceManager.DefaultBackBufferWidth,
 				GraphicsDeviceManager.DefaultBackBufferHeight,
-				DepthFormat.Depth16
+				presentationParameters.DepthStencilFormat
 			);
 
 			// Initialize texture collection array
@@ -1907,6 +1907,20 @@ namespace Microsoft.Xna.Framework.Graphics
 				{ DepthFormat.Depth24Stencil8,	GLenum.GL_DEPTH24_STENCIL8 }
 			};
 
+			public static readonly Dictionary<DepthFormat, GLenum> GLDepthFormat = new Dictionary<DepthFormat, GLenum>()
+			{
+				{ DepthFormat.Depth16,		GLenum.GL_DEPTH_COMPONENT },
+				{ DepthFormat.Depth24,		GLenum.GL_DEPTH_COMPONENT },
+				{ DepthFormat.Depth24Stencil8,	GLenum.GL_DEPTH_STENCIL }
+			};
+
+			public static readonly Dictionary<DepthFormat, GLenum> DepthType = new Dictionary<DepthFormat, GLenum>()
+			{
+				{ DepthFormat.Depth16,		GLenum.GL_UNSIGNED_BYTE },
+				{ DepthFormat.Depth24,		GLenum.GL_UNSIGNED_BYTE },
+				{ DepthFormat.Depth24Stencil8,	GLenum.GL_UNSIGNED_INT_24_8 }
+			};
+
 			public static readonly Dictionary<VertexElementFormat, GLenum> PointerType = new Dictionary<VertexElementFormat, GLenum>()
 			{
 				{ VertexElementFormat.Single,		GLenum.GL_FLOAT },
@@ -1959,18 +1973,21 @@ namespace Microsoft.Xna.Framework.Graphics
 				int height,
 				DepthFormat depthFormat
 			) {
-#if DISABLE_FAUXBACKBUFFER
-				Handle = 0;
 				Width = width;
 				Height = height;
+#if DISABLE_FAUXBACKBUFFER
+				Handle = 0;
 #else
 				glDevice = device;
+
+				// Generate and bind the FBO.
 				uint handle;
 				glDevice.glGenFramebuffers((IntPtr) 1, out handle);
 				Handle = handle;
-				glDevice.glGenTextures((IntPtr) 1, out colorAttachment);
-				glDevice.glGenTextures((IntPtr) 1, out depthStencilAttachment);
+				glDevice.BindFramebuffer(Handle);
 
+				// Create and attach the color buffer
+				glDevice.glGenTextures((IntPtr) 1, out colorAttachment);
 				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, colorAttachment);
 				glDevice.glTexImage2D(
 					GLenum.GL_TEXTURE_2D,
@@ -1983,22 +2000,6 @@ namespace Microsoft.Xna.Framework.Graphics
 					GLenum.GL_UNSIGNED_BYTE,
 					IntPtr.Zero
 				);
-				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, depthStencilAttachment);
-				glDevice.glTexImage2D(
-					GLenum.GL_TEXTURE_2D,
-					0,
-					(int) GLenum.GL_DEPTH_COMPONENT16,
-					(IntPtr) width,
-					(IntPtr) height,
-					0,
-					GLenum.GL_DEPTH_COMPONENT,
-					GLenum.GL_UNSIGNED_BYTE,
-					IntPtr.Zero
-				);
-				glDevice.glBindFramebuffer(
-					GLenum.GL_FRAMEBUFFER,
-					Handle
-				);
 				glDevice.glFramebufferTexture2D(
 					GLenum.GL_FRAMEBUFFER,
 					GLenum.GL_COLOR_ATTACHMENT0,
@@ -2006,17 +2007,42 @@ namespace Microsoft.Xna.Framework.Graphics
 					colorAttachment,
 					0
 				);
+
+				if (depthFormat == DepthFormat.None)
+				{
+					// Don't bother creating a depth/stencil texture.
+					depthStencilAttachment = 0;
+
+					// Keep this state sane.
+					glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, 0);
+
+					return;
+				}
+
+				// Create and attach the depth/stencil buffer
+				glDevice.glGenTextures((IntPtr) 1, out depthStencilAttachment);
+				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, depthStencilAttachment);
+				glDevice.glTexImage2D(
+					GLenum.GL_TEXTURE_2D,
+					0,
+					(int) XNAToGL.DepthStorage[depthFormat],
+					(IntPtr) width,
+					(IntPtr) height,
+					0,
+					XNAToGL.GLDepthFormat[depthFormat],
+					XNAToGL.DepthType[depthFormat],
+					IntPtr.Zero
+				);
 				glDevice.glFramebufferTexture2D(
 					GLenum.GL_FRAMEBUFFER,
-					GLenum.GL_DEPTH_ATTACHMENT,
+					XNAToGL.DepthStencilAttachment[depthFormat],
 					GLenum.GL_TEXTURE_2D,
 					depthStencilAttachment,
 					0
 				);
-				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, 0);
 
-				Width = width;
-				Height = height;
+				// Keep this state sane.
+				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, 0);
 #endif
 			}
 
@@ -2026,7 +2052,10 @@ namespace Microsoft.Xna.Framework.Graphics
 				uint handle = Handle;
 				glDevice.glDeleteFramebuffers((IntPtr) 1, ref handle);
 				glDevice.glDeleteTextures((IntPtr) 1, ref colorAttachment);
-				glDevice.glDeleteTextures((IntPtr) 1, ref depthStencilAttachment);
+				if (depthStencilAttachment != 0)
+				{
+					glDevice.glDeleteTextures((IntPtr) 1, ref depthStencilAttachment);
+				}
 				glDevice = null;
 				Handle = 0;
 #endif
@@ -2038,10 +2067,9 @@ namespace Microsoft.Xna.Framework.Graphics
 				int height,
 				DepthFormat depthFormat
 			) {
-#if DISABLE_FAUXBACKBUFFER
 				Width = width;
 				Height = height;
-#else
+#if !DISABLE_FAUXBACKBUFFER
 				// Update our color attachment to the new resolution.
 				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, colorAttachment);
 				glDevice.glTexImage2D(
@@ -2056,74 +2084,73 @@ namespace Microsoft.Xna.Framework.Graphics
 					IntPtr.Zero
 				);
 
-				// Update the depth attachment based on the desired DepthFormat.
-				GLenum depthPixelFormat;
-				GLenum depthPixelInternalFormat;
-				GLenum depthPixelType;
-				GLenum depthAttachmentType;
-				if (depthFormat == DepthFormat.Depth16)
+				if (depthFormat == DepthFormat.None)
 				{
-					depthPixelFormat = GLenum.GL_DEPTH_COMPONENT;
-					depthPixelInternalFormat = GLenum.GL_DEPTH_COMPONENT16;
-					depthPixelType = GLenum.GL_UNSIGNED_BYTE;
-					depthAttachmentType = GLenum.GL_DEPTH_ATTACHMENT;
+					// Remove depth/stencil attachment, if applicable
+					if (depthStencilAttachment != 0)
+					{
+						glDevice.BindFramebuffer(Handle);
+						glDevice.glFramebufferTexture2D(
+							GLenum.GL_FRAMEBUFFER,
+							XNAToGL.DepthStencilAttachment[depthStencilFormat],
+							GLenum.GL_TEXTURE_2D,
+							0,
+							0
+						);
+						glDevice.glDeleteTextures(
+							(IntPtr) 1,
+							ref depthStencilAttachment
+						);
+						depthStencilAttachment = 0;
+						if (graphicsDevice.RenderTargetCount > 0)
+						{
+							glDevice.BindFramebuffer(
+								graphicsDevice.GLDevice.targetFramebuffer
+							);
+						}
+						depthStencilFormat = DepthFormat.None;
+					}
+					return;
 				}
-				else if (depthFormat == DepthFormat.Depth24)
+				else if (depthStencilAttachment == 0)
 				{
-					depthPixelFormat = GLenum.GL_DEPTH_COMPONENT;
-					depthPixelInternalFormat = GLenum.GL_DEPTH_COMPONENT24;
-					depthPixelType = GLenum.GL_UNSIGNED_BYTE;
-					depthAttachmentType = GLenum.GL_DEPTH_ATTACHMENT;
-				}
-				else
-				{
-					depthPixelFormat = GLenum.GL_DEPTH_STENCIL;
-					depthPixelInternalFormat = GLenum.GL_DEPTH24_STENCIL8;
-					depthPixelType = GLenum.GL_UNSIGNED_INT_24_8;
-					depthAttachmentType = GLenum.GL_DEPTH_STENCIL_ATTACHMENT;
+					// Generate a depth/stencil texture, if needed
+					glDevice.glGenTextures(
+						(IntPtr) 1,
+						out depthStencilAttachment
+					);
 				}
 
+				// Update the depth/stencil texture
 				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, depthStencilAttachment);
 				glDevice.glTexImage2D(
 					GLenum.GL_TEXTURE_2D,
 					0,
-					(int) depthPixelInternalFormat,
+					(int) XNAToGL.DepthStorage[depthFormat],
 					(IntPtr) width,
 					(IntPtr) height,
 					0,
-					depthPixelFormat,
-					depthPixelType,
+					XNAToGL.GLDepthFormat[depthFormat],
+					XNAToGL.DepthType[depthFormat],
 					IntPtr.Zero
 				);
 
 				// If the depth format changes, detach before reattaching!
 				if (depthFormat != depthStencilFormat)
 				{
-					GLenum attach;
-					if (depthStencilFormat == DepthFormat.Depth24Stencil8)
-					{
-						attach = GLenum.GL_DEPTH_STENCIL_ATTACHMENT;
-					}
-					else
-					{
-						attach = GLenum.GL_DEPTH_ATTACHMENT;
-					}
+					glDevice.BindFramebuffer(Handle);
 
-					glDevice.glBindFramebuffer(
-						GLenum.GL_FRAMEBUFFER,
-						Handle
-					);
-
+					// Detach and reattach the depth texture
 					glDevice.glFramebufferTexture2D(
 						GLenum.GL_FRAMEBUFFER,
-						attach,
+						XNAToGL.DepthStencilAttachment[depthStencilFormat],
 						GLenum.GL_TEXTURE_2D,
 						0,
 						0
 					);
 					glDevice.glFramebufferTexture2D(
 						GLenum.GL_FRAMEBUFFER,
-						depthAttachmentType,
+						XNAToGL.DepthStencilAttachment[depthFormat],
 						GLenum.GL_TEXTURE_2D,
 						depthStencilAttachment,
 						0
@@ -2131,8 +2158,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 					if (graphicsDevice.RenderTargetCount > 0)
 					{
-						glDevice.glBindFramebuffer(
-							GLenum.GL_FRAMEBUFFER,
+						glDevice.BindFramebuffer(
 							graphicsDevice.GLDevice.targetFramebuffer
 						);
 					}
@@ -2140,13 +2166,11 @@ namespace Microsoft.Xna.Framework.Graphics
 					depthStencilFormat = depthFormat;
 				}
 
+				// Keep this state sane.
 				glDevice.glBindTexture(
 					GLenum.GL_TEXTURE_2D,
 					graphicsDevice.GLDevice.Textures[0].Handle
 				);
-
-				Width = width;
-				Height = height;
 #endif
 			}
 		}
