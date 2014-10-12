@@ -57,23 +57,26 @@ namespace Microsoft.Xna.Framework.Input
 
 		#region Internal Constructor
 
-		internal GamePadDPad(Buttons b) : this()
+		internal GamePadDPad(params Buttons[] buttons) : this()
 		{
-			if ((b & Buttons.DPadDown) == Buttons.DPadDown)
+			foreach (Buttons b in buttons)
 			{
-				Down = ButtonState.Pressed;
-			}
-			if ((b & Buttons.DPadLeft) == Buttons.DPadLeft)
-			{
-				Left = ButtonState.Pressed;
-			}
-			if ((b & Buttons.DPadRight) == Buttons.DPadRight)
-			{
-				Right = ButtonState.Pressed;
-			}
-			if ((b & Buttons.DPadUp) == Buttons.DPadUp)
-			{
-				Up = ButtonState.Pressed;
+				if ((b & Buttons.DPadDown) == Buttons.DPadDown)
+				{
+					Down = ButtonState.Pressed;
+				}
+				if ((b & Buttons.DPadLeft) == Buttons.DPadLeft)
+				{
+					Left = ButtonState.Pressed;
+				}
+				if ((b & Buttons.DPadRight) == Buttons.DPadRight)
+				{
+					Right = ButtonState.Pressed;
+				}
+				if ((b & Buttons.DPadUp) == Buttons.DPadUp)
+				{
+					Up = ButtonState.Pressed;
+				}
 			}
 		}
 
