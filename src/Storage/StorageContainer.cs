@@ -189,7 +189,10 @@ namespace Microsoft.Xna.Framework.Storage
 			string dirPath = Path.Combine(storagePath, directory);
 
 			// Now let's try to create it.
-			Directory.CreateDirectory(dirPath);
+			if (!Directory.Exists(dirPath))
+			{
+				Directory.CreateDirectory(dirPath);
+			}
 		}
 
 		/// <summary>
