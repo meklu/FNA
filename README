@@ -3,6 +3,14 @@ accurate XNA4 runtime for the desktop.
 
 Project Website: http://fna-xna.github.io/
 
+About This Repository
+---------------------
+This repository is still based on the MonoGame project's Git history. For the
+first official release of FNA, we will be starting a brand new history with a
+new repository at this GitHub organization:
+
+https://github.com/FNA-XNA/
+
 License
 -------
 FNA is released under the Microsoft Public License. See LICENSE for details.
