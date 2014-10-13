@@ -710,8 +710,8 @@ namespace Microsoft.Xna.Framework
 		}
 
 		/* FIXME: We should work toward eliminating internal methods. They
-		 * break entirely the possibility that additional platforms could
-		 * be added by third parties without changing MonoGame itself.
+		 * could eliminate the possibility that additional platforms could
+		 * be added by third parties without changing FNA itself.
 		 */
 
 		internal void DoUpdate(GameTime gameTime)
