@@ -417,7 +417,7 @@ namespace Microsoft.Xna.Framework.Content
 			}
 			catch (ContentLoadException ex)
 			{
-				// MonoGame try to load as a non-content file
+				// Try to load as a non-content file
 				assetName = FileHelpers.NormalizeFilePathSeparators(
 					Path.Combine(RootDirectoryFullPath, assetName)
 				);

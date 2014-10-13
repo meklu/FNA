@@ -152,7 +152,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 		private SoundEffect INTERNAL_parentEffect;
 
-		/* MonoGame XACT wraps around SoundEffect for audio output.
+		/* FNA' XACT runtime wraps around SoundEffect for audio output.
 		 * Only problem: XACT pitch has no boundaries, SoundEffect does.
 		 * So, we're going to use this to tell the pitch clamp to STFU.
 		 * -flibit
