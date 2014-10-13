@@ -276,8 +276,8 @@ namespace Microsoft.Xna.Framework.Graphics
 		public delegate void G_Viewport(
 			int x,
 			int y,
-			IntPtr width,
-			IntPtr height
+			int width,
+			int height
 		);
 		public G_Viewport glViewport;
 
@@ -290,8 +290,8 @@ namespace Microsoft.Xna.Framework.Graphics
 		private delegate void Scissor(
 			int x,
 			int y,
-			IntPtr width,
-			IntPtr height
+			int width,
+			int height
 		);
 		private Scissor glScissor;
 
@@ -392,11 +392,11 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		/* BEGIN TEXTURE FUNCTIONS */
 
-		public delegate void GenTextures(IntPtr n, out uint textures);
+		public delegate void GenTextures(int n, out uint textures);
 		public GenTextures glGenTextures;
 
 		public delegate void DeleteTextures(
-			IntPtr n,
+			int n,
 			ref uint textures
 		);
 		public DeleteTextures glDeleteTextures;
@@ -408,8 +408,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLenum target,
 			int level,
 			int internalFormat,
-			IntPtr width,
-			IntPtr height,
+			int width,
+			int height,
 			int border,
 			GLenum format,
 			GLenum type,
@@ -422,8 +422,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			int level,
 			int xoffset,
 			int yoffset,
-			IntPtr width,
-			IntPtr height,
+			int width,
+			int height,
 			GLenum format,
 			GLenum type,
 			IntPtr pixels
@@ -434,10 +434,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLenum target,
 			int level,
 			int internalFormat,
-			IntPtr width,
-			IntPtr height,
+			int width,
+			int height,
 			int border,
-			IntPtr imageSize,
+			int imageSize,
 			IntPtr pixels
 		);
 		public CompressedTexImage2D glCompressedTexImage2D;
@@ -447,10 +447,10 @@ namespace Microsoft.Xna.Framework.Graphics
 			int level,
 			int xoffset,
 			int yoffset,
-			IntPtr width,
-			IntPtr height,
+			int width,
+			int height,
 			GLenum format,
-			IntPtr imageSize,
+			int imageSize,
 			IntPtr pixels
 		);
 		public CompressedTexSubImage2D glCompressedTexSubImage2D;
@@ -459,9 +459,9 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLenum target,
 			int level,
 			int internalFormat,
-			IntPtr width,
-			IntPtr height,
-			IntPtr depth,
+			int width,
+			int height,
+			int depth,
 			int border,
 			GLenum format,
 			GLenum type,
@@ -475,9 +475,9 @@ namespace Microsoft.Xna.Framework.Graphics
 			int xoffset,
 			int yoffset,
 			int zoffset,
-			IntPtr width,
-			IntPtr height,
-			IntPtr depth,
+			int width,
+			int height,
+			int depth,
 			GLenum format,
 			GLenum type,
 			IntPtr pixels
@@ -525,11 +525,11 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		/* BEGIN BUFFER FUNCTIONS */
 
-		public delegate void GenBuffers(IntPtr n, out uint buffers);
+		public delegate void GenBuffers(int n, out uint buffers);
 		public GenBuffers glGenBuffers;
 
 		private delegate void DeleteBuffers(
-			IntPtr n,
+			int n,
 			ref uint buffers
 		);
 		private DeleteBuffers glDeleteBuffers;
@@ -580,7 +580,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			int size,
 			GLenum type,
 			bool normalized,
-			IntPtr stride,
+			int stride,
 			IntPtr pointer
 		);
 		private G_VertexAttribPointer glVertexAttribPointer;
@@ -610,14 +610,14 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		/* BEGIN FRAMEBUFFER FUNCTIONS */
 
-		private delegate void DrawBuffers(IntPtr n, GLenum[] bufs);
+		private delegate void DrawBuffers(int n, GLenum[] bufs);
 		private DrawBuffers glDrawBuffers;
 
 		public delegate void ReadPixels(
 			int x,
 			int y,
-			IntPtr width,
-			IntPtr height,
+			int width,
+			int height,
 			GLenum format,
 			GLenum type,
 			IntPtr pixels
@@ -625,13 +625,13 @@ namespace Microsoft.Xna.Framework.Graphics
 		public ReadPixels glReadPixels;
 
 		public delegate void GenFramebuffers(
-			IntPtr n,
+			int n,
 			out uint framebuffers
 		);
 		public GenFramebuffers glGenFramebuffers;
 
 		public delegate void DeleteFramebuffers(
-			IntPtr n,
+			int n,
 			ref uint framebuffers
 		);
 		public DeleteFramebuffers glDeleteFramebuffers;
@@ -674,13 +674,13 @@ namespace Microsoft.Xna.Framework.Graphics
 		public BlitFramebuffer glBlitFramebuffer;
 
 		public delegate void GenRenderbuffers(
-			IntPtr n,
+			int n,
 			out uint renderbuffers
 		);
 		public GenRenderbuffers glGenRenderbuffers;
 
 		public delegate void DeleteRenderbuffers(
-			IntPtr n,
+			int n,
 			ref uint renderbuffers
 		);
 		public DeleteRenderbuffers glDeleteRenderbuffers;
@@ -694,8 +694,8 @@ namespace Microsoft.Xna.Framework.Graphics
 		public delegate void RenderbufferStorage(
 			GLenum target,
 			GLenum internalformat,
-			IntPtr width,
-			IntPtr height
+			int width,
+			int height
 		);
 		public RenderbufferStorage glRenderbufferStorage;
 
@@ -705,10 +705,10 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public delegate void DrawElementsInstanced(
 			GLenum mode,
-			IntPtr count,
+			int count,
 			GLenum type,
 			IntPtr indices,
-			IntPtr instanceCount
+			int instanceCount
 		);
 		public DrawElementsInstanced glDrawElementsInstanced;
 
@@ -716,7 +716,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLenum mode,
 			int start,
 			int end,
-			IntPtr count,
+			int count,
 			GLenum type,
 			IntPtr indices
 		);
@@ -725,7 +725,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		public delegate void DrawArrays(
 			GLenum mode,
 			int first,
-			IntPtr count
+			int count
 		);
 		public DrawArrays glDrawArrays;
 
@@ -733,10 +733,10 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		/* BEGIN QUERY FUNCTIONS */
 
-		public delegate void GenQueries(IntPtr n, out uint ids);
+		public delegate void GenQueries(int n, out uint ids);
 		public GenQueries glGenQueries;
 
-		public delegate void DeleteQueries(IntPtr n, ref uint ids);
+		public delegate void DeleteQueries(int n, ref uint ids);
 		public DeleteQueries glDeleteQueries;
 
 		public delegate void BeginQuery(GLenum target, uint id);
@@ -764,7 +764,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public delegate void ShaderSource(
 			uint shader,
-			IntPtr count,
+			int count,
 			ref string source,
 			ref int length
 		);
@@ -796,7 +796,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public delegate void Uniform4fv(
 			int location,
-			IntPtr count,
+			int count,
 			IntPtr value
 		);
 		public Uniform4fv glUniform4fv;
@@ -867,7 +867,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLenum source,
 			GLenum type,
 			GLenum severity,
-			IntPtr count, // GLsizei
+			int count,
 			IntPtr ids, // const GLuint*
 			bool enabled
 		);
@@ -879,7 +879,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLenum type,
 			uint id,
 			GLenum severity,
-			IntPtr length, // GLsizei
+			int length,
 			IntPtr message, // const GLchar*
 			IntPtr userParam // const GLvoid*
 		);
@@ -889,7 +889,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLenum type,
 			uint id,
 			GLenum severity,
-			IntPtr length, // GLsizei
+			int length,
 			IntPtr message, // const GLchar*
 			IntPtr userParam // const GLvoid*
 		) {
@@ -1335,7 +1335,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				GLenum.GL_DONT_CARE,
 				GLenum.GL_DONT_CARE,
 				GLenum.GL_DONT_CARE,
-				IntPtr.Zero,
+				0,
 				IntPtr.Zero,
 				true
 			);
@@ -1343,7 +1343,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				GLenum.GL_DONT_CARE,
 				GLenum.GL_DEBUG_TYPE_OTHER_ARB,
 				GLenum.GL_DEBUG_SEVERITY_LOW_ARB,
-				IntPtr.Zero,
+				0,
 				IntPtr.Zero,
 				false
 			);

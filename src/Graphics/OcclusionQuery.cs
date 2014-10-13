@@ -59,7 +59,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			GraphicsDevice = graphicsDevice;
 			GraphicsDevice.GLDevice.glGenQueries(
-				(IntPtr) 1,
+				1,
 				out glQueryId
 			);
 		}
@@ -75,7 +75,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				GraphicsDevice.AddDisposeAction(() =>
 				{
 					GraphicsDevice.GLDevice.glDeleteQueries(
-						(IntPtr) 1,
+						1,
 						ref glQueryId
 					);
 				});

@@ -51,7 +51,7 @@ namespace Microsoft.Xna.Framework.Graphics
             //
             _shaderHandle = GraphicsDevice.GLDevice.glCreateShader(Stage == ShaderStage.Vertex ? OpenGLDevice.GLenum.GL_VERTEX_SHADER : OpenGLDevice.GLenum.GL_FRAGMENT_SHADER);
             int len = _glslCode.Length;
-            GraphicsDevice.GLDevice.glShaderSource(_shaderHandle, (IntPtr) 1, ref _glslCode, ref len);
+            GraphicsDevice.GLDevice.glShaderSource(_shaderHandle, 1, ref _glslCode, ref len);
             GraphicsDevice.GLDevice.glCompileShader(_shaderHandle);
 
             var compiled = 0;

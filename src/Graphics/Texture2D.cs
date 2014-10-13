@@ -98,10 +98,10 @@ namespace Microsoft.Xna.Framework.Graphics
 							OpenGLDevice.GLenum.GL_TEXTURE_2D,
 							i,
 							(int) glInternalFormat,
-							(IntPtr) levelWidth,
-							(IntPtr) levelHeight,
+							levelWidth,
+							levelHeight,
 							0,
-							(IntPtr) (((levelWidth + 3) / 4) * ((levelHeight + 3) / 4) * GetFormatSize()),
+							((levelWidth + 3) / 4) * ((levelHeight + 3) / 4) * GetFormatSize(),
 							IntPtr.Zero
 						);
 					}
@@ -114,8 +114,8 @@ namespace Microsoft.Xna.Framework.Graphics
 							OpenGLDevice.GLenum.GL_TEXTURE_2D,
 							i,
 							(int) glInternalFormat,
-							(IntPtr) Math.Max(Width >> i, 1),
-							(IntPtr) Math.Max(Height >> i, 1),
+							Math.Max(Width >> i, 1),
+							Math.Max(Height >> i, 1),
 							0,
 							glFormat,
 							glType,
@@ -216,10 +216,10 @@ namespace Microsoft.Xna.Framework.Graphics
 							level,
 							x,
 							y,
-							(IntPtr) w,
-							(IntPtr) h,
+							w,
+							h,
 							glInternalFormat,
-							(IntPtr) dataLength,
+							dataLength,
 							dataPtr
 						);
 					}
@@ -240,8 +240,8 @@ namespace Microsoft.Xna.Framework.Graphics
 							level,
 							x,
 							y,
-							(IntPtr) w,
-							(IntPtr) h,
+							w,
+							h,
 							glFormat,
 							glType,
 							dataPtr

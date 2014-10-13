@@ -103,13 +103,13 @@ namespace Microsoft.Xna.Framework.Media
 			// Create the YUV textures.
 			yuvTextures = new uint[3];
 			// FIXME: lol at my glGenTextures func -flibit
-			currentDevice.GLDevice.glGenTextures((IntPtr) 1, out yuvTextures[0]);
-			currentDevice.GLDevice.glGenTextures((IntPtr) 1, out yuvTextures[1]);
-			currentDevice.GLDevice.glGenTextures((IntPtr) 1, out yuvTextures[2]);
+			currentDevice.GLDevice.glGenTextures(1, out yuvTextures[0]);
+			currentDevice.GLDevice.glGenTextures(1, out yuvTextures[1]);
+			currentDevice.GLDevice.glGenTextures(1, out yuvTextures[2]);
 
 			// Create the RGBA framebuffer target.
 			currentDevice.GLDevice.glGenFramebuffers(
-				(IntPtr) 1,
+				1,
 				out rgbaFramebuffer
 			);
 
@@ -124,7 +124,7 @@ namespace Microsoft.Xna.Framework.Media
 			int len = shader_vertex.Length;
 			currentDevice.GLDevice.glShaderSource(
 				vshader_id,
-				(IntPtr) 1,
+				1,
 				ref shader_vertex,
 				ref len
 			);
@@ -135,7 +135,7 @@ namespace Microsoft.Xna.Framework.Media
 			len = shader_fragment.Length;
 			currentDevice.GLDevice.glShaderSource(
 				fshader_id,
-				(IntPtr) 1,
+				1,
 				ref shader_fragment,
 				ref len
 			);
@@ -179,15 +179,15 @@ namespace Microsoft.Xna.Framework.Media
 
 			// Delete the RGBA framebuffer target.
 			currentDevice.GLDevice.glDeleteFramebuffers(
-				(IntPtr) 1,
+				1,
 				ref rgbaFramebuffer
 			);
 
 			// Delete the YUV textures.
 			// FIXME: lol at my glGenTextures func -flibit
-			currentDevice.GLDevice.glDeleteTextures((IntPtr) 1, ref yuvTextures[0]);
-			currentDevice.GLDevice.glDeleteTextures((IntPtr) 1, ref yuvTextures[1]);
-			currentDevice.GLDevice.glDeleteTextures((IntPtr) 1, ref yuvTextures[2]);
+			currentDevice.GLDevice.glDeleteTextures(1, ref yuvTextures[0]);
+			currentDevice.GLDevice.glDeleteTextures(1, ref yuvTextures[1]);
+			currentDevice.GLDevice.glDeleteTextures(1, ref yuvTextures[2]);
 		}
 
 		private void GL_internal_genTexture(
@@ -238,8 +238,8 @@ namespace Microsoft.Xna.Framework.Media
 				OpenGLDevice.GLenum.GL_TEXTURE_2D,
 				0,
 				(int) OpenGLDevice.GLenum.GL_LUMINANCE,
-				(IntPtr) width,
-				(IntPtr) height,
+				width,
+				height,
 				0,
 				OpenGLDevice.GLenum.GL_LUMINANCE,
 				OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
@@ -363,8 +363,8 @@ namespace Microsoft.Xna.Framework.Media
 			currentDevice.GLDevice.glViewport(
 				oldViewport.X,
 				oldViewport.Y,
-				(IntPtr) oldViewport.Width,
-				(IntPtr) oldViewport.Height
+				oldViewport.Width,
+				oldViewport.Height
 			);
 
 			// Restore the program we got from glGet :(
@@ -771,8 +771,8 @@ namespace Microsoft.Xna.Framework.Media
 				0,
 				0,
 				0,
-				(IntPtr) currentVideo.width,
-				(IntPtr) currentVideo.height,
+				(int) currentVideo.width,
+				(int) currentVideo.height,
 				OpenGLDevice.GLenum.GL_LUMINANCE,
 				OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
 				currentVideo.pixels
@@ -789,8 +789,8 @@ namespace Microsoft.Xna.Framework.Media
 				0,
 				0,
 				0,
-				(IntPtr) (currentVideo.width / 2),
-				(IntPtr) (currentVideo.height / 2),
+				(int) (currentVideo.width / 2),
+				(int) (currentVideo.height / 2),
 				OpenGLDevice.GLenum.GL_LUMINANCE,
 				OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
 				new IntPtr(
@@ -810,8 +810,8 @@ namespace Microsoft.Xna.Framework.Media
 				0,
 				0,
 				0,
-				(IntPtr) (currentVideo.width / 2),
-				(IntPtr) (currentVideo.height / 2),
+				(int) (currentVideo.width / 2),
+				(int) (currentVideo.height / 2),
 				OpenGLDevice.GLenum.GL_LUMINANCE,
 				OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
 				new IntPtr(
@@ -825,15 +825,15 @@ namespace Microsoft.Xna.Framework.Media
 			currentDevice.GLDevice.glViewport(
 				0,
 				0,
-				(IntPtr) currentVideo.width,
-				(IntPtr) currentVideo.height
+				(int) currentVideo.width,
+				(int) currentVideo.height
 			);
 
 			// Draw the YUV textures to the framebuffer with our shader.
 			currentDevice.GLDevice.glDrawArrays(
 				OpenGLDevice.GLenum.GL_TRIANGLE_STRIP,
 				0,
-				(IntPtr) 4
+				4
 			);
 
 			// Clean up after ourselves.

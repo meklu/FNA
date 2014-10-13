@@ -610,8 +610,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				GLDevice.glReadPixels(
 					0, 0,
-					(IntPtr) GLDevice.Backbuffer.Width,
-					(IntPtr) GLDevice.Backbuffer.Height,
+					GLDevice.Backbuffer.Width,
+					GLDevice.Backbuffer.Height,
 					OpenGLDevice.GLenum.GL_RGBA,
 					OpenGLDevice.GLenum.GL_UNSIGNED_BYTE,
 					ptr.AddrOfPinnedObject()
@@ -973,7 +973,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					OpenGLDevice.GLenum.GL_UNSIGNED_SHORT :
 					OpenGLDevice.GLenum.GL_UNSIGNED_INT,
 				(IntPtr) (startIndex * (shortIndices ? 2 : 4)),
-				(IntPtr) instanceCount
+				instanceCount
 			);
 		}
 
@@ -1207,18 +1207,18 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#region Private XNA->GL Conversion Methods
 
-		private static IntPtr GetElementCountArray(PrimitiveType primitiveType, int primitiveCount)
+		private static int GetElementCountArray(PrimitiveType primitiveType, int primitiveCount)
 		{
 			switch (primitiveType)
 			{
 				case PrimitiveType.LineList:
-					return (IntPtr) (primitiveCount * 2);
+					return primitiveCount * 2;
 				case PrimitiveType.LineStrip:
-					return (IntPtr) (primitiveCount + 1);
+					return primitiveCount + 1;
 				case PrimitiveType.TriangleList:
-					return (IntPtr) (primitiveCount * 3);
+					return primitiveCount * 3;
 				case PrimitiveType.TriangleStrip:
-					return (IntPtr) (3 + (primitiveCount - 1));
+					return 3 + (primitiveCount - 1);
 			}
 
 			throw new NotSupportedException();
@@ -1352,7 +1352,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			GLDevice.glUniform4fv(
 				posFixupLoc,
-				(IntPtr) 1,
+				1,
 				posFixupPtr
 			);
 		}

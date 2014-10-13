@@ -74,7 +74,7 @@ namespace Microsoft.Xna.Framework.Graphics
 #if SDL2
                 device.GLDevice.glUniform4fv(
                     _location,
-                    (IntPtr) (_buffer.Length / 16),
+                    _buffer.Length / 16,
                     (IntPtr) bytePtr
                 );
 #else

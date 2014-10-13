@@ -137,7 +137,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				int vertexStride
 			) {
 				uint handle;
-				graphicsDevice.GLDevice.glGenBuffers((IntPtr) 1, out handle);
+				graphicsDevice.GLDevice.glGenBuffers(1, out handle);
 				Handle = handle;
 				Dynamic = dynamic ? GLenum.GL_STREAM_DRAW : GLenum.GL_STATIC_DRAW;
 
@@ -188,7 +188,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				IndexElementSize elementSize
 			) {
 				uint handle;
-				graphicsDevice.GLDevice.glGenBuffers((IntPtr) 1, out handle);
+				graphicsDevice.GLDevice.glGenBuffers(1, out handle);
 				Handle = handle;
 				Dynamic = dynamic ? GLenum.GL_STREAM_DRAW : GLenum.GL_STATIC_DRAW;
 				BufferSize = (IntPtr) (indexCount * (elementSize == IndexElementSize.SixteenBits ? 2 : 4));
@@ -533,7 +533,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			currentDrawBuffers = 0;
 			currentRenderbuffer = 0;
 			currentDepthStencilFormat = DepthFormat.None;
-			glGenFramebuffers((IntPtr) 1, out targetFramebuffer);
+			glGenFramebuffers(1, out targetFramebuffer);
 		}
 
 		#endregion
@@ -542,7 +542,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		public void Dispose()
 		{
-			glDeleteFramebuffers((IntPtr) 1, ref targetFramebuffer);
+			glDeleteFramebuffers(1, ref targetFramebuffer);
 			targetFramebuffer = 0;
 			Backbuffer.Dispose();
 			Backbuffer = null;
@@ -614,8 +614,8 @@ namespace Microsoft.Xna.Framework.Graphics
 				glViewport(
 					viewport.X,
 					viewport.Y,
-					(IntPtr) viewport.Width,
-					(IntPtr) viewport.Height
+					viewport.Width,
+					viewport.Height
 				);
 			}
 
@@ -643,8 +643,8 @@ namespace Microsoft.Xna.Framework.Graphics
 				glScissor(
 					scissorRectangle.X,
 					scissorRectangle.Y,
-					(IntPtr) scissorRectangle.Width,
-					(IntPtr) scissorRectangle.Height
+					scissorRectangle.Width,
+					scissorRectangle.Height
 				);
 			}
 		}
@@ -1088,7 +1088,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					size,
 					XNAToGL.PointerType[type],
 					normalized,
-					(IntPtr) stride,
+					stride,
 					pointer
 				);
 				Attributes[location].CurrentBuffer = currentVertexBuffer;
@@ -1299,7 +1299,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				currentVertexBuffer = 0;
 			}
 			uint handle = buffer.Handle;
-			glDeleteBuffers((IntPtr) 1, ref handle);
+			glDeleteBuffers(1, ref handle);
 		}
 
 		public void DeleteIndexBuffer(OpenGLIndexBuffer buffer)
@@ -1310,7 +1310,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				currentIndexBuffer = 0;
 			}
 			uint handle = buffer.Handle;
-			glDeleteBuffers((IntPtr) 1, ref handle);
+			glDeleteBuffers(1, ref handle);
 		}
 
 		#endregion
@@ -1320,7 +1320,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		public OpenGLTexture CreateTexture(Type target, SurfaceFormat format, bool hasMipmaps)
 		{
 			uint handle;
-			glGenTextures((IntPtr) 1, out handle);
+			glGenTextures(1, out handle);
 			OpenGLTexture result = new OpenGLTexture(
 				handle,
 				target,
@@ -1406,7 +1406,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				}
 			}
 			uint handle = texture.Handle;
-			glDeleteTextures((IntPtr) 1, ref handle);
+			glDeleteTextures(1, ref handle);
 		}
 
 		#endregion
@@ -1448,8 +1448,8 @@ namespace Microsoft.Xna.Framework.Graphics
 					glReadPixels(
 						rect.Value.Left,
 						rect.Value.Top,
-						(IntPtr) rect.Value.Width,
-						(IntPtr) rect.Value.Height,
+						rect.Value.Width,
+						rect.Value.Height,
 						GLenum.GL_RGBA, // FIXME: Assumption!
 						GLenum.GL_UNSIGNED_BYTE,
 						handle.AddrOfPinnedObject()
@@ -1477,8 +1477,8 @@ namespace Microsoft.Xna.Framework.Graphics
 					glReadPixels(
 						0,
 						0,
-						(IntPtr) width,
-						(IntPtr) height,
+						width,
+						height,
 						GLenum.GL_RGBA, // FIXME: Assumption
 						GLenum.GL_UNSIGNED_BYTE,
 						handle.AddrOfPinnedObject()
@@ -1554,7 +1554,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		public uint GenRenderbuffer(int width, int height, DepthFormat format)
 		{
 			uint handle;
-			glGenRenderbuffers((IntPtr) 1, out handle);
+			glGenRenderbuffers(1, out handle);
 			glBindRenderbuffer(
 				GLenum.GL_RENDERBUFFER,
 				handle
@@ -1562,8 +1562,8 @@ namespace Microsoft.Xna.Framework.Graphics
 			glRenderbufferStorage(
 				GLenum.GL_RENDERBUFFER,
 				XNAToGL.DepthStorage[format],
-				(IntPtr) width,
-				(IntPtr) height
+				width,
+				height
 			);
 			glBindRenderbuffer(
 				GLenum.GL_RENDERBUFFER,
@@ -1579,7 +1579,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				// Force a renderbuffer update, this no longer exists!
 				currentRenderbuffer = uint.MaxValue;
 			}
-			glDeleteRenderbuffers((IntPtr) 1, ref renderbuffer);
+			glDeleteRenderbuffers(1, ref renderbuffer);
 		}
 
 		#endregion
@@ -1729,7 +1729,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 			if (attachments.Length != currentDrawBuffers)
 			{
-				glDrawBuffers((IntPtr) attachments.Length, drawBuffersArray);
+				glDrawBuffers(attachments.Length, drawBuffersArray);
 				currentDrawBuffers = attachments.Length;
 			}
 
@@ -1983,19 +1983,19 @@ namespace Microsoft.Xna.Framework.Graphics
 
 				// Generate and bind the FBO.
 				uint handle;
-				glDevice.glGenFramebuffers((IntPtr) 1, out handle);
+				glDevice.glGenFramebuffers(1, out handle);
 				Handle = handle;
 				glDevice.BindFramebuffer(Handle);
 
 				// Create and attach the color buffer
-				glDevice.glGenTextures((IntPtr) 1, out colorAttachment);
+				glDevice.glGenTextures(1, out colorAttachment);
 				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, colorAttachment);
 				glDevice.glTexImage2D(
 					GLenum.GL_TEXTURE_2D,
 					0,
 					(int) GLenum.GL_RGBA,
-					(IntPtr) width,
-					(IntPtr) height,
+					width,
+					height,
 					0,
 					GLenum.GL_RGBA,
 					GLenum.GL_UNSIGNED_BYTE,
@@ -2021,14 +2021,14 @@ namespace Microsoft.Xna.Framework.Graphics
 				}
 
 				// Create and attach the depth/stencil buffer
-				glDevice.glGenTextures((IntPtr) 1, out depthStencilAttachment);
+				glDevice.glGenTextures(1, out depthStencilAttachment);
 				glDevice.glBindTexture(GLenum.GL_TEXTURE_2D, depthStencilAttachment);
 				glDevice.glTexImage2D(
 					GLenum.GL_TEXTURE_2D,
 					0,
 					(int) XNAToGL.DepthStorage[depthFormat],
-					(IntPtr) width,
-					(IntPtr) height,
+					width,
+					height,
 					0,
 					XNAToGL.GLDepthFormat[depthFormat],
 					XNAToGL.DepthType[depthFormat],
@@ -2051,11 +2051,11 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 #if !DISABLE_FAUXBACKBUFFER
 				uint handle = Handle;
-				glDevice.glDeleteFramebuffers((IntPtr) 1, ref handle);
-				glDevice.glDeleteTextures((IntPtr) 1, ref colorAttachment);
+				glDevice.glDeleteFramebuffers(1, ref handle);
+				glDevice.glDeleteTextures(1, ref colorAttachment);
 				if (depthStencilAttachment != 0)
 				{
-					glDevice.glDeleteTextures((IntPtr) 1, ref depthStencilAttachment);
+					glDevice.glDeleteTextures(1, ref depthStencilAttachment);
 				}
 				glDevice = null;
 				Handle = 0;
@@ -2077,8 +2077,8 @@ namespace Microsoft.Xna.Framework.Graphics
 					GLenum.GL_TEXTURE_2D,
 					0,
 					(int) GLenum.GL_RGBA,
-					(IntPtr) width,
-					(IntPtr) height,
+					width,
+					height,
 					0,
 					GLenum.GL_RGBA,
 					GLenum.GL_UNSIGNED_BYTE,
@@ -2099,7 +2099,7 @@ namespace Microsoft.Xna.Framework.Graphics
 							0
 						);
 						glDevice.glDeleteTextures(
-							(IntPtr) 1,
+							1,
 							ref depthStencilAttachment
 						);
 						depthStencilAttachment = 0;
@@ -2117,7 +2117,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				{
 					// Generate a depth/stencil texture, if needed
 					glDevice.glGenTextures(
-						(IntPtr) 1,
+						1,
 						out depthStencilAttachment
 					);
 				}
@@ -2128,8 +2128,8 @@ namespace Microsoft.Xna.Framework.Graphics
 					GLenum.GL_TEXTURE_2D,
 					0,
 					(int) XNAToGL.DepthStorage[depthFormat],
-					(IntPtr) width,
-					(IntPtr) height,
+					width,
+					height,
 					0,
 					XNAToGL.GLDepthFormat[depthFormat],
 					XNAToGL.DepthType[depthFormat],

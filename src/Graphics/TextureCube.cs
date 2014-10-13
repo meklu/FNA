@@ -68,10 +68,10 @@ namespace Microsoft.Xna.Framework.Graphics
 								OpenGLDevice.GLenum.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 								l,
 								(int) glInternalFormat,
-								(IntPtr) levelSize,
-								(IntPtr) levelSize,
+								levelSize,
+								levelSize,
 								0,
-								(IntPtr) (((levelSize + 3) / 4) * ((levelSize + 3) / 4) * GetFormatSize()),
+								((levelSize + 3) / 4) * ((levelSize + 3) / 4) * GetFormatSize(),
 								IntPtr.Zero
 							);
 						}
@@ -87,8 +87,8 @@ namespace Microsoft.Xna.Framework.Graphics
 								OpenGLDevice.GLenum.GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
 								l,
 								(int) glInternalFormat,
-								(IntPtr) size,
-								(IntPtr) size,
+								size,
+								size,
 								0,
 								glFormat,
 								glType,
@@ -196,10 +196,10 @@ namespace Microsoft.Xna.Framework.Graphics
 							level,
 							xOffset,
 							yOffset,
-							(IntPtr) width,
-							(IntPtr) height,
+							width,
+							height,
 							glInternalFormat,
-							(IntPtr) dataLength,
+							dataLength,
 							dataPtr
 						);
 					}
@@ -210,8 +210,8 @@ namespace Microsoft.Xna.Framework.Graphics
 							level,
 							xOffset,
 							yOffset,
-							(IntPtr) width,
-							(IntPtr) height,
+							width,
+							height,
 							glFormat,
 							glType,
 							dataPtr
