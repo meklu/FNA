@@ -362,7 +362,6 @@
     <Compile Include="lib\OpenAL-CS\src\ALEXT.cs" />
     <Compile Include="lib\OpenAL-CS\src\EFX.cs" />
     <Compile Include="lib\TheoraPlay-CS\TheoraPlay.cs" />
-    <Compile Include="lib\Vorbisfile-CS\Vorbisfile.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="FNA.dll.config">

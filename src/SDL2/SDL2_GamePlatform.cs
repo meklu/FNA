@@ -463,6 +463,9 @@ namespace Microsoft.Xna.Framework
 		{
 			// Stop the game loop
 			INTERNAL_runApplication = false;
+
+			// Close SDL2_mixer if needed
+			Media.Song.closeMixer();
 		}
 
 		public override void BeforeInitialize()
@@ -488,6 +491,12 @@ namespace Microsoft.Xna.Framework
 
 		public override bool BeforeUpdate(GameTime gameTime)
 		{
+			// Update our OpenAL context
+			if (OpenALDevice.Instance != null)
+			{
+				OpenALDevice.Instance.Update();
+			}
+
 			return true;
 		}
 
