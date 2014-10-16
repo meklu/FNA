@@ -114,6 +114,7 @@ namespace Microsoft.Xna.Framework.Audio
 		private XACTSound INTERNAL_activeSound;
 		private List<SoundEffectInstance> INTERNAL_instancePool;
 		private List<float> INTERNAL_instanceVolumes;
+		private List<float> INTERNAL_instancePitches;
 
 		// User-controlled sounds require a bit more trickery.
 		private bool INTERNAL_userControlledPlaying;
@@ -184,6 +185,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 			INTERNAL_instancePool = new List<SoundEffectInstance>();
 			INTERNAL_instanceVolumes = new List<float>();
+			INTERNAL_instancePitches = new List<float>();
 		}
 
 		#endregion
@@ -215,6 +217,7 @@ namespace Microsoft.Xna.Framework.Audio
 					}
 					INTERNAL_instancePool.Clear();
 					INTERNAL_instanceVolumes.Clear();
+					INTERNAL_instancePitches.Clear();
 					INTERNAL_queuedPlayback = false;
 				}
 				IsDisposed = true;
@@ -388,6 +391,7 @@ namespace Microsoft.Xna.Framework.Audio
 			}
 			INTERNAL_instancePool.Clear();
 			INTERNAL_instanceVolumes.Clear();
+			INTERNAL_instancePitches.Clear();
 			INTERNAL_userControlledPlaying = false;
 			INTERNAL_category.INTERNAL_removeActiveCue(this);
 
@@ -402,7 +406,7 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#region Internal Methods
 
-		internal bool INTERNAL_update(float globalVolume, float globalPitch)
+		internal bool INTERNAL_update()
 		{
 			// If this is our first update, time to play!
 			if (INTERNAL_queuedPlayback)
@@ -435,6 +439,7 @@ namespace Microsoft.Xna.Framework.Audio
 					INTERNAL_instancePool[i].Dispose();
 					INTERNAL_instancePool.RemoveAt(i);
 					INTERNAL_instanceVolumes.RemoveAt(i);
+					INTERNAL_instancePitches.RemoveAt(i);
 					i -= 1;
 				}
 			}
@@ -453,6 +458,7 @@ namespace Microsoft.Xna.Framework.Audio
 					}
 					INTERNAL_instancePool.Clear();
 					INTERNAL_instanceVolumes.Clear();
+					INTERNAL_instancePitches.Clear();
 					if (!INTERNAL_calculateNextSound())
 					{
 						// Nothing to play, bail.
@@ -523,12 +529,12 @@ namespace Microsoft.Xna.Framework.Audio
 				/* The final volume should be the combination of the
 				 * authored volume, Volume variable and RPC volume results.
 				 */
-				INTERNAL_instancePool[i].Volume = INTERNAL_instanceVolumes[i] * GetVariable("Volume") * rpcVolume * globalVolume;
-				/* The final pitch should be the combination of both the
-				 * global pitches and RPC pitches.
-				 * FIXME: Anything else?
+				INTERNAL_instancePool[i].Volume = INTERNAL_instanceVolumes[i] * GetVariable("Volume") * rpcVolume;
+
+				/* The final pitch should be the combination of the
+				 * authored pitch and RPC pitch results.
 				 */
-				INTERNAL_instancePool[i].Pitch = rpcPitch + globalPitch;
+				INTERNAL_instancePool[i].Pitch = INTERNAL_instancePitches[i] + rpcPitch;
 			}
 
 			// Finally, check if we're still active.
@@ -617,7 +623,11 @@ namespace Microsoft.Xna.Framework.Audio
 
 		private void INTERNAL_setupSounds()
 		{
-			INTERNAL_activeSound.GenerateInstances(INTERNAL_instancePool, INTERNAL_instanceVolumes);
+			INTERNAL_activeSound.GenerateInstances(
+				INTERNAL_instancePool,
+				INTERNAL_instanceVolumes,
+				INTERNAL_instancePitches
+			);
 
 			foreach (uint curDSP in INTERNAL_activeSound.DSPCodes)
 			{

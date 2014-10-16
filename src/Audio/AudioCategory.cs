@@ -172,10 +172,8 @@ namespace Microsoft.Xna.Framework.Audio
 
 		#region Internal Methods
 
-		internal void INTERNAL_update(
-			float globalVolume,
-			float globalPitch
-		) {
+		internal void INTERNAL_update()
+		{
 			/* Believe it or not, someone might run the update on a thread.
 			 * So, we're going to give a lock to this method.
 			 * -flibit
@@ -212,7 +210,7 @@ namespace Microsoft.Xna.Framework.Audio
 				}
 				for (int i = 0; i < activeCues.Count; i += 1)
 				{
-					if (!activeCues[i].INTERNAL_update(globalVolume, globalPitch))
+					if (!activeCues[i].INTERNAL_update())
 					{
 						cueInstanceCounts[activeCues[i].Name] -= 1;
 						activeCues.RemoveAt(i);

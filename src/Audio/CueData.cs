@@ -198,11 +198,27 @@ namespace Microsoft.Xna.Framework.Audio
 					RPCCodes[i] = reader.ReadUInt32();
 				}
 
-				// Seek past the rest - we dunno what it is yet.
-				reader.BaseStream.Seek(
-					rpcDataLength - 2 - 1 - (4 * RPCCodes.Length),
-					SeekOrigin.Current
-				);
+				// Sometimes there are even more codes to check!
+				if (rpcDataLength != (2 + 1 + 4 * RPCCodes.Length))
+				{
+					// FIXME: XACT separates these, I bet we should too. -flibit
+					uint[] moreCodes = new uint[RPCCodes.Length + reader.ReadByte()];
+					Array.Copy(RPCCodes, moreCodes, RPCCodes.Length);
+					int oldLen = RPCCodes.Length;
+					RPCCodes = moreCodes;
+
+					// Obtain "extra" RPC curve codes
+					for (int i = oldLen; i < RPCCodes.Length; i += 1)
+					{
+						RPCCodes[i] = reader.ReadUInt32();
+					}
+
+					// Seek past the rest - we dunno what it is yet.
+					reader.BaseStream.Seek(
+						rpcDataLength - 2 - 1 - 1 - (4 * RPCCodes.Length),
+						SeekOrigin.Current
+					);
+				}
 			}
 
 			// Parse DSP Presets
@@ -264,7 +280,8 @@ namespace Microsoft.Xna.Framework.Audio
 
 		public List<SoundEffectInstance> GenerateInstances(
 			List<SoundEffectInstance> result,
-			List<float> volumeResult
+			List<float> volumeResult,
+			List<float> pitchResult
 		) {
 			// Get the SoundEffectInstance List
 			foreach (XACTClip curClip in INTERNAL_clips)
@@ -272,10 +289,11 @@ namespace Microsoft.Xna.Framework.Audio
 				curClip.GenerateInstances(result, Volume, Pitch);
 			}
 
-			// Store completed authored volumes
+			// Store completed authored volumes/pitches
 			foreach (SoundEffectInstance sfi in result)
 			{
 				volumeResult.Add(sfi.Volume);
+				pitchResult.Add(sfi.Pitch);
 			}
 
 			return result;

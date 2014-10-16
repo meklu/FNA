@@ -349,11 +349,9 @@ namespace Microsoft.Xna.Framework.Audio
 					}
 
 					// Add to DSP Preset list
-					// FIXME: Did XNA4 PC ever go past Reverb?
 					INTERNAL_dspPresets.Add(
 						dspCode,
 						new DSPPreset(
-							"Reverb",
 							global,
 							parameters
 						)
@@ -478,57 +476,27 @@ namespace Microsoft.Xna.Framework.Audio
 		public void Update()
 		{
 			// Update Global RPCs
-			float globalVolume = 1.0f;
-			float globalPitch = 0.0f;
-			foreach (KeyValuePair<long, RPC> curRPC in INTERNAL_RPCs)
+			foreach (RPC curRPC in INTERNAL_RPCs.Values)
+			if (curRPC.Parameter >= RPCParameter.NUM_PARAMETERS)
 			foreach (Variable curVar in INTERNAL_variables)
+			if (curVar.Name.Equals(curRPC.Variable) && curVar.IsGlobal)
+			foreach (DSPPreset curDSP in INTERNAL_dspPresets.Values)
 			{
-				if (curVar.Name.Equals(curRPC.Value.Variable) && curVar.IsGlobal)
-				{
-					float result = curRPC.Value.CalculateRPC(
-						GetGlobalVariable(curVar.Name)
-					);
-					if (curRPC.Value.Parameter == RPCParameter.Volume)
-					{
-						globalVolume *= XACTCalculator.CalculateAmplitudeRatio(result / 100.0);
-					}
-					else if (curRPC.Value.Parameter == RPCParameter.Pitch)
-					{
-						globalPitch += result / 1000.0f;
-					}
-					else if (curRPC.Value.Parameter == RPCParameter.FilterFrequency)
-					{
-						// TODO: Global filter?
-					}
-					else if (curRPC.Value.Parameter >= RPCParameter.NUM_PARAMETERS)
-					{
-						// FIXME: ASSUMPTION MANIA UP IN THIS BIZNAZZ
-						foreach (KeyValuePair<long, DSPPreset> curDSP in INTERNAL_dspPresets)
-						{
-							if (curDSP.Value.Name.Equals("Reverb"))
-							{
-								// FIXME: Why don't we use the RPC calc here...?
-								curDSP.Value.SetParameter(
-									(int) curRPC.Value.Parameter - (int) RPCParameter.NUM_PARAMETERS,
-									GetGlobalVariable(curVar.Name)
-								);
-							}
-						}
-					}
-					else
-					{
-						throw new Exception("RPC Parameter Type: " + curRPC.Value.Parameter.ToString());
-					}
-				}
+				/* FIXME: This affects all DSP presets!
+				 * What if there's more than one?
+				 * -flibit
+				 */
+				// FIXME: Why don't we use the RPC calc here...? -flibit
+				curDSP.SetParameter(
+					(int) curRPC.Parameter - (int) RPCParameter.NUM_PARAMETERS,
+					GetGlobalVariable(curVar.Name)
+				);
 			}
 
 			// Update Cues
 			foreach (AudioCategory curCategory in INTERNAL_categories)
 			{
-				curCategory.INTERNAL_update(
-					globalVolume,
-					globalPitch
-				);
+				curCategory.INTERNAL_update();
 			}
 		}
 

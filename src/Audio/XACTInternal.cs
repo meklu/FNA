@@ -333,12 +333,6 @@ namespace Microsoft.Xna.Framework.Audio
 
 	internal class DSPPreset
 	{
-		public string Name
-		{
-			get;
-			private set;
-		}
-
 		public DSPEffect Effect
 		{
 			get;
@@ -358,22 +352,14 @@ namespace Microsoft.Xna.Framework.Audio
 		}
 
 		public DSPPreset(
-			string name,
 			bool global,
 			DSPParameter[] parameters
 		) {
-			Name = name;
 			IsGlobal = global;
 			Parameters = parameters;
 
-			if (Name.Equals("Reverb"))
-			{
-				Effect = new DSPReverbEffect(Parameters);
-			}
-			else
-			{
-				throw new Exception("DSP type unknown: " + Name);
-			}
+			// FIXME: Did XACT ever go past Reverb? -flibit
+			Effect = new DSPReverbEffect(Parameters);
 		}
 
 		public void Dispose()
@@ -384,31 +370,24 @@ namespace Microsoft.Xna.Framework.Audio
 		public void SetParameter(int index, float value)
 		{
 			Parameters[index].Value = value;
-			if (Name.Equals("Reverb"))
+			DSPReverbEffect effect = (DSPReverbEffect) Effect;
+
+			// Apply the value to the parameter
+			if (index == 17)
 			{
-				DSPReverbEffect effect = (DSPReverbEffect) Effect;
-	
-				// Apply the value to the parameter
-				if (index == 17)
-				{
-					effect.SetGain(Parameters[index].Value);
-				}
-				else if (index == 18)
-				{
-					effect.SetDecayTime(Parameters[index].Value);
-				}
-				else if (index == 19)
-				{
-					effect.SetDensity(Parameters[index].Value);
-				}
-				else
-				{
-					throw new Exception("DSP parameter unhandled: " + index.ToString());
-				}
+				effect.SetGain(Parameters[index].Value);
+			}
+			else if (index == 18)
+			{
+				effect.SetDecayTime(Parameters[index].Value);
+			}
+			else if (index == 19)
+			{
+				effect.SetDensity(Parameters[index].Value);
 			}
 			else
 			{
-				throw new Exception("DSP type unknown: " + Name);
+				throw new Exception("DSP parameter unhandled: " + index.ToString());
 			}
 		}
 	}
