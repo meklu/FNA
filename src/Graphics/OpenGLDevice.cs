@@ -495,7 +495,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			// Initialize texture collection array
 			int numSamplers;
-			glGetIntegerv(GLenum.GL_MAX_TEXTURE_UNITS, out numSamplers);
+			glGetIntegerv(GLenum.GL_MAX_TEXTURE_IMAGE_UNITS, out numSamplers);
 			Textures = new OpenGLTexture[numSamplers];
 			for (int i = 0; i < numSamplers; i += 1)
 			{

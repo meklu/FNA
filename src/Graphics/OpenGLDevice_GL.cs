@@ -190,7 +190,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_UNPACK_ALIGNMENT =			0x0CF5,
 			// Multitexture
 			GL_TEXTURE0 =				0x84C0,
-			GL_MAX_TEXTURE_UNITS =			0x84E2,
+			GL_MAX_TEXTURE_IMAGE_UNITS =		0x8872,
 			// Texture Queries
 			GL_TEXTURE_WIDTH =			0x1000,
 			GL_TEXTURE_HEIGHT =			0x1001,
