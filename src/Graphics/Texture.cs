@@ -97,7 +97,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					break;
 				case SurfaceFormat.Bgr565:
 					glInternalFormat = OpenGLDevice.GLenum.GL_RGB;
-					glFormat = OpenGLDevice.GLenum.GL_BGR;
+					glFormat = OpenGLDevice.GLenum.GL_RGB;
 					glType = OpenGLDevice.GLenum.GL_UNSIGNED_SHORT_5_6_5;
 					break;
 				case SurfaceFormat.Bgra4444:

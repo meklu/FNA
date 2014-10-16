@@ -154,7 +154,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			GL_LUMINANCE =				0x1909,
 			GL_RGBA4 =				0x8056,
 			GL_RGB10_A2_EXT =			0x8059,
-			GL_BGR =				0x80E0,
 			GL_BGRA =				0x80E1,
 			GL_DEPTH_COMPONENT16 =			0x81A5,
 			GL_DEPTH_COMPONENT24 =			0x81A6,
