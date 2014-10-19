@@ -1205,6 +1205,15 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
+		#region FNA Extensions
+
+		public void SetStringMarkerEXT(string text)
+		{
+			GLDevice.SetStringMarker(text);
+		}
+
+		#endregion
+
 		#region Private XNA->GL Conversion Methods
 
 		private static int GetElementCountArray(PrimitiveType primitiveType, int primitiveCount)

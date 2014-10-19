@@ -840,6 +840,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		/* END STUPID THREADED GL FUNCTIONS */
 
+#if DEBUG
 		/* BEGIN DEBUG OUTPUT FUNCTIONS */
 
 		private delegate void DebugMessageCallback(
@@ -892,6 +893,14 @@ namespace Microsoft.Xna.Framework.Graphics
 		}
 
 		/* END DEBUG OUTPUT FUNCTIONS */
+
+		/* BEGIN STRING MARKER FUNCTIONS */
+
+		private delegate void StringMarkerGREMEDY(int length, byte[] chars);
+		private StringMarkerGREMEDY glStringMarkerGREMEDY;
+
+		/* END STRING MARKER FUNCTIONS */
+#endif
 
 		public void LoadGLEntryPoints()
 		{
@@ -1301,39 +1310,57 @@ namespace Microsoft.Xna.Framework.Graphics
 				SupportsHardwareInstancing = false;
 			}
 
+#if DEBUG
 			/* ARB_debug_output, for debug contexts */
 			IntPtr messageCallback = SDL.SDL_GL_GetProcAddress("glDebugMessageCallbackARB");
 			IntPtr messageControl = SDL.SDL_GL_GetProcAddress("glDebugMessageControlARB");
 			if (messageCallback == IntPtr.Zero || messageControl == IntPtr.Zero)
 			{
 				System.Console.WriteLine("ARB_debug_output not supported!");
-				return;
 			}
-			glDebugMessageCallbackARB = (DebugMessageCallback) Marshal.GetDelegateForFunctionPointer(
-				messageCallback,
-				typeof(DebugMessageCallback)
-			);
-			glDebugMessageControlARB = (DebugMessageControl) Marshal.GetDelegateForFunctionPointer(
-				messageControl,
-				typeof(DebugMessageControl)
-			);
-			glDebugMessageCallbackARB(DebugCall, IntPtr.Zero);
-			glDebugMessageControlARB(
-				GLenum.GL_DONT_CARE,
-				GLenum.GL_DONT_CARE,
-				GLenum.GL_DONT_CARE,
-				0,
-				IntPtr.Zero,
-				true
-			);
-			glDebugMessageControlARB(
-				GLenum.GL_DONT_CARE,
-				GLenum.GL_DEBUG_TYPE_OTHER_ARB,
-				GLenum.GL_DEBUG_SEVERITY_LOW_ARB,
-				0,
-				IntPtr.Zero,
-				false
-			);
+			else
+			{
+				glDebugMessageCallbackARB = (DebugMessageCallback) Marshal.GetDelegateForFunctionPointer(
+					messageCallback,
+					typeof(DebugMessageCallback)
+				);
+				glDebugMessageControlARB = (DebugMessageControl) Marshal.GetDelegateForFunctionPointer(
+					messageControl,
+					typeof(DebugMessageControl)
+				);
+				glDebugMessageCallbackARB(DebugCall, IntPtr.Zero);
+				glDebugMessageControlARB(
+					GLenum.GL_DONT_CARE,
+					GLenum.GL_DONT_CARE,
+					GLenum.GL_DONT_CARE,
+					0,
+					IntPtr.Zero,
+					true
+				);
+				glDebugMessageControlARB(
+					GLenum.GL_DONT_CARE,
+					GLenum.GL_DEBUG_TYPE_OTHER_ARB,
+					GLenum.GL_DEBUG_SEVERITY_LOW_ARB,
+					0,
+					IntPtr.Zero,
+					false
+				);
+			}
+
+			/* GREMEDY_string_marker, for apitrace */
+			IntPtr stringMarkerCallback = SDL.SDL_GL_GetProcAddress("glStringMarkerGREMEDY");
+			if (stringMarkerCallback == IntPtr.Zero)
+			{
+				System.Console.WriteLine("GREMEDY_string_marker not supported!");
+			}
+			else
+			{
+				glStringMarkerGREMEDY = (StringMarkerGREMEDY) Marshal.GetDelegateForFunctionPointer(
+					stringMarkerCallback,
+					typeof(StringMarkerGREMEDY)
+				);
+			}
+#endif
 		}
 
 		private IntPtr TryGetFramebufferEP(string ep)

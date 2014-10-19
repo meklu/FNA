@@ -601,6 +601,18 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		#endregion
 
+		#region String Marker Method
+
+		public void SetStringMarker(string text)
+		{
+#if DEBUG
+			byte[] chars = System.Text.Encoding.ASCII.GetBytes(text);
+			glStringMarkerGREMEDY(chars.Length, chars);
+#endif
+		}
+
+		#endregion
+
 		#region State Management Methods
 
 		public void SetViewport(Viewport vp, bool renderTargetBound)
