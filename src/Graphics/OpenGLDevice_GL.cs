@@ -12,25 +12,9 @@
 /* If you want to debug GL without the extra FBO in your way, you can use this.
  * Additionally, if you always use the desktop resolution in fullscreen mode,
  * you can use this to optimize your game and even lower the GL requirements.
- * -flibit
- */
-#endregion
-
-#region THREADED_GL Option
-// #define THREADED_GL
-/* Ah, so I see you've run into some issues with threaded GL...
  *
- * This class is designed to handle rendering coming from multiple threads, but
- * if you're too wreckless with how many threads are calling the GL, this will
- * hang.
- *
- * With THREADED_GL we instead allow you to run threaded rendering using
- * multiple GL contexts. This is more flexible, but much more dangerous.
- *
- * Also note that this affects Threading.cs and SDL2/SDL2_GamePlatform.cs!
- * Check THREADED_GL there too.
- *
- * Basically, if you have to enable this, you should feel very bad.
+ * Note that this also affects OpenGLDevice.cs!
+ * Check DISABLE_FAUXBACKBUFFER there too.
  * -flibit
  */
 #endregion
@@ -658,6 +642,7 @@ namespace Microsoft.Xna.Framework.Graphics
 		);
 		public FramebufferRenderbuffer glFramebufferRenderbuffer;
 
+#if !DISABLE_FAUXBACKBUFFER
 		public delegate void BlitFramebuffer(
 			int srcX0,
 			int srcY0,
@@ -671,6 +656,7 @@ namespace Microsoft.Xna.Framework.Graphics
 			GLenum filter
 		);
 		public BlitFramebuffer glBlitFramebuffer;
+#endif
 
 		public delegate void GenRenderbuffers(
 			int n,
@@ -1269,10 +1255,12 @@ namespace Microsoft.Xna.Framework.Graphics
 					TryGetFramebufferEP("glFramebufferRenderbuffer"),
 					typeof(FramebufferRenderbuffer)
 				);
+#if !DISABLE_FAUXBACKBUFFER
 				glBlitFramebuffer = (BlitFramebuffer) Marshal.GetDelegateForFunctionPointer(
 					TryGetFramebufferEP("glBlitFramebuffer"),
 					typeof(BlitFramebuffer)
 				);
+#endif
 				glGenRenderbuffers = (GenRenderbuffers) Marshal.GetDelegateForFunctionPointer(
 					TryGetFramebufferEP("glGenRenderbuffers"),
 					typeof(GenRenderbuffers)
