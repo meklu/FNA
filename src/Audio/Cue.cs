@@ -494,11 +494,11 @@ namespace Microsoft.Xna.Framework.Audio
 			{
 				RPC curRPC = INTERNAL_baseEngine.INTERNAL_getRPC(curCode);
 				float result;
-				try
+				if (!INTERNAL_baseEngine.INTERNAL_isGlobalVariable(curRPC.Variable))
 				{
 					result = curRPC.CalculateRPC(GetVariable(curRPC.Variable));
 				}
-				catch
+				else
 				{
 					// It's a global variable we're looking for!
 					result = curRPC.CalculateRPC(

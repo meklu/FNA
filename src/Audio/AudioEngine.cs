@@ -548,6 +548,21 @@ namespace Microsoft.Xna.Framework.Audio
 			return INTERNAL_categories[category];
 		}
 
+		internal bool INTERNAL_isGlobalVariable(string name)
+		{
+			// FIXME: Any way to speed this up? -flibit
+			foreach (Variable curVar in INTERNAL_variables)
+			{
+				if (name.Equals(curVar.Name))
+				{
+					return curVar.IsGlobal;
+				}
+			}
+
+			// Variable doesn't even exist here...!
+			return false;
+		}
+
 		#endregion
 	}
 }
