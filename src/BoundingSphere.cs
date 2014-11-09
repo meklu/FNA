@@ -273,12 +273,12 @@ namespace Microsoft.Xna.Framework
 
 			// From "Real-Time Collision Detection" (Page 89)
 
-			var minx = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-			var maxx = -minx;
-			var miny = minx;
-			var maxy = -minx;
-			var minz = minx;
-			var maxz = -minx;
+			Vector3 minx = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+			Vector3 maxx = -minx;
+			Vector3 miny = minx;
+			Vector3 maxy = -minx;
+			Vector3 minz = minx;
+			Vector3 maxz = -minx;
 
 			// Find the most extreme points along the principle axis.
 			int numPoints = 0;
@@ -319,13 +319,13 @@ namespace Microsoft.Xna.Framework
 				);
 			}
 
-			var sqDistX = Vector3.DistanceSquared(maxx, minx);
-			var sqDistY = Vector3.DistanceSquared(maxy, miny);
-			var sqDistZ = Vector3.DistanceSquared(maxz, minz);
+			float sqDistX = Vector3.DistanceSquared(maxx, minx);
+			float sqDistY = Vector3.DistanceSquared(maxy, miny);
+			float sqDistZ = Vector3.DistanceSquared(maxz, minz);
 
 			// Pick the pair of most distant points.
-			var min = minx;
-			var max = maxx;
+			Vector3 min = minx;
+			Vector3 max = maxx;
 			if (sqDistY > sqDistX && sqDistY > sqDistZ)
 			{
 				max = maxy;
@@ -337,8 +337,29 @@ namespace Microsoft.Xna.Framework
 				min = minz;
 			}
 			
-			var center = (min + max) * 0.5f;
-			var radius = Vector3.Distance(max, center);
+			Vector3 center = (min + max) * 0.5f;
+			float radius = Vector3.Distance(max, center);
+
+			// Test every point and expand the sphere.
+			// The current bounding sphere is just a good approximation and may not enclose all points.
+			// From: Mathematics for 3D Game Programming and Computer Graphics, Eric Lengyel, Third Edition.
+			// Page 218
+			float sqRadius = radius * radius;
+			foreach (Vector3 pt in points)
+			{
+				Vector3 diff = (pt - center);
+				float sqDist = diff.LengthSquared();
+				if (sqDist > sqRadius)
+				{
+					float distance = (float) Math.Sqrt(sqDist); // equal to diff.Length();
+					Vector3 direction = diff / distance;
+					Vector3 G = center - radius * direction;
+					center = (G + pt) / 2;
+					radius = Vector3.Distance(pt, center);
+					sqRadius = radius * radius;
+				}
+			}
+
 			return new BoundingSphere(center, radius);
 		}
 
