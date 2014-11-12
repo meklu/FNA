@@ -197,35 +197,34 @@ namespace Microsoft.Xna.Framework
 
 		public ContainmentType Contains(BoundingSphere sphere)
 		{
-			float val = Vector3.Distance(sphere.Center, Center);
+			float sqDistance;
+			Vector3.DistanceSquared(ref sphere.Center, ref Center, out sqDistance);
 
-			if (val > sphere.Radius + Radius)
+			if (sqDistance > (sphere.Radius + Radius) * (sphere.Radius + Radius))
 			{
 				return ContainmentType.Disjoint;
 			}
-			else if (val <= Radius - sphere.Radius)
+			else if (sqDistance <= (Radius * sphere.Radius) * (Radius - sphere.Radius))
 			{
 				return ContainmentType.Contains;
 			}
-			else
-			{
-				return ContainmentType.Intersects;
-			}
+			return ContainmentType.Intersects;
 		}
 
 		public ContainmentType Contains(Vector3 point)
 		{
-			float distance = Vector3.Distance(point, Center);
+			float sqRadius = Radius * Radius;
+			float sqDistance;
+			Vector3.DistanceSquared(ref point, ref Center, out sqDistance);
 
-			if (distance > this.Radius)
+			if (sqDistance > sqRadius)
 			{
 				return ContainmentType.Disjoint;
 			}
-			else if (distance < this.Radius)
+			else if (sqDistance < sqRadius)
 			{
 				return ContainmentType.Contains;
 			}
-
 			return ContainmentType.Intersects;
 		}
 
@@ -239,12 +238,14 @@ namespace Microsoft.Xna.Framework
 
 		#region Public Static Methods
 
-		public static void CreateFromBoundingBox(ref BoundingBox box, out BoundingSphere result)
+		public static BoundingSphere CreateFromBoundingBox(BoundingBox box)
 		{
-			result = CreateFromBoundingBox(box);
+			BoundingSphere result;
+			CreateFromBoundingBox(ref box, out result);
+			return result;
 		}
 
-		public static BoundingSphere CreateFromBoundingBox(BoundingBox box)
+		public static void CreateFromBoundingBox(ref BoundingBox box, out BoundingSphere result)
 		{
 			// Find the center of the box.
 			Vector3 center = new Vector3(
@@ -256,7 +257,7 @@ namespace Microsoft.Xna.Framework
 			// Find the distance between the center and one of the corners of the box.
 			float radius = Vector3.Distance(center, box.Max);
 
-			return new BoundingSphere(center, radius);
+			result = new BoundingSphere(center, radius);
 		}
 
 		public static BoundingSphere CreateFromFrustum(BoundingFrustum frustum)
@@ -365,6 +366,16 @@ namespace Microsoft.Xna.Framework
 
 		public static BoundingSphere CreateMerged(BoundingSphere original, BoundingSphere additional)
 		{
+			BoundingSphere result;
+			CreateMerged(ref original, ref additional, out result);
+			return result;
+		}
+
+		public static void CreateMerged(
+			ref BoundingSphere original,
+			ref BoundingSphere additional,
+			out BoundingSphere result
+		) {
 			Vector3 ocenterToaCenter = Vector3.Subtract(additional.Center, original.Center);
 			float distance = ocenterToaCenter.Length();
 
@@ -374,13 +385,15 @@ namespace Microsoft.Xna.Framework
 				// Original contains additional.
 				if (distance <= original.Radius - additional.Radius)
 				{
-					return original;
+					result = original;
+					return;
 				}
 
 				// Additional contains original.
 				if (distance <= additional.Radius - original.Radius)
 				{
-					return additional;
+					result = additional;
+					return;
 				}
 			}
 
@@ -395,18 +408,9 @@ namespace Microsoft.Xna.Framework
 					* ocenterToaCenter
 				);
 
-			BoundingSphere result = new BoundingSphere();
+			result = new BoundingSphere();
 			result.Center = original.Center + ocenterToaCenter;
 			result.Radius = (leftRadius + Rightradius) / 2;
-			return result;
-		}
-
-		public static void CreateMerged(
-			ref BoundingSphere original,
-			ref BoundingSphere additional,
-			out BoundingSphere result
-		) {
-			result = BoundingSphere.CreateMerged(original, additional);
 		}
 
 		public bool Intersects(BoundingBox box)
@@ -416,17 +420,19 @@ namespace Microsoft.Xna.Framework
 
 		public void Intersects(ref BoundingBox box, out bool result)
 		{
-			result = Intersects(box);
+			box.Intersects(ref this, out result);
 		}
 
 		public void Intersects(ref BoundingSphere sphere, out bool result)
 		{
-			result = Intersects(sphere);
+			float sqDistance;
+			Vector3.DistanceSquared(ref sphere.Center, ref Center, out sqDistance);
+			result = !(sqDistance > (sphere.Radius + Radius) * (sphere.Radius + Radius));
 		}
 
 		public void Intersects(ref Ray ray, out Nullable<float> result)
 		{
-			result = Intersects(ray);
+			ray.Intersects(ref this, out result);
 		}
 
 		public Nullable<float> Intersects(Ray ray)
@@ -436,12 +442,9 @@ namespace Microsoft.Xna.Framework
 
 		public bool Intersects(BoundingSphere sphere)
 		{
-			float val = Vector3.Distance(sphere.Center, Center);
-			if (val > sphere.Radius + Radius)
-			{
-				return false;
-			}
-			return true;
+			bool result;
+			Intersects(ref sphere, out result);
+			return result;
 		}
 
 		public PlaneIntersectionType Intersects(Plane plane)
