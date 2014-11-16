@@ -24,28 +24,7 @@ namespace Microsoft.Xna.Framework.Input
 		/// For more information this event is based off:
 		/// http://msdn.microsoft.com/en-AU/library/system.windows.forms.control.keypress.aspx
 		/// </summary>
-		public static event EventHandler<TextInputEventArgs> TextInput;
-
-		#endregion
-
-		#region EventArgs
-
-		/// <summary>
-		/// This class is used for the TextInput event as EventArgs.
-		/// </summary>
-		public class TextInputEventArgs : EventArgs
-		{
-			public char Character
-			{
-				get;
-				private set;
-			}
-
-			public TextInputEventArgs(char character)
-			{
-				Character = character;
-			}
-		}
+        public static event Action<char> TextInput;
 
 		#endregion
 
@@ -55,10 +34,7 @@ namespace Microsoft.Xna.Framework.Input
 		{
 			if (TextInput != null)
 			{
-				TextInput(
-					null,
-					new TextInputEventArgs(character)
-				);
+				TextInput(character);
 			}
 		}
 
