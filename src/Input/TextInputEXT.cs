@@ -24,7 +24,7 @@ namespace Microsoft.Xna.Framework.Input
 		/// For more information this event is based off:
 		/// http://msdn.microsoft.com/en-AU/library/system.windows.forms.control.keypress.aspx
 		/// </summary>
-        public static event Action<char> TextInput;
+		public static event Action<char> TextInput;
 
 		#endregion
 
