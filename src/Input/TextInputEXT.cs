@@ -30,11 +30,11 @@ namespace Microsoft.Xna.Framework.Input
 
 		#region Internal Event Access Method
 
-		internal static void OnTextInput(char character)
+		internal static void OnTextInput(char c)
 		{
 			if (TextInput != null)
 			{
-				TextInput(character);
+				TextInput(c);
 			}
 		}
 
