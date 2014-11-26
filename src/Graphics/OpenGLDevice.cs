@@ -718,17 +718,17 @@ namespace Microsoft.Xna.Framework.Graphics
 						XNAToGL.BlendEquation[blendOpAlpha]
 					);
 				}
+			}
 
-				if (blendState.ColorWriteChannels != colorWriteEnable)
-				{
-					colorWriteEnable = blendState.ColorWriteChannels;
-					glColorMask(
-						(colorWriteEnable & ColorWriteChannels.Red) != 0,
-						(colorWriteEnable & ColorWriteChannels.Green) != 0,
-						(colorWriteEnable & ColorWriteChannels.Blue) != 0,
-						(colorWriteEnable & ColorWriteChannels.Alpha) != 0
-					);
-				}
+			if (blendState.ColorWriteChannels != colorWriteEnable)
+			{
+				colorWriteEnable = blendState.ColorWriteChannels;
+				glColorMask(
+					(colorWriteEnable & ColorWriteChannels.Red) != 0,
+					(colorWriteEnable & ColorWriteChannels.Green) != 0,
+					(colorWriteEnable & ColorWriteChannels.Blue) != 0,
+					(colorWriteEnable & ColorWriteChannels.Alpha) != 0
+				);
 			}
 		}
 
