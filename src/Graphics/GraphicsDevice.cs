@@ -174,6 +174,20 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
+		// FIXME: Codename OhGodNo -flibit
+		public int ReferenceStencil
+		{
+			get;
+			set;
+		}
+
+		// FIXME: Codename OhGodNo -flibit
+		public SamplerStateCollection VertexSamplerStates
+		{
+			get;
+			private set;
+		}
+
 		#endregion
 
 		#region Public Buffer Object Properties
