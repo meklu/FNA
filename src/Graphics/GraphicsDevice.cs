@@ -708,8 +708,6 @@ namespace Microsoft.Xna.Framework.Graphics
 			{
 				GLDevice.SetRenderTargets(null, null, 0, DepthFormat.None);
 
-				RenderTargetCount = 0;
-
 				// Set the viewport to the size of the backbuffer.
 				Viewport = new Viewport(0, 0, PresentationParameters.BackBufferWidth, PresentationParameters.BackBufferHeight);
 
@@ -732,6 +730,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					}
 				}
 				Array.Clear(renderTargetBindings, 0, renderTargetBindings.Length);
+				RenderTargetCount = 0;
 			}
 			else
 			{
