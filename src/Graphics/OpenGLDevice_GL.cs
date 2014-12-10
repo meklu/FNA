@@ -607,6 +607,9 @@ namespace Microsoft.Xna.Framework.Graphics
 		);
 		public ReadPixels glReadPixels;
 
+		public delegate void GenerateMipmap(GLenum target);
+		public GenerateMipmap glGenerateMipmap;
+
 		public delegate void GenFramebuffers(
 			int n,
 			out uint framebuffers
@@ -1118,6 +1121,10 @@ namespace Microsoft.Xna.Framework.Graphics
 				glReadPixels = (ReadPixels) Marshal.GetDelegateForFunctionPointer(
 					SDL.SDL_GL_GetProcAddress("glReadPixels"),
 					typeof(ReadPixels)
+				);
+				glGenerateMipmap = (GenerateMipmap) Marshal.GetDelegateForFunctionPointer(
+					SDL.SDL_GL_GetProcAddress("glGenerateMipmap"),
+					typeof(GenerateMipmap)
 				);
 				glDrawRangeElements = (DrawRangeElements) Marshal.GetDelegateForFunctionPointer(
 					SDL.SDL_GL_GetProcAddress("glDrawRangeElements"),
