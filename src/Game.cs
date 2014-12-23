@@ -400,12 +400,15 @@ namespace Microsoft.Xna.Framework
 
 		public void ResetElapsedTime()
 		{
-			Platform.ResetElapsedTime();
-			_gameTimer.Reset();
-			_gameTimer.Start();
-			_accumulatedElapsedTime = TimeSpan.Zero;
-			_gameTime.ElapsedGameTime = TimeSpan.Zero;
-			_previousTicks = 0L;
+			if (_initialized)
+			{
+				Platform.ResetElapsedTime();
+				_gameTimer.Reset();
+				_gameTimer.Start();
+				_accumulatedElapsedTime = TimeSpan.Zero;
+				_gameTime.ElapsedGameTime = TimeSpan.Zero;
+				_previousTicks = 0L;
+			}
 		}
 
 		public void SuppressDraw()
